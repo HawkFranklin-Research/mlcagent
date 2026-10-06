@@ -11,3 +11,7 @@
 ## P2 — Template model and deterministic checks
 - Declarative schemas, validation, gates and deterministic sub-goal checks implemented.
 - Draft template content follows in this phase. Validation deferred.
+
+## P3 — Project lifecycle
+- Read-only data registration and inventory, frozen workflow snapshots, separate uv analysis environments,
+  runtime evidence helpers and edit-aware materialised views implemented. Runtime validation deferred.
