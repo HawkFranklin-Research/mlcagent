@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # Original hook, intentionally defensive; documented as weaker than namespace isolation.
-SOURCE = '''import json, os, pathlib, sys
+SOURCE = """import json, os, pathlib, sys
 rules = json.loads(os.environ["MLCA_AUDIT_RULES"])
 read_roots = [pathlib.Path(p).resolve() for p in rules["read_roots"]]
 write_roots = [pathlib.Path(p).resolve() for p in rules["write_roots"]]
@@ -20,11 +20,11 @@ def guard(event, args):
     elif event.startswith("socket.") and not rules["network"]:
         raise PermissionError("MLCA blocked network access")
 sys.addaudithook(guard)
-'''
+"""
 
 
 def install(directory: Path) -> Path:
-    directory.mkdir(parents=True,exist_ok=True)
-    path = directory/'sitecustomize.py'
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "sitecustomize.py"
     path.write_text(SOURCE)
     return directory

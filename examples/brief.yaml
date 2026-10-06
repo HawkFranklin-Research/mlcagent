@@ -1,0 +1,5 @@
+aim: '<describe the intended study>'
+target: '<target or duration column>'
+unit: '<patient, sample, visit or other observational unit>'
+# For survival only:
+event_column: '<event indicator column>'

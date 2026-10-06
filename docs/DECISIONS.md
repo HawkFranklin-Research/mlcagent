@@ -28,3 +28,33 @@
   privacy guarantees do not extend to unrestricted free text.
 - Unknown prices remain unknown; cost budgets require configured pricing or a per-request upper bound
   for real providers. Fake/local providers can use explicitly configured zero-cost bounds.
+
+## 2026-10-06 — Implementation details
+
+- Analysis runtime source is snapshotted into each project and installed as a small independent package,
+  rather than an editable installation of the entire harness. This keeps provider code out of execution.
+- Freeze operations use split-specific locations/keys, allowing histories to share immutable artifacts.
+  Reported encryption is randomized; script replay compares regenerated split manifests rather than
+  ciphertext hashes. Built-in report/inventory steps use consistency checks; ordinary scripts are rerun.
+- A package-lock mismatch after branch checkout refuses execution. Restore the branch's recorded
+  environment before continuing; the engine never silently substitutes a later dependency set.
+- Only explicitly opted-in weaker execution is allowed without bubblewrap. No tests have established
+  this host's namespace support yet.
+- P2/P8 draft template structures were generated together; the survival content is finalized structurally
+  in P8. The P3 commit landed after P4 because dependency provisioning was asynchronous; commit messages
+  describe implementation phases, not validation milestones.
+- Request envelopes are transactionally persisted; usage/egress JSONL are recoverable projections.
+  Unknown/in-flight usage reserves the configured upper-bound cost. HTTP framing is not captured.
+- Report rebuilding also needs the frozen template snapshot and request sidecars; these are part of
+  project evidence, in addition to event records and step artifacts.
+
+## 2026-10-06 — Final source review
+
+- Frozen runtime source and per-step package snapshots are recorded and hash-checked. Reproduction
+  builds separate environments for each historical package snapshot and uses the frozen helper source.
+- Inference redaction recursively handles strings instead of modifying serialized JSON syntax.
+- Execution wall time, process compute time and model latency are reported separately; these overlap
+  and must not be blindly added. Human decision counts are recorded, not estimates of human work time.
+- Broad adapter/callback payload boundaries use Any annotations; persisted contracts use Pydantic.
+- Static checks completed: Ruff lint, Ruff formatting and Git whitespace checks. No application modules,
+  analysis scripts, UI sessions or tests were executed for validation.

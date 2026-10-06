@@ -1,0 +1,34 @@
+# Replace model placeholders before making any model request. No credentials belong in this file.
+providers:
+  openai:
+    kind: openai_api
+    api_key_env: OPENAI_API_KEY
+    structured_outputs: false
+    request_cost_bound_usd: 0.10
+  openrouter:
+    kind: openrouter
+    api_key_env: OPENROUTER_API_KEY
+    request_cost_bound_usd: 0.10
+  local:
+    kind: openai_compatible
+    base_url: http://localhost:11434/v1
+    api_key_env: null
+    request_cost_bound_usd: 0
+roles:
+  navigator:
+    provider: openai
+    model: '<choose navigator model>'
+    max_output_tokens: 4096
+  worker:
+    provider: openrouter
+    model: '<choose worker model>'
+    max_output_tokens: 8192
+privacy:
+  allow_sample_rows: false
+  store_payloads: true
+budgets:
+  turn_max_usd: 1
+  session_max_usd: 10
+  worker_max_attempts: 3
+sandbox:
+  allow_level_b: false

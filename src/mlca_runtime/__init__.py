@@ -1,124 +1,142 @@
 """Small analysis-side API. No model clients, credentials or engine access."""
-from pathlib import Path
+
 import hashlib
 import json
 import os
 import pickle
 import random
 import tempfile
+from pathlib import Path
+from typing import Any
 
 
 def _step() -> Path:
-    return Path(os.environ['MLCA_STEP_DIR']).resolve()
+    return Path(os.environ["MLCA_STEP_DIR"]).resolve()
 
 
 def inputs() -> dict[str, Path]:
-    return {name:Path(value['path']) for name,value in json.loads((_step()/'inputs.json').read_text()).items()}
+    return {
+        name: Path(value["path"]) for name, value in json.loads((_step() / "inputs.json").read_text()).items()
+    }
 
 
 def output_dir() -> Path:
-    path = _step()/'outputs'
+    path = _step() / "outputs"
     path.mkdir(exist_ok=True)
     return path
 
 
 def _output(name: str) -> Path:
-    path = (output_dir()/name).resolve()
+    path = (output_dir() / name).resolve()
     if not path.is_relative_to(output_dir().resolve()):
-        raise ValueError('Output must be inside the step output directory')
-    path.parent.mkdir(parents=True,exist_ok=True)
+        raise ValueError("Output must be inside the step output directory")
+    path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def _record(kind: str, value: dict) -> None:
-    path = _step()/'manifest.json'
-    data = json.loads(path.read_text()) if path.exists() else {'outputs':[],'metrics':[],'facts':[],'fits':[]}
-    data.setdefault(kind,[]).append(value)
-    fd, name = tempfile.mkstemp(dir=_step())
-    with os.fdopen(fd,'w') as stream:
-        json.dump(data,stream,allow_nan=False,sort_keys=True)
-    os.replace(name,path)
+    path = _step() / "manifest.json"
+    data = (
+        json.loads(path.read_text())
+        if path.exists()
+        else {"outputs": [], "metrics": [], "facts": [], "fits": []}
+    )
+    data.setdefault(kind, []).append(value)
+    scratch = _step() / "scratch"
+    scratch.mkdir(exist_ok=True)
+    fd, name = tempfile.mkstemp(dir=scratch)
+    with os.fdopen(fd, "w") as stream:
+        json.dump(data, stream, allow_nan=False, sort_keys=True)
+    os.replace(name, path)
 
 
-def _artifact(path: Path, kind: str, caption: str = '') -> None:
-    _record('outputs',{'name':str(path.relative_to(output_dir())), 'kind':kind,'caption':caption})
+def _artifact(path: Path, kind: str, caption: str = "") -> None:
+    _record("outputs", {"name": str(path.relative_to(output_dir())), "kind": kind, "caption": caption})
 
 
-def save_figure(fig, name: str, caption: str = '') -> Path:
+def save_figure(fig: Any, name: str, caption: str = "") -> Path:
     from .style import apply
+
     apply()
     path = _output(name)
-    if path.suffix.lower()!='.png':
-        path = path.with_suffix('.png')
-    fig.savefig(path,dpi=300,bbox_inches='tight')
-    svg = path.with_suffix('.svg')
-    fig.savefig(svg,bbox_inches='tight')
-    _artifact(path,'figure',caption)
-    _artifact(svg,'figure',caption)
+    if path.suffix.lower() != ".png":
+        path = path.with_suffix(".png")
+    fig.savefig(path, dpi=300, bbox_inches="tight")
+    svg = path.with_suffix(".svg")
+    fig.savefig(svg, bbox_inches="tight")
+    _artifact(path, "figure", caption)
+    _artifact(svg, "figure", caption)
     return path
 
 
-def save_table(df, name: str, caption: str = '') -> Path:
+def save_table(df: Any, name: str, caption: str = "") -> Path:
     path = _output(name)
-    if path.suffix.lower() not in {'.csv','.parquet','.json'}:
-        path = path.with_suffix('.csv')
-    if path.suffix=='.json':
-        path.write_text(df.to_json(orient='table'))
-    elif path.suffix=='.parquet':
-        df.to_parquet(path,index=True)
+    if path.suffix.lower() not in {".csv", ".parquet", ".json"}:
+        path = path.with_suffix(".csv")
+    if path.suffix == ".json":
+        path.write_text(df.to_json(orient="table"))
+    elif path.suffix == ".parquet":
+        df.to_parquet(path, index=True)
     else:
-        df.to_csv(path,index=False)
-    _artifact(path,'table',caption)
-    if path.suffix=='.csv':
-        parquet = path.with_suffix('.parquet')
-        df.to_parquet(parquet,index=True)
-        _artifact(parquet,'table',caption)
+        df.to_csv(path, index=False)
+    _artifact(path, "table", caption)
+    if path.suffix == ".csv":
+        parquet = path.with_suffix(".parquet")
+        df.to_parquet(parquet, index=True)
+        _artifact(parquet, "table", caption)
     return path
 
 
-def save_model(model, name: str) -> Path:
+def save_model(model: Any, name: str) -> Path:
     path = _output(name)
-    with path.open('wb') as stream:
-        pickle.dump(model,stream)
-    _artifact(path,'model')
+    with path.open("wb") as stream:
+        pickle.dump(model, stream)
+    _artifact(path, "model")
     return path
 
 
-def save_json(value: object, name: str, kind: str = 'report') -> Path:
+def save_json(value: object, name: str, kind: str = "report") -> Path:
     path = _output(name)
-    path.write_text(json.dumps(value,sort_keys=True,allow_nan=False))
-    _artifact(path,kind)
+    path.write_text(json.dumps(value, sort_keys=True, allow_nan=False))
+    _artifact(path, kind)
     return path
 
 
-def record_metric(name: str, value: float, split: str, ci=None) -> None:
+def record_metric(name: str, value: float, split: str, ci: Any = None) -> None:
     import math
-    if split not in {'train','val','test'} or not math.isfinite(float(value)):
-        raise ValueError('Metrics require a finite value and named partition')
-    _record('metrics',{'name':name,'value':float(value),'split':split,'ci':ci})
+
+    if split not in {"train", "val", "test"} or not math.isfinite(float(value)):
+        raise ValueError("Metrics require a finite value and named partition")
+    _record("metrics", {"name": name, "value": float(value), "split": split, "ci": ci})
 
 
-def record_fact_candidate(key: str, value, unit: str | None = None, source: str = '') -> None:
-    _record('facts',{'key':key,'value':value,'unit':unit,'source':source})
+def record_fact_candidate(key: str, value: Any, unit: str | None = None, source: str = "") -> None:
+    _record("facts", {"key": key, "value": value, "unit": unit, "source": source})
 
 
-def index_sha256(index) -> str:
-    return hashlib.sha256(json.dumps(list(index),default=str,separators=(',',':')).encode()).hexdigest()
+def index_sha256(index: Any) -> str:
+    return hashlib.sha256(json.dumps(list(index), default=str, separators=(",", ":")).encode()).hexdigest()
 
 
-def fit_record(estimator_or_pipeline, X, partition: str, y=None, **kwargs):
-    if partition != 'train':
-        raise ValueError('Fit is allowed only on training data')
-    expected = os.environ.get('MLCA_TRAIN_INDEX_SHA256')
+def fit_record(estimator_or_pipeline: Any, X: Any, partition: str, y: Any = None, **kwargs: Any) -> Any:
+    if partition != "train":
+        raise ValueError("Fit is allowed only on training data")
+    expected = os.environ.get("MLCA_TRAIN_INDEX_SHA256")
     digest = index_sha256(X.index)
     if not expected or digest != expected:
-        raise ValueError('Fit rows must match the frozen training index')
-    result = estimator_or_pipeline.fit(X,y,**kwargs) if y is not None else estimator_or_pipeline.fit(X,**kwargs)
-    _record('fits',{'partition':partition,'index_sha256':digest,'estimator':type(estimator_or_pipeline).__name__})
+        raise ValueError("Fit rows must match the frozen training index")
+    result = (
+        estimator_or_pipeline.fit(X, y, **kwargs) if y is not None else estimator_or_pipeline.fit(X, **kwargs)
+    )
+    _record(
+        "fits",
+        {"partition": partition, "index_sha256": digest, "estimator": type(estimator_or_pipeline).__name__},
+    )
     return result
 
 
 def set_seed(seed: int) -> None:
     random.seed(seed)
     import numpy as np
+
     np.random.seed(seed)

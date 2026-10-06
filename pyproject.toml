@@ -26,6 +26,9 @@ packages = ["src/mlca", "src/mlca_runtime"]
 [tool.ruff]
 line-length = 110
 
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
 [tool.pytest.ini_options]
 markers = ["live: explicitly enabled real provider calls", "slow: project environment creation"]
 addopts = "-m 'not live'"

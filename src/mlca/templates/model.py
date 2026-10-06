@@ -1,14 +1,15 @@
 from pathlib import Path
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class Spec(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
 
 class CheckSpec(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
     type: str
 
 
@@ -32,13 +33,13 @@ class EventSpec(Spec):
     subgoals: list[Subgoal]
     actions: list[str]
     default_options: list[str]
-    done_when: str | list[str] = 'all_subgoals'
+    done_when: str | list[str] = "all_subgoals"
     custom_scope: Scope
     max_options: int = Field(default=4, ge=1, le=4)
 
 
 class ParamSpec(Spec):
-    type: Literal['data_ref','string','integer','number','boolean','enum']
+    type: Literal["data_ref", "string", "integer", "number", "boolean", "enum"]
     default: object = None
     required: bool = True
     enum: list = Field(default_factory=list)
@@ -48,7 +49,7 @@ class ParamSpec(Spec):
 
 class OutputSpec(Spec):
     name: str
-    kind: Literal['table','figure','model','report','data','other']
+    kind: Literal["table", "figure", "model", "report", "data", "other"]
     required: bool = True
 
 
@@ -64,8 +65,8 @@ class ActionSpec(Spec):
     reads_test: bool = False
     allow_network: bool = False
     timeout_s: int = Field(default=300, ge=1, le=86400)
-    methods_text: str = ''
-    builtin: Literal['split','report','inventory'] | None = None
+    methods_text: str = ""
+    builtin: Literal["split", "report", "inventory"] | None = None
 
 
 class TemplateSpec(Spec):
@@ -76,7 +77,7 @@ class TemplateSpec(Spec):
     brief_questions: list[dict] = Field(default_factory=list)
     events: list[str]
     transitions: dict = Field(default_factory=dict)
-    style: str = 'default'
+    style: str = "default"
     default_runtime_packages: list[str] = Field(default_factory=list)
 
 

@@ -1,0 +1,7 @@
+# Prices must be supplied and verified by the user; no prices are assumed.
+# provider_name:
+#   model_identifier:
+#     input_per_million: 0.0
+#     output_per_million: 0.0
+#     cached_input_per_million: 0.0
+{}

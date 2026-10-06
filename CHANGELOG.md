@@ -35,3 +35,9 @@
   branch controls and explicit test unlocking implemented.
 - Deterministic methods/provenance/figure/usage reports and optional Inspector added.
 - Original text banner only; image-logo decision remains pending. Runtime/UI validation deferred.
+
+## P8 — Survival workflow and hardening
+- Survival template, event generations, loop invalidation and project-wide test-exposure controls added.
+- Stale artifact/confirmation reuse, branch environment-lock mismatch and user-edited views are guarded.
+- Source formatted and linted; architecture, security, provider/template guides and status documented.
+- Tests, smoke runs and scientific/live validation remain deferred by the author.
