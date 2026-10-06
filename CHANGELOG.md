@@ -15,3 +15,7 @@
 ## P3 — Project lifecycle
 - Read-only data registration and inventory, frozen workflow snapshots, separate uv analysis environments,
   runtime evidence helpers and edit-aware materialised views implemented. Runtime validation deferred.
+
+## P4 — Execution and test lock
+- Standalone subprocess lifecycle, static checks, Linux namespace mounts, explicit weaker fallback,
+  engine-managed split and encrypted test vault implemented. Runtime validation deferred.
