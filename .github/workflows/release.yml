@@ -1,0 +1,134 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  verify:
+    needs: ci
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE_NAME_APPROVED: ${{ vars.PACKAGE_NAME_APPROVED }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+      - run: uv sync --locked --group dev
+      - name: Verify licence, author-approved name and version tag
+        run: uv run python scripts/verify_release.py --tag "$RELEASE_TAG" --approved-name "$PACKAGE_NAME_APPROVED"
+      - run: uv run python scripts/sync_versions.py --check
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_REPOSITORY: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+      - run: uv sync --locked --group dev
+      - run: uv run python scripts/sync_versions.py
+      - run: uv run python scripts/check_wheel.py
+      - run: uv run python scripts/make_checksums.py
+      - run: cp installers/install.sh installers/install.ps1 dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: packaging/npm/
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: release-files/
+      - run: |
+          mkdir dist
+          cp release-files/*.whl release-files/*.tar.gz dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+  github-release:
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - run: gh release create "$RELEASE_TAG" dist/* --verify-tag --generate-notes
+  publish-npm:
+    needs: github-release
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: packaging/npm/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+      - run: npm publish --provenance --access public
+        working-directory: packaging/npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  update-homebrew:
+    needs: publish-npm
+    if: ${{ vars.HOMEBREW_TAP != '' }}
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      HOMEBREW_TAP: ${{ vars.HOMEBREW_TAP }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      PUBLIC_REPOSITORY: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+      - run: uv sync --locked --group dev
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - name: Render formula and propose tap update
+        run: |
+          uv run python scripts/render_formula.py --from-dist dist --output mlca.rb
+          gh auth setup-git
+          gh repo clone "$HOMEBREW_TAP" tap
+          git -C tap checkout -b "mlca-$RELEASE_TAG"
+          mkdir -p tap/Formula
+          cp mlca.rb tap/Formula/mlca.rb
+          git -C tap config user.name github-actions
+          git -C tap config user.email github-actions@users.noreply.github.com
+          git -C tap add Formula/mlca.rb
+          git -C tap commit -m "Update MLCA to $RELEASE_TAG"
+          git -C tap push -u origin "mlca-$RELEASE_TAG"
+          gh pr create --repo "$HOMEBREW_TAP" --head "mlca-$RELEASE_TAG" --title "Update MLCA $RELEASE_TAG" --body "Generated wrapper for the verified Python release."

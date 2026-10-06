@@ -154,3 +154,14 @@
   blanket access to the host's /tmp; path comparisons normalize case on Windows and handle drives.
 - Level B remains opt-in. Doctor explains macOS/native Windows limitations and recommends WSL2 with
   bubblewrap for Windows users who require level A. Native platform execution awaits the CI matrix.
+
+## 2026-10-06 — Distribution C: gated release files
+- CI runs Python 3.11/3.13 on Linux/macOS/Windows, installs bubblewrap on Linux, primes dependencies
+  before an offline suite, and checks wheel resources. Ubuntu's ephemeral CI runner enables user
+  namespaces when its AppArmor restriction would otherwise prevent level A; local host settings are untouched.
+- Release depends on the CI matrix, matching version tag, a non-placeholder licence and the author-set
+  PACKAGE_NAME_APPROVED variable. All publication jobs use environment release; the author must
+  configure required reviewers in GitHub before any release. OIDC handles PyPI; npm uses provenance.
+- Homebrew updates are conditional on HOMEBREW_TAP and need a tap-scoped token to propose a PR.
+- Workflow YAML syntax and local negative/positive metadata guards pass. actionlint and act are not
+  installed here, so actionlint validation and act -n were not run. No workflow was triggered.

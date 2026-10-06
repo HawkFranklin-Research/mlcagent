@@ -74,3 +74,5 @@
   uv-tool installation checks. The source artwork is excluded from wheels.
 - B: portable scrubbed subprocess paths, private temporary homes, Windows-normalized audit roots and
   explicit per-OS doctor guidance. Weaker execution remains opt-in.
+- C: cross-platform CI and a sequential, decision-gated release workflow with protected publication
+  jobs, checksums, PyPI OIDC, npm provenance and an optional Homebrew PR. Workflows are files only.
