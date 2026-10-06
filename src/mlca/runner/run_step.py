@@ -90,9 +90,9 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
     number = sum(r.type.value == "StepStarted" for r in session.store.read()) + 1
     step_id = f"{number:02d}_{action.event}_{action.id}_{str(ULID())[-8:]}"
     step = session.root / ".mlca/steps" / step_id
+    inputs = inputs_for(action, state, session.root, params)
     step.mkdir(parents=True)
     (step / "outputs").mkdir()
-    inputs = inputs_for(action, state, session.root, params)
     session.emit(
         "StepStarted",
         {
@@ -268,6 +268,7 @@ def _worker(session: Any, action: Any, params: Any, step_id: Any, step: Any, sta
                 state.split["train_index_sha256"] if state.split else "",
                 action.allow_network,
                 callback=session.output_callback,
+                expected_train_rows=state.split["counts"]["train"] if state.split else 0,
             )
             execution = {k: session.redact(v) if isinstance(v, str) else v for k, v in execution.items()}
             session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)

@@ -111,3 +111,13 @@
   File replacement, shrinkage, same-size metadata changes or checkpoint discrepancies force full verification.
   Session open and explicit verify always inspect the entire log. Hashes are tamper evidence, not signatures.
 - Session replay is cached by branch/head id and invalidated on emits; direct appends also change the key.
+
+## 2026-10-06 — Functional review F7 and scientific refusal wording
+- Welcome/workflow bindings now belong to their screens; Tab/XOFF aliases are removed.
+  Session output and subscribed records use readable summaries rather than raw option dictionaries.
+- Input validation occurs before step folder creation. Tamper diagnostics identify the preceding
+  modified line or last-line checkpoint mismatch; full verification retains all integrity checks.
+- Confirmed repository .cache contained only uv; preserved downloaded dependency entries in uv's
+  standard external cache for offline testing, then removed .cache. Repository-local caches are forbidden.
+- Fit-stage requirements are unchanged. Refusals direct read-only work to validate/interpret;
+  fit index mismatches report expected/received counts while retaining exact index-hash enforcement.

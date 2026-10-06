@@ -22,7 +22,7 @@ from .screens.report import ReportScreen
 from .screens.welcome import WelcomeScreen
 from .widgets.event_graph import EventGraph
 from .widgets.facts import Facts
-from .widgets.log_stream import LogStream
+from .widgets.log_stream import LogStream, record_summary, result_summary
 from .widgets.options import Options
 from .widgets.status_bar import StatusBar
 from .widgets.subgoals import Subgoals
@@ -31,25 +31,7 @@ from .widgets.subgoals import Subgoals
 class MlcaApp(App):
     TITLE = text("title")
     CSS = """#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #status-bar { height: 2; }"""
-    BINDINGS = [
-        ("1", "choose_1", text("choose")),
-        ("2", "choose_2", text("choose")),
-        ("3", "choose_3", text("choose")),
-        ("4", "choose_4", text("choose")),
-        ("n", "next", text("next")),
-        ("l", "loop", text("loop")),
-        ("c", "custom", text("custom")),
-        ("f", "confirm", text("confirm")),
-        ("b", "branches", text("branches")),
-        ("r", "report", text("report")),
-        ("u", "usage", text("usage")),
-        ("v", "view_figure", text("view_figure")),
-        ("t", "unlock", text("unlock")),
-        ("ctrl+o", "open", text("open")),
-        ("ctrl+i", "init", text("init")),
-        ("ctrl+s", "configure", text("configure")),
-        ("q", "quit", text("quit")),
-    ]
+    BINDINGS = []
 
     def __init__(self, project: Path, configure: Any = False) -> None:
         super().__init__()
@@ -75,7 +57,9 @@ class MlcaApp(App):
                 self.write_log, channel + ": " + chunk[-2000:]
             )
             self.session.subscribe(
-                lambda record: self.call_from_thread(self.write_log, record.type.value) if self.busy else None
+                lambda record: (
+                    self.call_from_thread(self.write_log, record_summary(record)) if self.busy else None
+                )
             )
             self.switch_screen(MainScreen())
         except Exception as exc:
@@ -105,7 +89,7 @@ class MlcaApp(App):
         self.busy = True
         try:
             result = getattr(self.session, method)(*args)
-            self.call_from_thread(self.write_log, json.dumps(result, default=str, ensure_ascii=False))
+            self.call_from_thread(self.write_log, result_summary(method, result))
             options = result if method == "options" else self.session.options()
             self.call_from_thread(self.refresh_project, options)
             if method == "report":

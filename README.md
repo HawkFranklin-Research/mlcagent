@@ -76,3 +76,13 @@ No fresh LLM call is represented as reproduction. See [event log](docs/event-log
 The paper, legacy code/data and reference harnesses were not edited. New harness evidence must remain
 separate from legacy study results. No remote or publication is configured. License remains an author
 decision; the placeholder grants no license.
+
+
+## Scientific guard rails
+
+Steps in preprocess, features and model, including custom steps, must fit on the training partition
+through `mlca_runtime.fit_record`. For read-only inspection, use validate or interpret. This requirement
+keeps fit evidence attached to every step in a fit event rather than trusting an LLM's assurance.
+`fit_record` requires the exact frozen training index, including order; mismatches report expected and
+received row counts. Equal counts alone do not pass: this prevents fitting on substituted, validation
+or test rows. Instrumentation and audit hooks cannot prove the semantics of arbitrary native code.

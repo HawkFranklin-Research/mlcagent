@@ -10,6 +10,12 @@ from mlca.ui_text import text
 
 
 class WelcomeScreen(Screen):
+    BINDINGS = [
+        ("o", "app.open", text("open")),
+        ("i", "app.init", text("init")),
+        ("s", "app.configure", text("configure")),
+        ("q", "app.quit", text("quit")),
+    ]
     DEFAULT_CSS = """
     WelcomeScreen { align: center middle; }
     WelcomeScreen #welcome { width: auto; height: auto; padding: 1 2; }

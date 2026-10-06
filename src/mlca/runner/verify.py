@@ -135,6 +135,7 @@ def verify(session: Any) -> Any:
                     level,
                     action.timeout_s if action else 300,
                     state.split["train_index_sha256"] if state.split else "",
+                    expected_train_rows=state.split["counts"]["train"] if state.split else 0,
                 )
             differences = []
             for output in step["outputs"]:

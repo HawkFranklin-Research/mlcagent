@@ -51,5 +51,7 @@ def check(source: str, allow_network: Any = False, require_fit: Any = False) -> 
         )
         for n in ast.walk(tree)
     ):
-        violations.append("Fit stage must record at least one fit via mlca_runtime.fit_record")
+        violations.append(
+            "Steps in this event must fit on the training partition with fit_record. For read-only inspection, use the validate or interpret event."
+        )
     return violations

@@ -27,6 +27,7 @@ def execute(
     train_index_sha256: Any = "",
     allow_network: Any = False,
     callback: Any = None,
+    expected_train_rows: int = 0,
 ) -> dict:
     with tempfile.TemporaryDirectory(prefix="mlca-home-") as temporary:
         env = {
@@ -39,6 +40,7 @@ def execute(
             "MLCA_STEP_DIR": str(step),
             "MLCA_STYLE": str(style),
             "MLCA_TRAIN_INDEX_SHA256": train_index_sha256,
+            "MLCA_TRAIN_ROW_COUNT": str(expected_train_rows),
             "TMPDIR": "/tmp",
         }
         if level == "B":

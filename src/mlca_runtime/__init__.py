@@ -124,7 +124,9 @@ def fit_record(estimator_or_pipeline: Any, X: Any, partition: str, y: Any = None
     expected = os.environ.get("MLCA_TRAIN_INDEX_SHA256")
     digest = index_sha256(X.index)
     if not expected or digest != expected:
-        raise ValueError("Fit rows must match the frozen training index")
+        raise ValueError(
+            f"Fit rows must match the frozen training index: expected {os.environ.get('MLCA_TRAIN_ROW_COUNT', 'unknown')} rows, received {len(index)} rows"
+        )
     result = (
         estimator_or_pipeline.fit(X, y, **kwargs) if y is not None else estimator_or_pipeline.fit(X, **kwargs)
     )
