@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
 from ulid import ULID
@@ -25,6 +25,9 @@ PAYLOAD_FIELDS = {
     "CustomInstructionSubmitted": ["text"],
     "ScopeDecision": ["layer", "decision", "reason"],
     "StepStarted": ["step_id", "action_id", "params", "inputs", "outputs", "number"],
+    "ScriptRequested": ["attempt", "work_order", "sha256"],
+    "ApprovalRequested": ["kind", "target", "reason", "requested_by"],
+    "ApprovalResolved": ["request_id", "decision", "note"],
     "ScriptWritten": ["attempt", "sha256", "path"],
     "StaticCheckFailed": ["attempt", "violations"],
     "RunFinished": ["attempt", "exit_status", "duration", "sandbox_level"],
@@ -137,7 +140,7 @@ class Record(StrictModel):
     parent_id: str | None = None
     branch: str = "main"
     session_id: str
-    actor: Literal["engine", "user", "navigator", "worker", "inspector", "illustrator"] = "engine"
+    actor: str = "engine"
     event_id: str | None = None
     step_id: str | None = None
     payload: dict
@@ -145,6 +148,15 @@ class Record(StrictModel):
 
     @model_validator(mode="after")
     def validate_payload(self) -> Any:
+        if self.actor not in {
+            "engine",
+            "user",
+            "navigator",
+            "worker",
+            "inspector",
+            "illustrator",
+        } and not self.actor.startswith("agent:"):
+            raise ValueError("Unknown actor principal")
         PAYLOAD_MODELS[self.type.value].model_validate(self.payload)
         return self
 

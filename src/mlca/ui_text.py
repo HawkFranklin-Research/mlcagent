@@ -1,6 +1,7 @@
 """Shared labels for command-line and terminal clients."""
 
 TEXT = {
+    "approvals": "Approvals",
     "title": "MLCA — Guided machine learning workflows",
     "tagline": "Machine Learning Copilot Agent",
     "subtitle": "guided, event-based ML workflows",

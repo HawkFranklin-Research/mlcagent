@@ -9,6 +9,7 @@ from typing import Any
 from textual import work
 from textual.app import App
 from textual.screen import ModalScreen
+from textual.widgets import Static
 
 from mlca.api import Session
 from mlca.config import Config, ProviderConfig, RoleConfig, load, save
@@ -69,6 +70,10 @@ class MlcaApp(App):
         if not self.session or not isinstance(self.screen, MainScreen):
             return
         status = self.session.status()
+        count = len(status["approvals"])
+        self.screen.query_one("#approvals-banner", Static).update(
+            f"{count} approval(s) waiting (a)" if count else ""
+        )
         self.screen.query_one(EventGraph).render_state(status)
         self.screen.query_one(Subgoals).render_state(status)
         self.screen.query_one(Facts).render_state(status)
@@ -211,6 +216,37 @@ class MlcaApp(App):
                 FormScreen(text("custom"), [("instruction", text("custom"), "")]),
                 lambda result: self.run_session_action("custom", result["instruction"]) if result else None,
             )
+
+    def action_approvals(self):
+        if not self._can_act():
+            return
+        requests = self.session.approvals()
+        if not requests:
+            self.notify("No approvals waiting")
+            return
+
+        def selected(result):
+            if result:
+                decision = {"approve": "approved", "decline": "declined"}.get(
+                    result["decision"], result["decision"]
+                )
+                self.run_session_action(
+                    "resolve_approval", result["id"], decision, result["note"], result["phrase"]
+                )
+
+        self.push_screen(
+            FormScreen(
+                "Pending approvals (review each request before deciding)\n"
+                + json.dumps(requests, ensure_ascii=False),
+                [
+                    ("id", "Request ID", requests[0]["request_id"]),
+                    ("decision", "approve or decline", ""),
+                    ("note", "Author note", ""),
+                    ("phrase", "Type UNLOCK TEST for test unlock only", ""),
+                ],
+            ),
+            selected,
+        )
 
     def action_confirm(self) -> Any:
         if self._can_act():

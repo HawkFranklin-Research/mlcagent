@@ -45,12 +45,17 @@ class SandboxConfig(ConfigModel):
     allow_level_b: bool = False
 
 
+class MCPConfig(ConfigModel):
+    mode: Literal["brain", "driver"] = "brain"
+
+
 class Config(ConfigModel):
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     roles: dict[str, RoleConfig] = Field(default_factory=dict)
     privacy: Privacy = Field(default_factory=Privacy)
     budgets: Budgets = Field(default_factory=Budgets)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
+    mcp: MCPConfig = Field(default_factory=MCPConfig)
 
     @model_validator(mode="after")
     def roles_exist(self) -> Any:

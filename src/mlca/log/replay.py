@@ -43,10 +43,13 @@ def replay(records: list[Record]) -> ProjectState:
             state.steps.append(
                 {**p, "event_id": record.event_id, "status": "running", "runs": [], "scripts": []}
             )
-        elif kind in ("ScriptWritten", "RunFinished", "StepCompleted", "StepFailed"):
+        elif kind in ("ScriptRequested", "ScriptWritten", "RunFinished", "StepCompleted", "StepFailed"):
             step = next((s for s in state.steps if s["step_id"] == record.step_id), None)
             if step is not None:
-                if kind == "ScriptWritten":
+                if kind == "ScriptRequested":
+                    step.update(status="awaiting_script", work_order=p["work_order"], attempt=p["attempt"])
+                elif kind == "ScriptWritten":
+                    step["status"] = "running"
                     step["scripts"].append(p)
                 elif kind == "RunFinished":
                     step["runs"].append(p)

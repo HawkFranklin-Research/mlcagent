@@ -16,27 +16,10 @@ class Worker(Role):
         return match.group(1) + "\n", result.request_id
 
     def write_script(self, action: Any, params: Any, inputs: Any, state: Any, step_id: Any) -> Any:
-        rendered = action.prompt
-        for key, value in params.items():
-            rendered = rendered.replace("{" + key + "}", str(value))
+        order = render_order(self.session, action, params, inputs, state)
         result = self.session.client.complete(
             self.name,
-            [
-                {
-                    "role": "user",
-                    "content": prompt(
-                        "worker_write.md",
-                        action=rendered,
-                        inputs={k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()},
-                        brief={"answers": state.brief, "columns": state.columns},
-                        params=params,
-                        packages=self.session.packages(),
-                        outputs=[o.model_dump() for o in action.outputs],
-                        facts=action.fact_candidates,
-                        event=action.event,
-                    ),
-                }
-            ],
+            [{"role": "user", "content": order["worker_prompt"]}],
             context=self.context("write", action.id, step_id),
             categories=["template_spec", "inventory_summary", "user_text"],
         )
@@ -61,3 +44,42 @@ class Worker(Role):
             categories=["script", "traceback", "template_spec"],
         )
         return self._script(result)
+
+
+def render_order(session, action, params, inputs, state):
+    rendered = action.prompt
+    for key, value in params.items():
+        rendered = rendered.replace("{" + key + "}", str(value))
+    names = {k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()}
+    if action.reads_test:
+        names["test"] = {"name": "test.parquet", "format": ".parquet"}
+    outputs = [o.model_dump() for o in action.outputs]
+    brief = {"answers": state.brief, "columns": state.columns}
+    return {
+        "event": action.event,
+        "action": action.id,
+        "instructions": rendered,
+        "inputs": names,
+        "required_outputs": outputs,
+        "allowed_fact_keys": action.fact_candidates,
+        "params": params,
+        "packages": session.packages(),
+        "brief": brief,
+        "rules": [
+            "Use mlca_runtime.inputs()/output_dir()",
+            "Fit only via fit_record on frozen train index",
+            "No network or subprocess; no undeclared paths",
+            "Only required outputs plus at most one figure; summary tables <=50 rows x12 columns; <=5 printed lines; record metrics and cite facts",
+        ],
+        "worker_prompt": prompt(
+            "worker_write.md",
+            action=rendered,
+            inputs=names,
+            brief=brief,
+            params=params,
+            packages=session.packages(),
+            outputs=outputs,
+            facts=action.fact_candidates,
+            event=action.event,
+        ),
+    }

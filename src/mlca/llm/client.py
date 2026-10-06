@@ -67,6 +67,8 @@ class Client:
         context: RequestContext,
         categories: list[str],
     ) -> LLMResult:
+        if getattr(self, "disabled", False):
+            raise MlcaUserError("Model calls are disabled in brain mode")
         if role not in self.config.roles:
             raise MlcaUserError(f"Configure a model for role {role} before making requests")
         selected = self.config.roles[role]
@@ -118,6 +120,7 @@ class Client:
             start = time.monotonic()
             record = {
                 **context.model_dump(),
+                "principal": getattr(self, "principal", "user"),
                 "request_id": request_id,
                 "ts": datetime.now(timezone.utc).isoformat(),
                 "provider": selected.provider,

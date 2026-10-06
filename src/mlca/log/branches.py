@@ -46,7 +46,7 @@ class Branches:
             raise MlcaUserError(f"Unknown branch: {name}")
         return ancestry(records, heads[name])
 
-    def create(self, name: str, from_id: str, session_id: str) -> None:
+    def create(self, name: str, from_id: str, session_id: str, actor: str = "user") -> None:
         if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,63}", name):
             raise MlcaUserError("Branch names must be letters, digits, hyphens or underscores")
         records = self.store.read()
@@ -68,14 +68,12 @@ class Branches:
             branch=name,
             parent_id=source.id,
             session_id=session_id,
-            actor="user",
+            actor=actor,
         )
-        self.checkout(name, session_id)
+        self.checkout(name, session_id, actor)
 
-    def checkout(self, name: str, session_id: str) -> None:
+    def checkout(self, name: str, session_id: str, actor: str = "user") -> None:
         if name not in branch_heads(self.store.read()):
             raise MlcaUserError("Unknown branch")
-        self.store.append(
-            "BranchCheckedOut", {"name": name}, branch=name, session_id=session_id, actor="user"
-        )
+        self.store.append("BranchCheckedOut", {"name": name}, branch=name, session_id=session_id, actor=actor)
         atomic_json(self.path, self.list())

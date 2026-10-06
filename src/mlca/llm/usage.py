@@ -31,7 +31,7 @@ def persist(root: Path, usage: dict, egress: dict) -> None:
 
 def summary(records: list[dict]) -> dict:
     groups = {}
-    for axis in ["role", "event_id", "step_id"]:
+    for axis in ["role", "event_id", "step_id", "principal"]:
         result = defaultdict(
             lambda: {
                 "requests": 0,
@@ -48,7 +48,9 @@ def summary(records: list[dict]) -> dict:
             group["requests"] += 1
             for key in ["input_tokens", "output_tokens", "cached_tokens", "latency_ms"]:
                 group[key] += r.get(key, 0) or 0
-            if r.get("cost_usd") is None:
+            if r.get("cost_source") == "external":
+                pass
+            elif r.get("cost_usd") is None:
                 group["unknown_cost_requests"] += 1
             else:
                 group["known_cost_usd"] += r["cost_usd"]
@@ -56,6 +58,8 @@ def summary(records: list[dict]) -> dict:
     return {
         "requests": len(records),
         "known_cost_usd": sum(r.get("cost_usd") or 0 for r in records),
-        "unknown_cost_requests": sum(r.get("cost_usd") is None for r in records),
+        "unknown_cost_requests": sum(
+            r.get("cost_usd") is None and r.get("cost_source") != "external" for r in records
+        ),
         "groups": groups,
     }

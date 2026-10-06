@@ -20,6 +20,7 @@ class MainScreen(Screen):
     BINDINGS = [
         (key, "app." + action, text(label))
         for key, action, label in [
+            ("a", "approvals", "approvals"),
             ("1", "choose_1", "choose"),
             ("2", "choose_2", "choose"),
             ("3", "choose_3", "choose"),
@@ -48,6 +49,7 @@ class MainScreen(Screen):
                 yield Subgoals(id="subgoals")
                 yield Options(id="options")
             yield Facts(id="facts")
+        yield Static("", id="approvals-banner")
         yield LogStream(id="log-stream")
         yield StatusBar(id="status-bar")
         yield Footer()

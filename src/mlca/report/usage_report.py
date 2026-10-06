@@ -1,10 +1,31 @@
+from collections import Counter
 from typing import Any
 
 from mlca.llm.usage import summary
 
 
 def build(state: Any, requests: Any, records: Any) -> Any:
+    decisions = {
+        "OptionChosen",
+        "CustomInstructionSubmitted",
+        "UserConfirmed",
+        "PackageApproved",
+        "ScriptEditedByUser",
+        "TestUnlocked",
+        "BranchCreated",
+        "BranchCheckedOut",
+        "ApprovalResolved",
+    }
+    principals = Counter(r.actor for r in records if r.type.value in decisions)
+    script_sources = Counter(
+        script.get("source", "worker")
+        for step in state.steps
+        for script in step.get("scripts", [])
+        if not script.get("builtin")
+    )
     return {
+        "decisions_by_principal": dict(principals),
+        "script_attempts_by_source": dict(script_sources),
         **summary(requests),
         "steps_completed": sum(s["status"] == "completed" for s in state.steps),
         "steps_failed": sum(s["status"] == "failed" for s in state.steps),
@@ -14,7 +35,7 @@ def build(state: Any, requests: Any, records: Any) -> Any:
         "compute_time_s": sum(r.get("duration", 0) for s in state.steps for r in s.get("runs", [])),
         "llm_latency_s": sum(r.get("latency_ms", 0) for r in requests) / 1000,
         "human_interventions": {
-            k: state.counts.get(k, 0)
+            k: sum(r.type.value == k and r.actor == "user" for r in records)
             for k in [
                 "OptionChosen",
                 "CustomInstructionSubmitted",

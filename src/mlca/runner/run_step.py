@@ -9,7 +9,7 @@ from ulid import ULID
 
 from mlca.engine.split import freeze as freeze_split
 from mlca.errors import BudgetError, IntegrityError, MlcaUserError
-from mlca.paths import atomic_json, contained, directory_sha256, sha256
+from mlca.paths import atomic_json, canonical, contained, directory_sha256, sha256
 from mlca.project.env import python
 from mlca.sandbox.level import detect
 from mlca.sandbox.vault import exposed
@@ -106,6 +106,8 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
             "environment_packages": state.environment_packages,
             "lock_sha256": state.lock_sha256,
             "runtime_sha256": state.runtime_sha256,
+            "action_spec": action.model_dump(mode="json"),
+            "turn_id": session.turn_id,
         },
         step_id=step_id,
     )
@@ -115,24 +117,9 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
             result = _builtin(session, action, params, step_id, step, state)
         else:
             result = _worker(session, action, params, step_id, step, state, inputs)
-        result["step_id"] = step_id
-        result["wall_time_s"] = time.monotonic() - started_at
-        atomic_json(step / "record.json", result)
-        # Include runtime evidence in the indexed artifacts; metrics have a hashed manifest source.
-        manifest = step / "manifest.json"
-        result["outputs"].append(
-            {
-                "name": "manifest.json",
-                "path": str(manifest.relative_to(session.root)),
-                "sha256": sha256(manifest),
-                "size": manifest.stat().st_size,
-                "kind": "other",
-                "caption": "",
-            }
-        )
-        session.emit("StepCompleted", {k: v for k, v in result.items() if k != "facts"}, step_id=step_id)
-        freeze(step)
-        return result
+        if result.get("status") == "awaiting_script":
+            return result
+        return complete_step(session, action, step_id, result, started_at)
     except Exception as exc:
         session.emit(
             "StepFailed",
@@ -143,7 +130,33 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
             },
             step_id=step_id,
         )
+        freeze(step)
         raise
+
+
+def complete_step(session, action, step_id, result, started_at=None):
+    step = session.root / ".mlca/steps" / step_id
+    result["step_id"] = step_id
+    result["wall_time_s"] = (
+        time.monotonic() - started_at
+        if started_at is not None
+        else sum(r.get("duration", 0) for r in session.step_status(step_id).get("runs", []))
+    )
+    atomic_json(step / "record.json", result)
+    manifest = step / "manifest.json"
+    result["outputs"].append(
+        {
+            "name": "manifest.json",
+            "path": str(manifest.relative_to(session.root)),
+            "sha256": sha256(manifest),
+            "size": manifest.stat().st_size,
+            "kind": "other",
+            "caption": "",
+        }
+    )
+    session.emit("StepCompleted", {k: v for k, v in result.items() if k != "facts"}, step_id=step_id)
+    freeze(step)
+    return result
 
 
 def _builtin(session: Any, action: Any, params: Any, step_id: Any, step: Any, state: Any) -> Any:
@@ -186,116 +199,178 @@ def _builtin(session: Any, action: Any, params: Any, step_id: Any, step: Any, st
     return collect(session.root, step, action, session.state)
 
 
-def _worker(session: Any, action: Any, params: Any, step_id: Any, step: Any, state: Any, inputs: Any) -> Any:
-    from mlca.roles.worker import Worker
+def work_order(session, action, params, step_id, inputs, attempt, error=None):
+    from mlca.roles.worker import render_order
 
-    worker = Worker(session)
+    order = render_order(session, action, params, inputs, session.state)
+    order.update(step_id=step_id, attempt=attempt, max_attempts=session.config.budgets.worker_max_attempts)
+    if error:
+        order["previous_diagnostics"] = error
+    session.emit(
+        "ScriptRequested",
+        {
+            "attempt": attempt,
+            "work_order": order,
+            "sha256": __import__("hashlib").sha256(canonical(order).encode()).hexdigest(),
+        },
+        step_id=step_id,
+    )
+    return order
+
+
+def diagnostics(execution, allow_samples):
+    if allow_samples:
+        return execution["stderr"][-4000:] or "Execution failed or script was modified"
+    text = execution["stderr"]
+    types = re.findall(r"^([A-Za-z][A-Za-z0-9_]*(?:Error|Exception))(?::|$)", text, re.MULTILINE)
+    lines = re.findall(r'File "[^"\n]*script.py", line (\d+)', text)
+    return (
+        "Execution failed: "
+        + (types[-1] if types else "runtime failure")
+        + ("; script line " + lines[-1] if lines else "")
+        + ". Detailed diagnostics remain local because sample-row egress is disabled."
+    )
+
+
+def run_attempt(session, action, params, step_id, attempt, source, request_id=None):
+    # Both script sources use this exact execution and collection path.
+    state = session.state
+    if (
+        sha256(session.root / ".mlca/requirements.lock") != state.lock_sha256
+        or directory_sha256(session.root / ".mlca/runtime/mlca_runtime") != state.runtime_sha256
+    ):
+        raise IntegrityError("Step environment or frozen runtime changed")
+    step = session.root / ".mlca/steps" / step_id
+    inputs = inputs_for(action, state, session.root, params)
     level = detect(session.config.sandbox.allow_level_b)
-    source, error, request_id = "", None, None
-    max_attempts = session.config.budgets.worker_max_attempts
+    directory = step / "attempts" / str(attempt)
+    directory.mkdir(parents=True)
+    (directory / "outputs").mkdir()
+    (directory / "scratch").mkdir()
+    script = directory / "script.py"
+    source = session.redact(source)
+    script.write_text(source, encoding="utf-8")
+    script_hash = sha256(script)
+    session.emit(
+        "ScriptWritten",
+        {
+            "attempt": attempt,
+            "sha256": script_hash,
+            "path": str(script.relative_to(session.root)),
+            "worker_request_id": request_id,
+            "source": session.principal if session.mode == "brain" else "worker",
+        },
+        step_id=step_id,
+        actor=session.principal if session.mode == "brain" else "worker",
+    )
+    violations = static_check(
+        source, action.allow_network, require_fit=action.event in {"preprocess", "features", "model"}
+    )
+    if action.event not in {"preprocess", "features", "model"} and not violations:
+        import ast
+
+        if any(
+            isinstance(n, ast.Call)
+            and (
+                getattr(n.func, "attr", None) in {"fit", "fit_transform", "fit_record", "partial_fit"}
+                or getattr(n.func, "id", None) == "fit_record"
+            )
+            for n in ast.walk(ast.parse(source))
+        ):
+            violations.append("Fitting is not allowed in this workflow event")
+    if violations:
+        session.emit("StaticCheckFailed", {"attempt": attempt, "violations": violations}, step_id=step_id)
+        return None, "\n".join(violations)
+    # Exposure lasts for execution only, never while a provider or external agent is thinking.
     context = exposed(session.root, state, step_id, session.emit) if action.reads_test else nullcontext(None)
     with context as test_path:
         if test_path:
             inputs["test"] = test_path
-            atomic_json(
-                step / "inputs.json", {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()}
-            )
-        for attempt in range(1, max_attempts + 1):
-            directory = step / "attempts" / str(attempt)
-            directory.mkdir(parents=True)
-            (directory / "outputs").mkdir()
-            (directory / "scratch").mkdir()
-            atomic_json(
-                directory / "inputs.json",
-                {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()},
-            )
-            try:
-                if error is None:
-                    source, request_id = worker.write_script(action, params, inputs, state, step_id)
-                else:
-                    source, request_id = worker.repair_script(action, source, error, step_id)
-            except BudgetError:
-                raise
-            except MlcaUserError as exc:
-                error = str(exc)
-                if attempt == max_attempts:
-                    raise
-                continue
-            script = directory / "script.py"
-            script.write_text(source, encoding="utf-8")
-            script_hash = sha256(script)
-            session.emit(
-                "ScriptWritten",
-                {
-                    "attempt": attempt,
-                    "sha256": script_hash,
-                    "path": str(script.relative_to(session.root)),
-                    "worker_request_id": request_id,
-                },
-                step_id=step_id,
-            )
-            violations = static_check(
-                source, action.allow_network, require_fit=action.event in {"preprocess", "features", "model"}
-            )
-            if action.event not in {"preprocess", "features", "model"}:
-                import ast
+        mapping = {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()}
+        atomic_json(step / "inputs.json", mapping)
+        atomic_json(directory / "inputs.json", mapping)
+        execution = execute(
+            python(session.root / ".mlca/env"),
+            directory,
+            list(inputs.values()),
+            session.root / ".mlca/env",
+            session.root / ".mlca/runtime",
+            session.root / ".mlca/style.mplstyle",
+            level,
+            action.timeout_s,
+            state.split["train_index_sha256"] if state.split else "",
+            action.allow_network,
+            callback=session.output_callback,
+            expected_train_rows=state.split["counts"]["train"] if state.split else 0,
+        )
+    execution = {k: session.redact(v) if isinstance(v, str) else v for k, v in execution.items()}
+    session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)
+    if execution["exit_status"] != 0 or sha256(script) != script_hash:
+        return None, diagnostics(execution, session.config.privacy.allow_sample_rows)
+    try:
+        collect(session.root, directory, action, state)
+    except MlcaUserError as exc:
+        return None, str(exc)
+    shutil.copyfile(script, step / "script.py")
+    shutil.copytree(directory / "outputs", step / "outputs", dirs_exist_ok=True)
+    manifest = directory / "manifest.json"
+    if not manifest.exists():
+        atomic_json(manifest, {"outputs": [], "metrics": [], "fits": [], "facts": []})
+    shutil.copyfile(manifest, step / "manifest.json")
+    return collect(session.root, step, action, state), None
 
-                tree = ast.parse(source) if not violations else None
-                if tree and any(
-                    isinstance(n, ast.Call)
-                    and (
-                        getattr(n.func, "attr", None) in {"fit", "fit_transform", "fit_record", "partial_fit"}
-                        or getattr(n.func, "id", None) == "fit_record"
-                    )
-                    for n in ast.walk(tree)
-                ):
-                    violations.append("Fitting is not allowed in this workflow event")
-            if violations:
-                session.emit(
-                    "StaticCheckFailed", {"attempt": attempt, "violations": violations}, step_id=step_id
-                )
-                error = "\n".join(violations)
-                continue
-            execution = execute(
-                python(session.root / ".mlca/env"),
-                directory,
-                list(inputs.values()),
-                session.root / ".mlca/env",
-                session.root / ".mlca/runtime",
-                session.root / ".mlca/style.mplstyle",
-                level,
-                action.timeout_s,
-                state.split["train_index_sha256"] if state.split else "",
-                action.allow_network,
-                callback=session.output_callback,
-                expected_train_rows=state.split["counts"]["train"] if state.split else 0,
-            )
-            execution = {k: session.redact(v) if isinstance(v, str) else v for k, v in execution.items()}
-            session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)
-            if execution["exit_status"] != 0 or sha256(script) != script_hash:
-                if session.config.privacy.allow_sample_rows:
-                    error = execution["stderr"][-4000:] or "Execution failed or script was modified"
-                else:
-                    diagnostics = execution["stderr"]
-                    types = re.findall(
-                        r"^([A-Za-z][A-Za-z0-9_]*(?:Error|Exception))(?::|$)", diagnostics, re.MULTILINE
-                    )
-                    locations = re.findall(r'File "[^"\n]*script.py", line (\d+)', diagnostics)
-                    error = "Execution failed: " + (types[-1] if types else "runtime failure")
-                    if locations:
-                        error += "; script line " + locations[-1]
-                    error += ". Detailed diagnostics remain local because sample-row egress is disabled."
-                continue
-            try:
-                collect(session.root, directory, action, state)
-            except MlcaUserError as exc:
-                error = str(exc)
-                continue
-            shutil.copyfile(script, step / "script.py")
-            shutil.copytree(directory / "outputs", step / "outputs", dirs_exist_ok=True)
-            manifest = directory / "manifest.json"
-            if not manifest.exists():
-                atomic_json(manifest, {"outputs": [], "metrics": [], "fits": [], "facts": []})
-            shutil.copyfile(manifest, step / "manifest.json")
-            return collect(session.root, step, action, state)
+
+def _worker(session, action, params, step_id, step, state, inputs):
+    from .sources import ExternalSource, WorkerSource
+
+    source = ExternalSource() if session.mode == "brain" else WorkerSource(session)
+    previous, error = "", None
+    for attempt in range(1, session.config.budgets.worker_max_attempts + 1):
+        order = work_order(session, action, params, step_id, inputs, attempt, error)
+        if isinstance(source, ExternalSource):
+            return {"step_id": step_id, "status": "awaiting_script", "work_order": order}
+        try:
+            previous, request_id = source.script(action, params, inputs, state, step_id, previous, error)
+        except BudgetError:
+            raise
+        except MlcaUserError as exc:
+            error = str(exc)
+            continue
+        observation, error = run_attempt(session, action, params, step_id, attempt, previous, request_id)
+        if observation is not None:
+            return observation
     raise MlcaUserError("Worker exhausted its attempt budget: " + (error or "No valid script"))
+
+
+def submit(session, step_id, code):
+    from mlca.templates.model import ActionSpec
+
+    saved = session.step_status(step_id)
+    if saved["status"] != "awaiting_script":
+        raise MlcaUserError("Step is not awaiting a script")
+    if saved["event_id"] != session.state.current_event:
+        raise MlcaUserError("Step belongs to another event")
+    action = ActionSpec.model_validate(saved["action_spec"])
+    attempt = saved["attempt"]
+    observation, error = run_attempt(session, action, saved["params"], step_id, attempt, code)
+    if observation is not None:
+        observation = complete_step(session, action, step_id, observation)
+        from mlca.engine.turn import finish
+
+        return finish(session, action, observation)
+    if attempt >= session.config.budgets.worker_max_attempts:
+        session.emit(
+            "StepFailed", {"step_id": step_id, "attempts": attempt, "last_error": error}, step_id=step_id
+        )
+        freeze(session.root / ".mlca/steps" / step_id)
+        return {"step_id": step_id, "status": "failed", "diagnostics": error}
+    order = work_order(
+        session,
+        action,
+        saved["params"],
+        step_id,
+        inputs_for(action, session.state, session.root, saved["params"]),
+        attempt + 1,
+        error,
+    )
+    return {"step_id": step_id, "status": "awaiting_script", "work_order": order}

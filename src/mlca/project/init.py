@@ -59,6 +59,7 @@ def initialise(
     brief: dict,
     config: dict | None = None,
     column_picker: Callable | None = None,
+    principal: str = "user",
 ) -> Path:
     root = path.resolve()
     if (root / ".mlca").exists():
@@ -115,7 +116,7 @@ def initialise(
         store.append("DataRegistered", item)
     atomic_json(root / ".mlca/inventory.json", inventory)
     store.append("InventoryRecorded", {"files": inventory, "sha256": sha256(root / ".mlca/inventory.json")})
-    store.append("BriefRecorded", {"answers": brief, "columns": columns}, actor="user")
+    store.append("BriefRecorded", {"answers": brief, "columns": columns}, actor=principal)
     lock_data = create(root, workflow.spec.default_runtime_packages)
     store.append("EnvironmentRecorded", lock_data)
     store.append(

@@ -18,6 +18,8 @@ from mlca.ui_text import text
 
 app = typer.Typer(invoke_without_command=True, no_args_is_help=False)
 templates_app = typer.Typer()
+approvals_app = typer.Typer(invoke_without_command=True)
+app.add_typer(approvals_app, name="approvals")
 app.add_typer(templates_app, name="templates")
 
 
@@ -116,6 +118,12 @@ def choose(ctx: typer.Context, n: str, json_output: bool = typer.Option(False, "
 def custom(ctx: typer.Context, instruction: str, json_output: bool = typer.Option(False, "--json")) -> Any:
     with Session.open(_path(ctx)) as session:
         output(session.custom(instruction), json_output)
+
+
+@app.command("abandon-step")
+def abandon_step(ctx: typer.Context, step_id: str, reason: str = typer.Option(...)):
+    with Session.open(_path(ctx)) as session:
+        output(session.abandon_step(step_id, reason))
 
 
 @app.command("next")
@@ -232,6 +240,30 @@ def package(
 ) -> Any:
     with Session.open(_path(ctx)) as session:
         output(session.package(spec, approve), json_output)
+
+
+@approvals_app.callback()
+def approval_list(ctx: typer.Context):
+    if ctx.invoked_subcommand is None:
+        with Session.open(_path(ctx)) as session:
+            output(session.approvals())
+
+
+@approvals_app.command("approve")
+def approval_approve(
+    ctx: typer.Context, request_id: str, note: str = typer.Option(""), phrase: str = typer.Option("")
+):
+    with Session.open(_path(ctx)) as session:
+        request = next((r for r in session.approvals() if r["request_id"] == request_id), None)
+        if request and request["kind"] == "unlock_test" and not phrase:
+            phrase = typer.prompt(text("unlock_phrase"))
+        output(session.resolve_approval(request_id, "approved", note, phrase))
+
+
+@approvals_app.command("decline")
+def approval_decline(ctx: typer.Context, request_id: str, note: str = typer.Option("")):
+    with Session.open(_path(ctx)) as session:
+        output(session.resolve_approval(request_id, "declined", note))
 
 
 @app.command("config")
