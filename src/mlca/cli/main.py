@@ -210,7 +210,7 @@ def package(
 
 
 @app.command("config")
-def configuration(ctx: typer.Context, operation: str = "show") -> Any:
+def configuration(ctx: typer.Context, operation: str = typer.Argument("show")) -> Any:
     if operation == "edit":
         from mlca.tui.app import MlcaApp
 
@@ -246,14 +246,14 @@ def doctor(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")
 
 
 @templates_app.command("list")
-def list_templates() -> Any:
+def list_templates(json_output: bool = typer.Option(False, "--json")) -> Any:
     from mlca.templates.registry import available
 
-    output({k: str(v) for k, v in available().items()})
+    output({k: str(v) for k, v in available().items()}, json_output)
 
 
 @templates_app.command("validate")
-def validate_template(path: Path) -> Any:
+def validate_template(path: Path, json_output: bool = typer.Option(False, "--json")) -> Any:
     from mlca.templates.loader import load as load_template
 
     workflow = load_template(path)
