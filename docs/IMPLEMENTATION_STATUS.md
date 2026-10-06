@@ -2,20 +2,22 @@
 
 | Phase | Source implementation | Execution validation |
 |---|---|---|
-| P0 | Package/environment bootstrap and documentation | Package dependencies installed; application run deferred |
+| P0 | Package/environment bootstrap and documentation | Dependencies installed; CLI help/version startup checked |
 | P1 | Event schemas, hash chain, replay, branches | Deferred |
 | P2 | Templates, checks and gates | Deferred |
 | P3 | Project registration, inventory, environment and runtime helpers | Deferred |
 | P4 | Static checks, subprocess execution, sandbox and vault | Deferred |
 | P5 | Providers, structured responses, usage, egress and budgets | Deferred |
 | P6 | Roles, turn loop, Session API, CLI and script verification | Deferred |
-| P7 | Textual interface, reports, Inspector and text banner | Deferred |
+| P7 | Textual interface, reports, Inspector and text banner | Headless welcome-screen startup, guarded actions and quit checked; other validation deferred |
 | P8 | Survival template, iteration invalidation, branch/edit safeguards and documentation | Deferred |
 | P9 | Not implemented; reserved for later authorization | Not applicable |
 
 Static source lint and formatting are performed separately from runtime verification. Tests and test
-fixtures have not been added or run because the author explicitly deferred them. No live calls, smoke
-runs, golden anemia/survival run, full-cycle run or UI interaction test has been performed. The original
+fixtures have not been added because the author explicitly deferred them. Following the reported
+startup blockers, focused CLI help/version and headless TUI checks passed, including guarded actions
+without a project and keyboard quit. No live calls, golden anemia/survival run, full-cycle run or
+broader UI interaction validation has been performed. The original
 anemia data will be supplied later; no absolute anemia path is embedded in application source.
 
 Open author choices: license, scientific template content, package/repository names, default models,

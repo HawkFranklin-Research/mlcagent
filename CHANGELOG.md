@@ -1,5 +1,11 @@
 # Changelog
 
+## Startup corrections — 6 October 2026
+- Defer branch annotations so the `list` method does not shadow the built-in annotation type at import.
+- Rename TUI helpers to `_can_act` and `run_session_action`, preserving Textual's startup and action dispatcher methods.
+- CLI help/version and headless welcome-screen startup, guarded actions and keyboard quit checks pass.
+- Full-cycle, provider, scientific and broader UI validation remain deferred.
+
 ## P0 — Repository bootstrap
 - Package, build configuration, agent rules and decision log created.
 - Validation deferred by author; no tests or runtime checks performed.

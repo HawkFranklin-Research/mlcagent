@@ -4,8 +4,8 @@ MLCA guides a machine learning project through declared workflow events. A Navig
 actions; a Worker writes standalone analysis scripts. The engine controls gates, scope, artifact
 provenance, validation loops and test access. CLI and Textual clients share the same Session API.
 
-P0–P8 source implementation is present. **Runtime validation is deferred**: no smoke, full-cycle,
-provider or UI tests have been run. See [implementation status](docs/IMPLEMENTATION_STATUS.md),
+P0–P8 source implementation is present. Focused CLI and headless TUI startup checks pass; full-cycle,
+provider and broader UI validation remain deferred. See [implementation status](docs/IMPLEMENTATION_STATUS.md),
 [decisions](docs/DECISIONS.md) and the original [plan](plan.md). Workflow content is DRAFT.
 
 ## Installation
@@ -18,8 +18,8 @@ uv run mlca --version
 uv run mlca
 ```
 
-The commands above are instructions for use; application execution has not been performed in this
-implementation session. Linux bubblewrap is required for level A. Other systems require explicit
+Only CLI help/version and headless TUI startup, guarded actions and quitting have been checked.
+Linux bubblewrap is required for level A. Other systems require explicit
 opt-in to weaker trusted-code execution; read the [security model](docs/security-model.md).
 
 ## Configuration

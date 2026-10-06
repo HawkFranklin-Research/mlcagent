@@ -91,14 +91,14 @@ class MlcaApp(App):
         if options is not None:
             self.screen.query_one(Options).render_options(options)
         else:
-            self.run_action("options", refresh_only=True)
+            self.run_session_action("options", refresh_only=True)
 
     def write_log(self, value: Any) -> Any:
         if isinstance(self.screen, MainScreen):
             self.screen.query_one(LogStream).write(value)
 
     @work(thread=True, exclusive=True, group="session")
-    def run_action(self, method: Any, *args: Any, refresh_only: Any = False) -> Any:
+    def run_session_action(self, method: Any, *args: Any, refresh_only: Any = False) -> Any:
         if self.busy:
             return
         self.busy = True
@@ -114,7 +114,7 @@ class MlcaApp(App):
         finally:
             self.busy = False
 
-    def _ready(self) -> Any:
+    def _can_act(self) -> bool:
         if not self.session or isinstance(self.screen, ModalScreen) or self.busy:
             return False
         return True
@@ -187,60 +187,64 @@ class MlcaApp(App):
         self.push_screen(OnboardingScreen(load()), selected)
 
     def action_choose_1(self) -> Any:
-        if self._ready():
-            self.run_action("choose", "1")
+        if self._can_act():
+            self.run_session_action("choose", "1")
 
     def action_choose_2(self) -> Any:
-        if self._ready():
-            self.run_action("choose", "2")
+        if self._can_act():
+            self.run_session_action("choose", "2")
 
     def action_choose_3(self) -> Any:
-        if self._ready():
-            self.run_action("choose", "3")
+        if self._can_act():
+            self.run_session_action("choose", "3")
 
     def action_choose_4(self) -> Any:
-        if self._ready():
-            self.run_action("choose", "4")
+        if self._can_act():
+            self.run_session_action("choose", "4")
 
     def action_next(self) -> Any:
-        if self._ready():
-            self.run_action("next")
+        if self._can_act():
+            self.run_session_action("next")
 
     def action_custom(self) -> Any:
-        if self._ready():
+        if self._can_act():
             self.push_screen(
                 FormScreen(text("custom"), [("instruction", text("custom"), "")]),
-                lambda result: self.run_action("custom", result["instruction"]) if result else None,
+                lambda result: self.run_session_action("custom", result["instruction"]) if result else None,
             )
 
     def action_confirm(self) -> Any:
-        if self._ready():
+        if self._can_act():
             self.push_screen(
                 FormScreen(text("confirm"), [("goal", text("subgoal"), ""), ("note", text("note"), "")]),
-                lambda result: self.run_action("confirm", result["goal"], result["note"]) if result else None,
+                lambda result: (
+                    self.run_session_action("confirm", result["goal"], result["note"]) if result else None
+                ),
             )
 
     def action_unlock(self) -> Any:
-        if self._ready():
+        if self._can_act():
             self.push_screen(
                 FormScreen(
                     text("unlock"),
                     [("phrase", text("unlock_phrase"), ""), ("reason", text("unlock_reason"), "")],
                 ),
                 lambda result: (
-                    self.run_action("unlock_test", result["phrase"], result["reason"]) if result else None
+                    self.run_session_action("unlock_test", result["phrase"], result["reason"])
+                    if result
+                    else None
                 ),
             )
 
     def action_loop(self) -> Any:
-        if self._ready():
+        if self._can_act():
             self.push_screen(
                 FormScreen(text("loop"), [("event", text("events"), "model")]),
-                lambda result: self.run_action("loop", result["event"]) if result else None,
+                lambda result: self.run_session_action("loop", result["event"]) if result else None,
             )
 
     def action_branches(self) -> Any:
-        if self._ready():
+        if self._can_act():
             available = self.session.branches.list()
             self.push_screen(
                 FormScreen(
@@ -248,20 +252,20 @@ class MlcaApp(App):
                     [("name", text("branch_name"), ""), ("from_id", text("from_id"), "")],
                 ),
                 lambda result: (
-                    self.run_action("branch", result["name"], result["from_id"])
+                    self.run_session_action("branch", result["name"], result["from_id"])
                     if result and result["from_id"]
-                    else self.run_action("checkout", result["name"])
+                    else self.run_session_action("checkout", result["name"])
                     if result
                     else None
                 ),
             )
 
     def action_report(self) -> Any:
-        if self._ready():
-            self.run_action("report", "all")
+        if self._can_act():
+            self.run_session_action("report", "all")
 
     def action_usage(self) -> Any:
-        if self._ready():
+        if self._can_act():
             self.push_screen(
                 ReportScreen("```json\n" + json.dumps(self.session.status()["usage"], indent=2) + "\n```")
             )
@@ -285,7 +289,7 @@ class MlcaApp(App):
         self.push_screen(ReportScreen("\n".join(sections)))
 
     def action_view_figure(self) -> None:
-        if not self._ready():
+        if not self._can_act():
             return
         figures = {
             f["path"]: f

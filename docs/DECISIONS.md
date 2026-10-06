@@ -60,3 +60,12 @@
 
 - Runtime failure messages sent for Worker repair are reduced to exception type and script line when
   sample-row egress is disabled. Full diagnostics stay local; recap prompts receive event metadata only.
+
+## 2026-10-06 — Startup corrections after external review
+- Added postponed annotation evaluation in branches.py, preserving the existing Branches.list API.
+- Renamed the TUI readiness helper to _can_act to avoid overriding Textual's internal _ready method.
+- A focused startup check also found run_action overriding Textual's asynchronous action dispatcher;
+  renamed the session worker helper and its call sites to run_session_action.
+- Focused verification for these fixes passed: CLI --help and --version; headless Textual welcome-screen
+  mounting, guarded choice/next actions without a project, and keyboard quit. No models or datasets used.
+- No permanent test suite was added. Full-cycle, scientific, provider and broader UI validation remain deferred.
