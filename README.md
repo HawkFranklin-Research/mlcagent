@@ -1,93 +1,140 @@
-# MLCA v2
+# MLCA: Machine Learning Copilot Agent (v2)
 
-MLCA guides a machine learning project through declared workflow events. A Navigator proposes useful
-actions; a Worker writes standalone analysis scripts. The engine controls gates, scope, artifact
-provenance, validation loops and test access. CLI and Textual clients share the same Session API.
+MLCA guides a machine-learning study step by step. Instead of an open-ended chat, a study moves through a fixed sequence of **events**. At each step you choose from a few natural **options**, or give a custom instruction limited to the current event. Every step becomes a standalone, numbered script with recorded outputs. Rules that protect the science are enforced by code, not by prompts: the test set stays locked, models are fitted on training rows only, and every number has a source.
 
-P0–P8 source implementation and distribution preparation are present. The permanent offline suite
-passes (54 tests; one unavailable PowerShell check skipped), including synthetic
-classification workflows, script replay and headless TUI checks. Real providers, original-data studies
-and broader UI validation remain untested. See [implementation status](docs/IMPLEMENTATION_STATUS.md),
-[decisions](docs/DECISIONS.md) and the original [plan](plan.md). Workflow content is DRAFT.
+```
+onboard → data → eda → split 🔒 → preprocess → features → model ⇄ validate → test (unlock once) → interpret → report
+                                     └──────── iteration loop (validation only) ────────┘
+```
 
-## Installation
+## How a step works
 
-Prepared installation channels (the package and installer URL are not published yet):
+1. **Status:** the engine rebuilds the project state from its event log.
+2. **Options:** two to three options from the current event's action catalog, plus `custom`. When an event is done, the next event is offered.
+3. **Choice:** you choose (or an agent chooses; see *Two ways to use MLCA*).
+4. **Script:** a short, standalone Python script is written for the action and run in a sandbox:
+   - only declared inputs are readable;
+   - no network;
+   - the test set is invisible until unlocked.
+5. **Record:** outputs, metrics and facts (each citing the file it came from) go into the event log. The event's sub-goals are then checked by code.
+
+Each event has a goal, sub-goals, an action catalog and a custom-instruction scope. These are defined in a **workflow template**:
+- `templates/tabular_classification/`: logistic baseline vs gradient boosting, ROC AUC;
+- `templates/survival/`: Cox vs penalised Cox, C-index.
+
+The template content is short by design; see [templates](docs/templates.md).
+
+## Two ways to use MLCA
+
+| | **Standalone** (available now) | **Docked to another agent through MCP** (planned: [plan_mcp.md](plan_mcp.md)) |
+|---|---|---|
+| Interface | terminal UI (`mlca`), CLI, browser view of the TUI (`mlca web`) | Claude Code, Codex, Hermes, OpenClaw, Cursor or any MCP client, connected with `mlca mcp` |
+| Who proposes options and writes scripts | MLCA's own **Navigator** and **Worker** models (your API keys: OpenAI, OpenRouter or a local OpenAI-compatible server) | **Brain mode** (default): the connected agent proposes options and writes each script; MLCA makes no model calls. **Driver mode**: the agent only chooses; MLCA's Navigator and Worker do the work |
+| Rules | all engine rules | the same engine rules; the agent cannot confirm sub-goals, unlock the test set or approve packages; it can only request them, and you approve in MLCA |
+| Attribution | decisions recorded as `user` | decisions recorded as `agent:<client>/<version>`, so reports separate human and agent work |
+
+In brain mode, a script written by Claude or Codex goes through exactly the same checks as one written by MLCA's Worker:
+- option validation;
+- static checks;
+- the sandbox;
+- the training-only fit rule;
+- the test lock.
+
+## Install
+
+Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/) are required. The package is not published yet; the prepared channels are:
 
 ```sh
 uv tool install mlca
-curl -LsSf <release-base-url>/install.sh | sh
+curl -LsSf <release-url>/install.sh | sh      # Linux, macOS, WSL
 npx mlca
 ```
 
-For this checkout: `uv sync --group dev`, then `uv run mlca`. Python >=3.11 is required.
-See [installation](docs/install.md) for every channel, OS support and removal, [testing](docs/testing.md)
-for offline cache preparation, and [releasing](docs/releasing.md) for the author-only release setup.
-Linux requires working bubblewrap namespaces for level A. macOS/native Windows require explicit
-level B opt-in for trusted code; WSL2 is recommended for level A on Windows. `mlca web` serves the
-same TUI locally with the optional web extra.
+From this checkout: `uv sync --group dev`, then `uv run mlca`. See [installation](docs/install.md).
 
-## Configuration
+**Isolation:**
+- **Linux:** full isolation (level A) with bubblewrap: `sudo apt install bubblewrap`.
+- **macOS and native Windows:** only the weaker level B, which must be enabled explicitly (`sandbox.allow_level_b: true`).
+- **Windows:** WSL2 is recommended.
 
-Use `mlca config edit` or copy [examples/config.yaml](examples/config.yaml) into
-`~/.config/mlca/config.yaml`, replacing model placeholders. Credentials come from environment variables.
-OpenAI API, OpenRouter and OpenAI-compatible/local providers are supported. Models and provider choices
-can differ between roles. No prices or default models are assumed. Real calls require pricing or a
-configured request-cost bound. Inspector is optional. Account login and special free-model gateways
-are reserved for P9. See [provider guide](docs/providers.md).
+## Configure models (standalone mode)
 
-## A project
+Copy [examples/config.yaml](examples/config.yaml) to `~/.config/mlca/config.yaml` (or run `mlca config edit`). Choose a provider and model for each role. Keys are read from environment variables (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`) and never written to disk. No default models or prices are assumed. See [providers](docs/providers.md).
+
+## Quick start
 
 ```bash
-uv run mlca init /path/to/project --data /path/to/dataset.csv \
-  --template tabular_classification --brief-file /path/to/brief.yaml
-uv run mlca --project /path/to/project status --json
-uv run mlca --project /path/to/project options --json
-uv run mlca --project /path/to/project choose 1
-uv run mlca --project /path/to/project confirm brief_confirmed "Study brief reviewed"
-uv run mlca --project /path/to/project next
+mlca init ./study --data data.csv --template tabular_classification   # asks the brief; resolves the target column
+mlca -p ./study                                                        # terminal UI
+# or step by step from the CLI:
+mlca -p ./study options
+mlca -p ./study choose 1
+mlca -p ./study confirm brief_confirmed "Aim, target and unit checked"
+mlca -p ./study next
 ```
 
-The TUI supplies equivalent forms and actions. Supported templates are tabular_classification and
-survival. Events: onboard → data → eda → split → preprocess → features → model → validate → test →
-interpret → report. Validation loops return to preprocessing/features/model until test exposure.
-Custom instructions must pass deterministic scope checks and Navigator classification.
+**Human decisions are explicit:**
+- `confirm <sub-goal> "<note>"` for author checks;
+- `unlock-test --phrase "UNLOCK TEST" --reason "..."` once, in the test event;
+- `package` approvals.
 
-The engine freezes partitions. In the test event, `unlock-test` requires typing `UNLOCK TEST` and a
-reason. Test files are temporarily exposed only to authorized test-reading actions. Re-unlocks are
-recorded; fitting closes after project-wide test exposure. Domain experts still review target
-construction, observational units, preprocessing semantics and validity of interpretations.
-
-## Evidence and resumption
-
-Project state lives under `.mlca/`: append-only log, frozen template, analysis environment and package
-lock, immutable completed steps, encrypted test partition and request evidence. Numbered scripts,
-figures, tables, reports and PROJECT_LOG.md are materialized views. Their edits are detected and never
-silently overwritten. `branch NAME --from ID` and `checkout NAME` select alternative histories.
-
-```bash
-mlca log --verify
-mlca replay                 # pure state rebuilding
-mlca replay --verify        # explicit script execution in a new environment
-mlca report all             # deterministic reports, no model calls
-mlca usage
-mlca doctor
-```
-
-Replay distinguishes state reconstruction from numerical reproducibility. Mismatches are reported.
-No fresh LLM call is represented as reproduction. See [event log](docs/event-log.md),
-[architecture](docs/architecture.md), [template guide](docs/templates.md) and [lineage](docs/lineage.md).
-
-The paper, legacy code/data and reference harnesses were not edited. New harness evidence must remain
-separate from legacy study results. No remote or publication is configured. License remains an author
-decision; the placeholder grants no license.
-
+After the test set is unlocked, fitting, validation loops and package changes are closed for the project.
 
 ## Scientific guard rails
 
-Steps in preprocess, features and model, including custom steps, must fit on the training partition
-through `mlca_runtime.fit_record`. For read-only inspection, use validate or interpret. This requirement
-keeps fit evidence attached to every step in a fit event rather than trusting an LLM's assurance.
-`fit_record` requires the exact frozen training index, including order; mismatches report expected and
-received row counts. Equal counts alone do not pass: this prevents fitting on substituted, validation
-or test rows. Instrumentation and audit hooks cannot prove the semantics of arbitrary native code.
+| Rule | Where it is enforced |
+|---|---|
+| Options are only actions from the current event's catalog, with validated parameters | `engine/options.py` |
+| An event can be entered only when its gate passes; sub-goals are ticked only by code checks or your confirmation | `engine/gates.py`, `engine/checks.py` |
+| Custom instructions must stay in the event's scope | `engine/scope_guard.py` |
+| The split is done by the engine; the test partition is encrypted until unlocked | `engine/split.py`, `sandbox/vault.py` |
+| Scripts run sandboxed: declared inputs only, no network, writes only to their own step folder | `runner/`, `sandbox/` |
+| In preprocess, features and model, every fit goes through `mlca_runtime.fit_record` on the exact frozen training rows; other events may not fit at all | `runner/static_checks.py`, `mlca_runtime` |
+| Every fact cites the file it came from | `engine/facts.py` |
+
+**Limits:** level B (macOS, Windows) is an audit hook, not an operating-system boundary. Code checks cannot prove the meaning of every computation. Domain review of targets, units, preprocessing and interpretation remains yours. See [security model](docs/security-model.md).
+
+## Evidence and reproducibility
+
+Everything lives in the project's `.mlca/` folder:
+- the append-only, hash-chained event log;
+- the frozen template;
+- the analysis environment and its lock file;
+- the immutable step folders;
+- the encrypted test partition;
+- the usage and egress logs.
+
+The `scripts/`, `figures/`, `tables/`, `reports/` and `PROJECT_LOG.md` folders are regenerated views; edits to them are detected.
+
+```bash
+mlca log --verify        # integrity of the event log
+mlca replay --verify     # re-run every step script in a fresh environment and compare outputs
+mlca report all          # methods draft, provenance, figure index, usage (no model calls)
+mlca branch alt --from <record or step>   # try another path; mlca checkout main to return
+```
+
+## Status
+
+- **Core (plan.md):** P0–P8 built; distribution prepared but not published. 54 offline tests pass.
+- **Not yet done:**
+  - tests for six engine rules (listed in [plan.md](plan.md) → *Status*);
+  - runs with real providers;
+  - the study on real data;
+  - native macOS and Windows checks.
+- **MCP docking ([plan_mcp.md](plan_mcp.md)):** planned, not implemented.
+- **Licence and package name:** author decisions, still open; the placeholder `LICENSE` grants no licence.
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [plan.md](plan.md) | Core design, phases and current status |
+| [plan_mcp.md](plan_mcp.md) | MCP server: docking modes, tools, safety, phases |
+| [docs/architecture.md](docs/architecture.md) | Components and data flow |
+| [docs/templates.md](docs/templates.md) | Writing workflow templates (short-content rules) |
+| [docs/event-log.md](docs/event-log.md) | Record types and replay |
+| [docs/security-model.md](docs/security-model.md) | Isolation levels and their limits |
+| [docs/providers.md](docs/providers.md) | Model providers and roles |
+| [docs/install.md](docs/install.md), [docs/releasing.md](docs/releasing.md) | Install channels; author-only release setup |
+| [docs/testing.md](docs/testing.md) | Running the offline tests (prime the uv cache once: `uv run python scripts/prime_test_cache.py`) |
+| [docs/DECISIONS.md](docs/DECISIONS.md), [CHANGELOG.md](CHANGELOG.md) | Decisions and history |

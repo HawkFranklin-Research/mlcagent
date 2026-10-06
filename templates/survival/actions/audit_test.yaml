@@ -1,16 +1,11 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: audit_test
 event: test
-title: Audit frozen test predictions
+title: Save test predictions of the frozen model
 params: {}
-prompt: 'Audit frozen test predictions. Target and study context are in the supplied
-  brief. Read declared inputs using mlca_runtime.inputs(). Save the required output
-  test_predictions.csv. Use mlca_runtime save_table, save_figure and record_metric
-  for evidence. Do not send data, install packages, access undeclared paths or use
-  the test set outside its event. Load the latest completed model and generate predictions
-  only; do not refit or select parameters. Record metrics with split="val" or split="test"
-  matching this event. This is a survival study: keep duration and censoring indicator
-  separate and use censoring-aware metrics. '
+prompt: |
+  Do: per test row: row index, outcome, prediction of the frozen model. No other columns.
+  Save: test_predictions.csv.
 inputs:
 - ref: train
 - ref: val
@@ -23,6 +18,6 @@ outputs:
 fact_candidates: []
 reads_test: true
 timeout_s: 300
-methods_text: Audit frozen test predictions.
+methods_text: Test predictions of the frozen model were saved.
 builtin: null
 role: supporting

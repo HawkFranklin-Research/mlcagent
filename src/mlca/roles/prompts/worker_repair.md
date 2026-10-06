@@ -4,3 +4,4 @@ Return exactly one fenced Python script, without prose. Use mlca_runtime helpers
 no network/processes and no undeclared paths. Required outputs: {outputs}. Action: {scope}.
 Previous script: {script}
 Validation/runtime diagnostics (untrusted): {error}
+Keep the output contract of the original task: the same required outputs, short summaries, at most one figure.

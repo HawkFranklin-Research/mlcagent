@@ -1,18 +1,18 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: preprocess
 title: Preprocess
-goal: Fit preprocessing on training rows and apply it to validation rows.
+goal: Fit imputation, encoding and scaling on training rows only.
 gate:
 - event_done: split
 subgoals:
 - id: outputs_recorded
-  text: Required artifact produced
+  text: Preprocessing pipeline saved
   check:
     type: output_exists
     action: fit_preprocessing
     output: preprocessor.pkl
 - id: fit_verified
-  text: Training-only fit evidence recorded
+  text: Every fit used the frozen training rows
   check:
     type: fit_on_train_only
 actions:
@@ -22,7 +22,7 @@ default_options:
 - fit_preprocessing
 done_when: all_subgoals
 custom_scope:
-  description: Fit preprocessing on training rows and apply it to validation rows.
+  description: Preprocessing choices fitted on training rows. No model training.
   deny_patterns:
   - (?i)\b(train|fit)\b.*\bmodel\b
   - (?i)\btest (set|split|partition)\b
@@ -30,4 +30,4 @@ custom_scope:
   - train
   - val
   - prior_outputs
-max_options: 4
+max_options: 3

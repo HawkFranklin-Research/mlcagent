@@ -6,6 +6,62 @@ Written 2026-10-06. When the code is done, it will be reviewed against section 1
 
 ---
 
+## Status (reviewed 2026-10-06 at commit `61cb041`)
+
+Legend: **✅ done** (code at the named location + test) · **🟡 done, untested or partial** · **⬜ not started** · **🔁 redesigned** (the code differs from the original spec; see R-list below).
+
+**Overall:** P0–P8 implemented. P9 partially done: distribution only, brought forward at the author's request.
+- **Tests:** `uv run pytest -q` gives **54 passed, 1 skipped** (PowerShell analyser unavailable). Confirmed by the reviewer in a clone.
+- **Offline cache:** the tests run uv offline (`UV_OFFLINE=1`). On a fresh machine, run `uv run python scripts/prime_test_cache.py` once first; CI does this automatically.
+- **Reviewer's manual run:** a synthetic project from `onboard` to `report` through the CLI, under sandbox level A. It covered the test lock, `replay --verify`, reports, branching and tamper detection.
+
+History:
+- P0–P8: commits `8a8a3c9` … `f56c9ef`.
+- Startup fixes: `46fbb75`.
+- Logo/banner: `6dc9309`.
+- Functional fixes F3–F7: `bc6b254` … `d13bbcb`.
+- Test suite: `1820066`.
+- Distribution A–E: `b371aa5` … `61cb041`.
+
+Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_distribution.prompt.md`. **MCP docking is planned separately in [`plan_mcp.md`](plan_mcp.md)**; the core invariant tests below are its prerequisite. Running log: `docs/IMPLEMENTATION_STATUS.md`, `CHANGELOG.md`, `docs/DECISIONS.md`.
+
+**Still open:**
+- **Invariant tests missing** (§13 item 1). Each needs a dedicated test:
+  - I3 (`GateBlocked`);
+  - I4 (model output cannot satisfy a sub-goal);
+  - I5 (invalid Navigator output → repair → fallback);
+  - I6 (layer-1 scope rejection makes zero model calls);
+  - I8 (step folder immutable after completion);
+  - I9 (`FactRejected` for a missing or invalid citation).
+- **No real model calls yet:** Navigator options, fact extraction, Inspector, OpenAI/OpenRouter providers.
+- **The §11 golden run on the real anemia data is not done;** the synthetic fixtures in `tests/fixtures/` stand in for it.
+- **Template content v0.2.0** (D2): short goals, sub-goals and Do/Save/Record action prompts were written for both templates, plus an output contract in the Worker prompt (`docs/templates.md` → *Writing content*). The author should review the concrete defaults (split fractions, model families, primary metrics).
+- **Native macOS/Windows not validated**; only level-B unit tests and CI definitions exist.
+- **P9 remainder:** JSON-RPC server, Ink/Electron clients, Illustrator, ChatGPT-account login, opencode free models.
+
+### Redesigns and additions relative to the original spec (R-list)
+
+| # | Area | Original spec | What was built (location) | Why |
+|---|---|---|---|---|
+| R1 | Event log | hash chain only | plus a `.mlca/log/head.json` checkpoint (detects last-line edits and truncation), and an incremental cached reader; full verification on `Session.open` and `mlca log --verify` (`log/store.py: Store._read`, `Store._incremental`) | integrity of the last line; read cost (F6) |
+| R2 | Record types | §6.1 list | added `TurnStarted`/`TurnEnded`, `SplitFrozen`, `TestRead`, `ObservationRecorded`, `EnvironmentRecorded` (`log/schema.py`) | turn grouping, split and test-read evidence, Inspector notes, environment changes |
+| R3 | Sessions | `SessionStarted` on every open | written lazily before the first mutating record; read-only commands write nothing (`api.py: Session._start_session`) | log noise (F6) |
+| R4 | Actions | all model-written | `builtin: inventory \| split \| report` actions run engine code (`templates/model.py: ActionSpec.builtin`, `runner/run_step.py: _builtin`) | the split and reports must not be generated code |
+| R5 | Templates | single-action `output_exists`; no action roles | `output_exists.any_of`, and `role: primary \| supporting` on actions, enforced by the loader (`engine/checks.py: evaluate`, `templates/model.py`, `templates/loader.py`) | alternative actions could never complete an event (F3) |
+| R6 | Brief | verbatim answers only | `BriefRecorded.columns` with resolved column names, and `ProjectState.columns`; verbatim answers kept (`project/init.py`, `cli/main.py: pick_column`, `log/replay.py`) | the split read the target from free text (F5) |
+| R7 | Test exposure | re-unlock allowed and logged | one-way: after any `TestUnlocked`, the fitting events (`split`, `preprocess`, `features`, `model`), validation loops and package approvals are refused project-wide (`api.py: _ever_unlocked`, `engine/turn.py: execute`, `api.py: package`) | stricter guard against tuning on the test set |
+| R8 | Unlock | confirmation phrase | the fixed phrase `UNLOCK TEST` plus a required reason (`api.py: unlock_test`); per-split key `keys/<project_id>_<split_id>.key`; plaintext only in a temp file during `reads_test` steps (`sandbox/vault.py: seal`, `exposed`) | explicit and auditable |
+| R9 | Sandbox level | B used automatically when bwrap is missing | B only with `sandbox.allow_level_b: true`, otherwise refuse; per-OS explanations (`sandbox/level.py: detect`, `explanation`); portable paths (`runner/process.py`) | honest isolation on macOS and Windows |
+| R10 | Fit rules | `fit_record` + check | fit stages must fit only via `fit_record` and contain at least one; other events may not fit at all; `fit_record` requires the exact frozen training index and reports row counts on mismatch (`runner/static_checks.py`, `runner/run_step.py: _worker`, `mlca_runtime/__init__.py: fit_record`). The author keeps this strict | leakage control (I11) |
+| R11 | Worker repair | truncated traceback | with `allow_sample_rows: false`, only the exception type and script line are sent (`runner/run_step.py: _worker`) | tracebacks can contain data values |
+| R12 | Options | engine adds `next` when done | the fallback also offers the event's other primary actions; a completed event offers only `next` (**author decision**, prompt 01 conflict); a note when everything is exhausted (`engine/options.py: fallback`, `api.py: options`) | branch recovery (F4) |
+| R13 | Project integrity | — | template snapshot `.mlca/template` (sha-checked on open); runtime snapshot `.mlca/runtime/mlca_runtime` and env-lock hash checked before each step (`api.py: Session.__init__`, `runner/run_step.py: run_step`) | a study cannot silently change underneath |
+| R14 | CLI | §7.8 list | plus `-p/--project`, `mlca templates list\|validate`, `mlca package`, `mlca web` (`cli/main.py`) | usability; browser view of the TUI |
+| R15 | TUI | Textual app | compact logo banner and brand bar (`tui/banner.py`, `assets/logo.txt`, `assets/logo.png`, `scripts/make_logo.py`); key bindings moved per screen (`tui/screens/welcome.py`, `main.py`); helpers renamed to `_can_act`, `run_session_action` so they don't override Textual's own methods | author's logo (D5); startup crashes |
+| R16 | Distribution | P9, later | brought forward and prepared, not published: wheel/sdist, `installers/install.sh` and `install.ps1`, npm launcher `packaging/npm/`, Homebrew `packaging/homebrew/`, CI and release workflows `.github/workflows/`, `docs/releasing.md`, `docs/install.md` | author request |
+
+---
+
 ## 0. Rules for the coding agent
 
 1. **New system, new code.** MLCA v2 is written from scratch in this repository. Other repositories are **references**: read them, reimplement the pattern. Copy a file only where section 9 says *copy*, and then add its attribution to `THIRD_PARTY_NOTICES.md`.
@@ -66,19 +122,19 @@ Machine (checked 2026-10-06): Linux, Python 3.13 (`/home/prime/miniconda3/bin/py
 
 ## 3. Invariants (each needs code plus a test)
 
-| ID | Invariant | Enforced in |
-|---|---|---|
-| I1 | The event log is append-only. Each record carries `prev_hash` (sha256 of the previous line), and `mlca log verify` detects any edit | `mlca/log/store.py` |
-| I2 | Project state is a pure function of the event log, so replay gives an identical state | `mlca/log/replay.py` |
-| I3 | An event can be entered only if its gate passes. Otherwise a `GateBlocked` record is written and nothing runs | `mlca/engine/gates.py` |
-| I4 | A sub-goal is satisfied only by its check (or by an explicit `user_confirm` check, logged as a human decision). Model output can never mark a sub-goal satisfied | `mlca/engine/checks.py` |
-| I5 | Options are always instances of the current event's action catalog. The engine validates every option, and an invalid Navigator output gets one repair attempt, then falls back to the template's `default_options` | `mlca/engine/options.py` |
-| I6 | The custom option is appended by the engine, never by the Navigator. A custom instruction passes the scope guard (two layers) before any code is generated | `mlca/engine/scope_guard.py` |
-| I7 | The test partition is unreadable to step scripts until `TestUnlocked` is in the event log; enforcement level recorded (section 7.4) | `mlca/sandbox/` |
-| I8 | Every step is a standalone script that reads only declared inputs and writes only to its own step folder. Step folders are immutable after `StepCompleted` | `mlca/runner/` |
-| I9 | Every fact cites an existing artefact (path + sha256); facts without a valid citation are rejected | `mlca/engine/facts.py` |
-| I10 | Every model request writes one usage record and one egress record; raw data rows are never sent unless `privacy.allow_sample_rows: true` | `mlca/llm/client.py` |
-| I11 | Preprocessing transforms are fitted only on the training partition, so fitting on validation or test is a check failure (section 7.4.4) | `templates/*/checks.py` + runtime helper |
+| ID | Invariant | Enforced in | Status (2026-10-06) |
+|---|---|---|---|
+| I1 | The event log is append-only. Each record carries `prev_hash` (sha256 of the previous line), and `mlca log verify` detects any edit | `mlca/log/store.py` | ✅ `log/store.py` (+R1) · `tests/unit/test_store.py` |
+| I2 | Project state is a pure function of the event log, so replay gives an identical state | `mlca/log/replay.py` | ✅ `log/replay.py: replay` · replay/`replay --verify` in `tests/integration/test_default_path.py` |
+| I3 | An event can be entered only if its gate passes. Otherwise a `GateBlocked` record is written and nothing runs | `mlca/engine/gates.py` | 🟡 `engine/gates.py: check` · used end to end; **no dedicated `GateBlocked` test** |
+| I4 | A sub-goal is satisfied only by its check (or by an explicit `user_confirm` check, logged as a human decision). Model output can never mark a sub-goal satisfied | `mlca/engine/checks.py` | 🟡 `engine/checks.py: run_all/evaluate` · **no test that model output cannot satisfy a sub-goal** |
+| I5 | Options are always instances of the current event's action catalog. The engine validates every option, and an invalid Navigator output gets one repair attempt, then falls back to the template's `default_options` | `mlca/engine/options.py` | 🟡 `engine/options.py: validate/fallback`, `roles/navigator.py: propose_options` (one repair) · fallback tested (`tests/unit/test_options.py`); **Navigator repair→fallback untested** |
+| I6 | The custom option is appended by the engine, never by the Navigator. A custom instruction passes the scope guard (two layers) before any code is generated | `mlca/engine/scope_guard.py` | 🟡 `engine/scope_guard.py: layer_one`, `api.py: custom` · **no test that layer-1 rejection makes zero model calls** |
+| I7 | The test partition is unreadable to step scripts until `TestUnlocked` is in the event log; enforcement level recorded (section 7.4) | `mlca/sandbox/` | ✅ `sandbox/vault.py`, `sandbox/bwrap.py`, `api.py: unlock_test` (+R7, R8) · `tests/integration/test_test_lock.py`, `test_sandbox.py` |
+| I8 | Every step is a standalone script that reads only declared inputs and writes only to its own step folder. Step folders are immutable after `StepCompleted` | `mlca/runner/` | 🟡 `runner/run_step.py`, `runner/artefacts.py: freeze` · standalone replay tested; **no immutability test** |
+| I9 | Every fact cites an existing artefact (path + sha256); facts without a valid citation are rejected | `mlca/engine/facts.py` | 🟡 `engine/facts.py: validate`, `engine/turn.py` · **no `FactRejected` test** |
+| I10 | Every model request writes one usage record and one egress record; raw data rows are never sent unless `privacy.allow_sample_rows: true` | `mlca/llm/client.py` | ✅ `llm/client.py`, `llm/usage.py`, `llm/egress.py` · usage == egress lines in `test_default_path.py`; real providers untested |
+| I11 | Preprocessing transforms are fitted only on the training partition, so fitting on validation or test is a check failure (section 7.4.4) | `templates/*/checks.py` + runtime helper | ✅ `mlca_runtime/__init__.py: fit_record`, `engine/checks.py` (`fit_on_train_only`), `runner/static_checks.py` (+R10) · `tests/unit/test_scientific_guards.py` |
 
 ---
 
@@ -112,6 +168,10 @@ Key decisions:
 ---
 
 ## 5. Repository layout (target state after P8)
+
+> **Status:** ✅ built as below, with these differences:
+> - **Added:** `src/mlca/runner/verify.py` (`replay --verify`), `src/mlca/distribution.py`, `src/mlca/web.py`, `installers/`, `packaging/` (npm, homebrew, `NAME`), `.github/workflows/`, `scripts/` (`make_logo.py`, `prime_test_cache.py`, release helpers), `docs/prompts/`, `docs/install.md`, `docs/releasing.md`, `docs/IMPLEMENTATION_STATUS.md`, `docs/HANDOFF.md`, `assets/logo.txt`, `assets/logo_source.png`.
+> - **Not built:** `roles/illustrator.py` (P9); `templates/*/checks.py`, because no template needs custom checks yet; `tests/integration/test_golden_anemia.py` and `tests/fixtures/tiny_tabular.csv` (replaced by `tests/fixtures/make_synthetic.py` and the `tests/integration/` suite).
 
 ```
 mlca-revized/
@@ -253,6 +313,8 @@ All models are pydantic v2. IDs are ULIDs (`python-ulid`). Timestamps are UTC IS
 
 ### 6.1 Event-log record
 
+> **Status:** ✅ `log/schema.py`. 🔁 Extra record types (R2), the `head.json` checkpoint (R1), and `BriefRecorded.columns` (R6).
+
 Common envelope (`mlca/log/schema.py`):
 
 ```python
@@ -305,9 +367,13 @@ The usage and egress records live in their own files (`usage.jsonl`, `egress.jso
 
 ### 6.2 Project state (replay output)
 
+> **Status:** ✅ `log/schema.py: ProjectState`, `log/replay.py: replay`. Added: `columns`, `generations` (loop invalidation), `split`, `lock_sha256`, `runtime_sha256`.
+
 `ProjectState`: template id/version, current event, event statuses (`locked`/`open`/`done`), sub-goal statuses with last check detail, facts (key → Fact), steps (ordered, with outputs), artefact index (path → sha256, step), test lock status, pending options, counts (turns, retries, custom instructions, rejections, user confirmations, user edits). `replay(records_on_branch) -> ProjectState` is pure: no filesystem access and no clock.
 
 ### 6.3 Workflow template format
+
+> **Status:** ✅ `templates/model.py`, `templates/loader.py`; templates in `templates/tabular_classification/`, `templates/survival/`. 🔁 `output_exists.any_of`, action `role`, action `builtin` (R4, R5). Content is still DRAFT (D2).
 
 `templates/<id>/template.yaml`:
 
@@ -385,6 +451,8 @@ Built-in check types (`mlca/engine/checks.py`): `event_done`, `fact_present` (ke
 
 ### 6.4 Option (Navigator output, validated)
 
+> **Status:** ✅ `engine/options.py: Option, validate, fallback`. 🔁 Completed events offer only `next` (R12).
+
 ```python
 class Option(BaseModel):
     id: str                       # "1".."4"
@@ -408,6 +476,8 @@ Validation rejects options whose action is not in the catalog, whose params fail
 
 ### 7.1 Turn loop (`engine/turn.py`)
 
+> **Status:** ✅ `engine/turn.py: execute`, `api.py: Session.options/choose/custom`; budgets in `llm/client.py: _budget`. 🟡 Navigator fact extraction and Inspector notes untested with real models.
+
 ```
 state = replay(branch)
 if state.pending_options is None:
@@ -430,11 +500,15 @@ Budgets (config, defaults): `worker.max_attempts: 3`; `turn.max_cost_usd: 1.00`,
 
 ### 7.2 Gates and checks
 
+> **Status:** ✅ `engine/gates.py`, `engine/checks.py`; `user_confirm` via `api.py: confirm`. 🟡 No dedicated test for I3/I4.
+
 - Gates are lists of check specs evaluated against `ProjectState` (+ artefact files for file-based checks). Evaluation results are logged.
 - Checks run after every step and on `mlca status --recheck`. A check never calls a model.
 - `user_confirm` is satisfied only by an explicit user action (`mlca confirm <subgoal> "<note>"` or the TUI confirm dialog). The note is stored verbatim.
 
 ### 7.3 Scope guard (`engine/scope_guard.py`)
+
+> **Status:** ✅ `engine/scope_guard.py: layer_one`, `roles/navigator.py: classify_scope`, `api.py: custom`. 🟡 The zero-model-call test for layer 1 is missing (I6).
 
 Layer 1 (deterministic, no model):
 - reject if the text matches any `deny_patterns` of the current event;
@@ -450,6 +524,8 @@ Layer 2 (Navigator `classify_scope`, structured output `{decision: in_scope|othe
 Both layers write `ScopeDecision`. Layer 1 runs first, and a layer-1 rejection never reaches a model.
 
 ### 7.4 Step execution (`runner/`, `sandbox/`)
+
+> **Status:** ✅ `runner/run_step.py`, `runner/process.py`, `runner/static_checks.py`, `sandbox/bwrap.py`, `sandbox/audit_hook.py`, `sandbox/vault.py`, `engine/split.py: freeze`. 🔁 R7–R11. The reviewer verified level A: original data, vault and key folder not visible; environment scrubbed; network blocked.
 
 #### 7.4.1 Step folder
 
@@ -517,6 +593,8 @@ Enforcement levels (`sandbox/level.py`, recorded in every `RunFinished`):
 
 ### 7.5 `mlca_runtime` (helper package in the project env)
 
+> **Status:** ✅ `src/mlca_runtime/__init__.py` (plus `save_model`, `save_json`, `index_sha256`), snapshotted per project into `.mlca/runtime/` (R13).
+
 Installed into `<project>/.mlca/env` at init (editable path install from the MLCA package data, version-pinned). API:
 - `inputs() -> dict[str, Path]`
 - `output_dir() -> Path`
@@ -530,6 +608,8 @@ Installed into `<project>/.mlca/env` at init (editable path install from the MLC
 All of these append to `manifest.json`, the only machine-readable link between a script and the engine.
 
 ### 7.6 Providers, roles, usage and egress (`llm/`)
+
+> **Status:** ✅ `llm/client.py`, `llm/structured.py`, `llm/usage.py`, `llm/egress.py`, `llm/pricing.py`, `llm/providers/{openai_api,openrouter,openai_compatible,fake}.py`; config in `config.py`. 🟡 Real OpenAI/OpenRouter calls not yet run (live tests not written). ⬜ 7.6.6 (ChatGPT login, opencode free models) still waits for the author.
 
 #### 7.6.1 Configuration
 
@@ -588,6 +668,8 @@ class LLMClient(Protocol):
 
 ### 7.7 Project lifecycle (`project/`)
 
+> **Status:** ✅ `project/init.py`, `project/inventory.py`, `project/env.py`, `project/files.py`; branches in `log/branches.py` + `api.py: branch/checkout` (re-check after a branch, R12). 🔁 Column resolution (R6), lazy session records (R3). 🟡 The Navigator recap on open is untested.
+
 `mlca init <path>`:
 1. Refuse if `.mlca/` exists.
 2. Create the layout (section 5).
@@ -612,6 +694,8 @@ A package request comes from the Worker or the user (`PackageRequested`). It nee
 
 ### 7.8 CLI (`cli/main.py`, Typer)
 
+> **Status:** ✅ `cli/main.py` (all commands listed below, plus R14).
+
 ```
 mlca                       open TUI in current folder (init wizard if no project)
 mlca init [PATH]           create a project (interactive; --data, --template, --brief-file for non-interactive)
@@ -635,9 +719,13 @@ Every command except `init` and `config` works headless with `--json` output, wh
 
 ### 7.9 Session API (`api.py`)
 
+> **Status:** ✅ `api.py: Session` (plus `package`, `verify_scripts`, and the state cache keyed on the branch head).
+
 `Session.open(path)`, `.status()`, `.options()`, `.choose(n)`, `.custom(text)`, `.next()`, `.loop(event)`, `.goto(event)`, `.confirm(subgoal, note)`, `.unlock_test(phrase)`, `.branch(name, from_id)`, `.checkout(name)`, `.report(kind)`, `.subscribe(callback)` (receives each new log record). The CLI, TUI and future RPC server call only this API.
 
 ### 7.10 TUI (`tui/`, Textual)
+
+> **Status:** ✅ `tui/app.py`, `tui/screens/*`, `tui/widgets/*`, `tui/banner.py`. 🔁 R15. 🟡 Main-screen layout is functional but plain; TUI flows beyond open/quit/readable log are untested.
 
 **Screens:**
 1. **Welcome:** banner from `assets/banner.txt`, version, sandbox level, configured roles. Shows "first run" if no user config.
@@ -654,6 +742,8 @@ Every command except `init` and `config` works headless with `--json` output, wh
 **Keys:** `1`–`4` choose, `n` next, `l` loop, `c` custom, `f` confirm sub-goal, `b` branches, `r` report, `u` usage, `q` quit (writes `SessionEnded`).
 
 ### 7.11 Reports (`report/`, no model calls)
+
+> **Status:** ✅ `report/{provenance,methods,figure_index,usage_report}.py` → `reports/generated/` (plus `project_test_exposure.json`).
 
 - **`provenance`:** for every figure, table and metric in the current branch, the chain artefact → step → script (sha256) → run attempt → model requests (ids, models) → inputs (sha256).
 - **`methods`:** a deterministic text draft assembled from the template's per-action `methods_text` fields (optional in action YAML), the step params, package versions from the lock and the split parameters. It is labelled "draft generated from the event log".
@@ -672,12 +762,16 @@ Every command except `init` and `config` works headless with `--json` output, wh
 Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGELOG.md` and `docs/DECISIONS.md` updated, and a local commit `P<n>: …`. **Done when** lists what will be verified in review.
 
 ### P0: repository bootstrap
+
+> **Status:** ✅ done (`8a8a3c9`). `docs/lineage.md` written.
 - `git init`; `pyproject.toml` (hatchling; deps: pydantic>=2, typer, textual, rich, pyyaml, python-ulid, openai, cryptography, pandas, pyarrow, filelock; dev: pytest, ruff, pytest-cov); `src/` layout; `uv lock`.
 - `README.md` (stub), `AGENTS.md` (section 0 rules + commands), `CHANGELOG.md`, `docs/DECISIONS.md`, `THIRD_PARTY_NOTICES.md` (empty table), `LICENSE` placeholder text "License to be chosen by the author".
 - `docs/lineage.md`: map v1 → v2 for the paper's continuity. v1 events (`InitializeEvent`, `ListFilesEvent`, `PreprocessEvent`, `TrainEvent`, `EvaluateEvent`, `PlotEvent`, `DocumentEvent`, `CustomEvent`, `StopEvent` on `master`; plus `LoadDataEvent`, `ClusterEvent`, `SelectModelEvent`, `AnalyzeSurvivalEvent` on `v1.5`) → v2 events/actions. Note the factual difference: v1's preprocessing prompt (`ml_copilot_agent/workflow.py`, `data_preprocessing`) scaled the whole dataset before any train/test split, while v2 forbids fitting before `split` (I11).
 - **Done when:** `uv run python -m mlca --version` works; `uv run pytest` runs (0 tests OK).
 
 ### P1: event log, schemas, replay, branches
+
+> **Status:** ✅ done (`7a936b4`, hardened in `215a3c4` F6). Tests: `tests/unit/test_store.py`, `tests/integration/test_branching.py`.
 - `log/schema.py`, `log/store.py`, `log/replay.py`, `log/branches.py`.
 - **Tests:**
   - append/read round trip;
@@ -688,6 +782,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** `mlca log --verify` on a fixture log reports OK and reports the exact line of a tampered record.
 
 ### P2: workflow templates, checks, gates
+
+> **Status:** ✅ done (`b74e084`, `bc6b254` F3). Tests: `tests/unit/test_template_loader.py`, `test_checks.py`, `tests/integration/test_alternatives.py`. 🟡 The five broken-fixture loader tests are partly covered.
 - `templates/model.py`, `loader.py`, `registry.py`; `engine/checks.py`, `engine/gates.py`.
 - Ship `templates/tabular_classification/` with the full structure and DRAFT content (section 6.3). It must cover all 11 events, at least 2 actions per event (except `onboard`/`report`), and at least one `user_confirm` sub-goal.
 - The validator rejects:
@@ -704,6 +800,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** `mlca templates validate templates/tabular_classification` passes, and 5 deliberately broken fixtures each fail with the right message.
 
 ### P3: project init, inventory, project env, runtime helpers
+
+> **Status:** ✅ done (`07e515b`, `548c38a` F5). Tests: `tests/unit/test_init_columns.py`, environment creation in the integration tests.
 - `project/init.py`, `inventory.py`, `env.py`, `files.py`; `src/mlca_runtime/`.
 - **Tests (env creation is marked `slow` but must run in CI locally):**
   - init creates the layout;
@@ -715,6 +813,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** `mlca init /tmp/x --data tests/fixtures/tiny_tabular.csv --template tabular_classification --brief-file tests/fixtures/brief.yaml` completes non-interactively, and `mlca status --json` shows event `onboard` or `data`.
 
 ### P4: runner, static checks, sandbox, test lock
+
+> **Status:** ✅ done (`39853fb`, portable paths `f98793d`). Tests: `tests/integration/test_sandbox.py`, `test_test_lock.py`, `tests/unit/test_scientific_guards.py`, `test_platform_runtime.py`.
 - `runner/*`, `sandbox/*`, `engine/split.py` (freeze).
 - **Tests:**
   - timeout kills the process group (a script that spawns a sleeping child);
@@ -729,6 +829,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** these tests pass, and `docs/security-model.md` states levels A/B and their limits.
 
 ### P5: LLM layer, usage, egress, fake provider
+
+> **Status:** 🟡 code done (`3bfa0c1`); usage/egress counted in `test_default_path.py`. **Missing:** a structured-output repair test, a 429 backoff test, the key-never-written grep test, and the `@pytest.mark.live` provider smoke test.
 - `llm/*`.
 - **Tests:**
   - the fake provider replays a script;
@@ -742,6 +844,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** offline tests pass; the live test passes when the author runs it with real keys.
 
 ### P6: roles and the turn loop, headless end to end
+
+> **Status:** 🟡 done (`94cdc06`). Full synthetic path + `replay --verify` pass (`tests/integration/test_default_path.py`). **Missing:** the invalid-Navigator-options test (I5), the layer-1 zero-call test (I6), the `FactRejected` test (I9), the Worker repair-loop test (`StaticCheckFailed`/failed run → repair → `StepFailed` after `max_attempts`) and the budget-stop test. The golden run uses synthetic data, not anemia (§11).
 - `roles/*` (navigator, worker), `prompts/*.md`, `engine/turn.py`, `options.py`, `scope_guard.py`, `facts.py`, `state_view.py`, `api.py`, `cli/main.py` (all commands in 7.8 except `report`, which comes in P7).
 - **Tests:**
   - invalid Navigator options → repair → fallback to `default_options` (I5);
@@ -755,6 +859,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** the golden test passes offline in under 3 minutes, and `mlca replay --verify` on its project reports all step outputs reproduced.
 
 ### P7: TUI, reports, inspector, banner
+
+> **Status:** 🟡 done (`dee81cc`; banner `6dc9309`; F7 `d13bbcb`). Tests: `tests/tui/test_tui.py` (welcome, open, quit, readable log). The "Done when" (author drives anemia through the TUI with real models) is **not yet done**.
 - `tui/*`, `report/*`, `roles/inspector.py`, `assets/banner.txt`, `assets/logo.png` (after D5).
 - **Tests:**
   - Textual pilot tests: open project, choose option 1, custom rejected with reason, confirm sub-goal, quit writes `SessionEnded`;
@@ -763,12 +869,16 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - **Done when:** the author can run `mlca` in a fresh folder, complete onboarding and drive the anemia project through the TUI with real models.
 
 ### P8: second template and hardening
+
+> **Status:** 🟡 done (`c555616` … `f56c9ef`). Survival template structure and column resolution are tested; **a full survival workflow run is not.** Branch UX, `ScriptEditedByUser` detection and `mlca doctor` exist.
 - `templates/survival/` (DRAFT content; needs `lifelines` in the template's runtime packages).
 - Branch UX in the TUI; `ScriptEditedByUser` detection; `mlca doctor`.
 - `docs/templates.md` (how to write a template), `docs/providers.md`.
 - **Done when:** a golden survival run with the fake provider passes (synthetic survival fixture), and a branch created at a `model` step yields two different `model` results whose reports both regenerate from the log.
 
 ### P9: later (each needs the author's go-ahead; do not start without it)
+
+> **Status:** 🔁 partly started on the author's go-ahead: **distribution** done and prepared, not published (R16; prompt 02; `b371aa5` … `61cb041`). It includes `mlca web` (browser TUI through `textual-serve`). ⬜ Still open: JSON-RPC server, Ink/Electron clients, Illustrator, ChatGPT login, opencode free models.
 - JSON-RPC server over stdio exposing `api.Session` (records as notifications); reference architecture: Hermes `tui_gateway/` (Python) ↔ `ui-tui/` (Ink/React) and `apps/desktop/` (Electron).
 - Ink TUI and Electron desktop clients in `clients/`; banner rendering style from opencode `packages/tui/src/logo.ts` + `component/logo.tsx` (copy with attribution).
 - `npx mlca` launcher: an npm package that installs/updates the Python core with uv and starts it (reference: Hermes `apps/bootstrap-installer/`, deepseek `npx @deepseek-ai/dsh`).
@@ -779,6 +889,8 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 ---
 
 ## 9. Borrowed material: exact sources and actions
+
+> **Status:** ✅ All rows were reimplemented or used as reference; nothing was copied (`THIRD_PARTY_NOTICES.md`). The opencode logo files were **not** copied: the banner is original, generated from the author's logo (`scripts/make_logo.py`).
 
 | What | Source (read-only) | Action | Destination |
 |---|---|---|---|
@@ -810,6 +922,8 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 
 ## 11. Test data and the golden run
 
+> **Status:** 🟡 Replaced for now by synthetic fixtures (`tests/fixtures/make_synthetic.py`, `synthetic_brief.yaml`, `synthetic_fake_llm.yaml`) driving the full path in `tests/integration/test_default_path.py`. ⬜ The anemia golden run is not written yet; the author will supply the data location.
+
 - Unit fixtures are synthetic and committed (`tests/fixtures/tiny_tabular.csv`, about 200 rows, generated by `tests/fixtures/make_fixtures.py` with a fixed seed).
 - **Golden run** (`tests/integration/test_golden_anemia.py`):
   - data are read from `/home/prime/Documents/github/mlca-paper-codebases/mlca_experiments/final results/hfr/Anemia/anemia.csv` (1,421 rows; columns `Gender, Hemoglobin, MCH, MCHC, MCV, Result`);
@@ -830,20 +944,34 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 
 ## 12. Open decisions for the author (record answers in `docs/DECISIONS.md`)
 
-| ID | Decision | Default until decided |
-|---|---|---|
-| D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | placeholder file, no licence granted |
-| D2 | Content of the `tabular_classification` template: event goals, sub-goals, actions, prompts, scope text | agent writes short DRAFT content |
-| D3 | PyPI/npm package name (`mlca` may be taken) | `mlca` locally, not published |
-| D4 | Default models per role | none; onboarding asks |
-| D5 | Reuse v1 logo (black-and-white) or design a new one | original text banner only |
-| D6 | GitHub: new repository or v2 branch of `VatsalPatel18/ml-copilot-agent` (tag v1 `v0.1.9-legacy`) | local repository only, no remote |
-| D7 | ChatGPT-account login and opencode free models, after a terms check (7.6.6) | not implemented |
-| D8 | Second template: survival (default) or subtyping/clustering | survival |
+| ID | Decision | Default until decided | Status (2026-10-06) |
+|---|---|---|---|
+| D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | placeholder file, no licence granted | ⬜ open; **blocks publishing** (`scripts/verify_release.py` refuses the placeholder) |
+| D2 | Content of the `tabular_classification` template: event goals, sub-goals, actions, prompts, scope text | agent writes short DRAFT content | 🟡 v0.2.0 content written with the author's direction (2026-10-06); defaults await author review |
+| D3 | PyPI/npm package name | `mlca` locally, not published | ⬜ open; **blocks publishing**. `mlca` and `mlca-agent` were free on PyPI and npm on 2026-10-06; `ml-copilot-agent` on PyPI is the author's v1. One place to change it: `packaging/NAME` + `pyproject.toml` |
+| D4 | Default models per role | none; onboarding asks | ⬜ open |
+| D5 | Reuse v1 logo (black-and-white) or design a new one | original text banner only | ✅ resolved: the author's logo → `assets/logo_source.png`, `assets/logo.txt`, `assets/logo.png` |
+| D6 | GitHub: new repository or v2 branch of `VatsalPatel18/ml-copilot-agent` (tag v1 `v0.1.9-legacy`) | local repository only, no remote | ⬜ open; no remote (needed before CI and releases run) |
+| D7 | ChatGPT-account login and opencode free models, after a terms check (7.6.6) | not implemented | ⬜ open; not implemented |
+| D8 | Second template: survival (default) or subtyping/clustering | survival | ✅ survival (`templates/survival/`), content DRAFT |
 
 ---
 
 ## 13. Evaluation checklist (used to review the finished work)
+
+> **Review 2026-10-06 (`61cb041`):**
+> 1. 🟡 I1, I2, I7, I10, I11 have tests; I3, I4, I5, I6, I8, I9 do not.
+> 2. ✅ 54 passed / 1 skipped, ruff clean, `replay --verify` reproduces. Offline tests need a primed uv cache.
+> 3. ✅ No model names or keys in `src/`.
+> 4. 🟡 Mechanisms present; only some are proven by tests.
+> 5. ⬜ Untested.
+> 6. ✅ Level A verified by test and manual probe; level-B limits documented in `docs/security-model.md`.
+> 7. ✅ Line counts match; the sample-row guard is untested.
+> 8. ✅ Reports regenerate from the log alone.
+> 9. 🟡 Freeze exists; edits are detected by `ScriptEditedByUser`; no immutability test.
+> 10. ✅ No remote, nothing published.
+> 11. ✅ Nothing copied.
+> 12. ✅ `docs/DECISIONS.md` maintained.
 
 1. Every invariant I1–I11 has code at the named location and at least one test that fails if the code is removed.
 2. `uv run pytest` passes offline; `ruff check` is clean; the golden run passes; `mlca replay --verify` reproduces.

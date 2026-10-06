@@ -1,17 +1,11 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: train_alternative
 event: model
-title: Train a prespecified alternative model
+title: Train gradient boosting (prespecified alternative)
 params: {}
-prompt: 'Train a prespecified alternative model. Target and study context are in the
-  supplied brief. Read declared inputs using mlca_runtime.inputs(). Save the required
-  output alternative_model.pkl. Use mlca_runtime save_table, save_figure and record_metric
-  for evidence. Do not send data, install packages, access undeclared paths or use
-  the test set outside its event. Load the frozen training partition with its original
-  row index. Fit every estimator or pipeline with mlca_runtime.fit_record(estimator,
-  X, "train", y=target_if_needed); never call fit or fit_transform directly. Save
-  fitted estimators with mlca_runtime.save_model. Include fitted preprocessing/selection
-  in the predictive pipeline so subsequent evaluation uses identical transformations. '
+prompt: |
+  Do: same pipeline with HistGradientBoostingClassifier(random_state=seed, default parameters); fit with fit_record on train.
+  Save: alternative_model.pkl (the full pipeline).
 inputs:
 - ref: train
 - ref: val
@@ -23,5 +17,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Train a prespecified alternative model.
+methods_text: Histogram gradient boosting with default parameters was fitted on training rows as the prespecified
+  alternative.
 builtin: null

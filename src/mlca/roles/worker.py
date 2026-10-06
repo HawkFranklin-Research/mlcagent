@@ -32,6 +32,7 @@ class Worker(Role):
                         params=params,
                         packages=self.session.packages(),
                         outputs=[o.model_dump() for o in action.outputs],
+                        facts=action.fact_candidates,
                         event=action.event,
                     ),
                 }

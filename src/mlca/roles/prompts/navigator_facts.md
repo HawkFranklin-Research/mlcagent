@@ -5,3 +5,4 @@ Each fact needs key, value, unit (optional), source (exact indexed artifact path
 Use only explicit evidence. Do not infer a number from a figure, assume a missing value or claim
 causation. Return an empty list when no justified fact can be cited.
 Evidence: {observation}
+Each value is one number or a short label (at most 5 words); never prose.

@@ -1,7 +1,7 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: freeze_stratified
 event: split
-title: Freeze seeded split
+title: Stratified split by target (60/20/20, seed 42)
 params:
   method:
     type: enum
@@ -32,11 +32,9 @@ params:
     type: string
     default: ''
     required: false
-prompt: 'Freeze seeded split. Target and study context are in the supplied brief.
-  Read declared inputs using mlca_runtime.inputs(). Save the required output split.json.
-  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
-  send data, install packages, access undeclared paths or use the test set outside
-  its event. '
+prompt: |
+  Do: engine split stratified by the target column.
+  Save: split.json.
 inputs:
 - ref: registered_data
 outputs:
@@ -46,5 +44,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Freeze seeded split.
+methods_text: Partitions (60/20/20) were frozen stratified by the target with a fixed seed; the test partition was
+  encrypted.
 builtin: split

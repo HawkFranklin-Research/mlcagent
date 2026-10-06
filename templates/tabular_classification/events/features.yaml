@@ -1,12 +1,12 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: features
 title: Features
-goal: Choose features with training-only fitted transformations.
+goal: Decide which features enter the model, using training rows only.
 gate:
 - event_done: preprocess
 subgoals:
 - id: outputs_recorded
-  text: Required artifact produced
+  text: Feature set decided and saved
   check:
     type: output_exists
     any_of:
@@ -15,7 +15,7 @@ subgoals:
     - action: retain_features
       output: selector_all.pkl
 - id: fit_verified
-  text: Training-only fit evidence recorded
+  text: Every fit used the frozen training rows
   check:
     type: fit_on_train_only
 actions:
@@ -25,7 +25,7 @@ default_options:
 - select_features
 done_when: all_subgoals
 custom_scope:
-  description: Choose features with training-only fitted transformations.
+  description: Feature selection fitted on training rows. No model training.
   deny_patterns:
   - (?i)\b(train|fit)\b.*\bmodel\b
   - (?i)\btest (set|split|partition)\b
@@ -33,4 +33,4 @@ custom_scope:
   - train
   - val
   - prior_outputs
-max_options: 4
+max_options: 3

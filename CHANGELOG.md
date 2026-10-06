@@ -1,5 +1,18 @@
 # Changelog
 
+## Template content v0.2.0, output contract, MCP plan — 6 October 2026
+- Both workflow templates now have short, specific content: one-sentence goals, state-phrased sub-goals,
+  one-sentence custom scopes, and three-line Do/Save/Record action prompts with concrete defaults.
+  Ids, outputs, roles, builtins and check types are unchanged; `max_options` is 3.
+- New sub-goals: primary metric recorded on validation and on test (`metric_present`; `roc_auc` for
+  classification, `c_index` for survival).
+- Worker prompt: output contract (required outputs plus at most one figure, summary tables at most
+  50x12, at most 5 printed lines, numbers via record_metric or cited facts; allowed fact keys passed in).
+  Navigator prompts: shorter titles, reasons and fact values.
+- `docs/templates.md`: "Writing content" rules. README rewritten. `plan_mcp.md` added (MCP docking,
+  brain and driver modes). `plan.md` status updated.
+- Checked: both templates validate; ruff passes; `uv run pytest -q` gives 54 passed, 1 skipped.
+
 ## Logo and banner — 6 October 2026
 - Author-provided logo stored as `assets/logo_source.png`; `scripts/make_logo.py` (dev-only: pillow, numpy)
   generates `assets/logo.txt` (36x10 Braille art of the figure) and `assets/logo.png` (512x512 grayscale).

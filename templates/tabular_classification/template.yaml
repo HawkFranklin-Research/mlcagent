@@ -1,15 +1,17 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: tabular_classification
-version: 0.1.0
+version: 0.2.0
 title: Tabular Classification
-description: 'DRAFT: author review required.'
+description: 'Binary or multiclass classification from one table. Baseline: regularised logistic regression; one
+  prespecified alternative (gradient boosting). Primary metric: ROC AUC (macro one-vs-rest if multiclass), chosen
+  on validation, confirmed once on test.'
 brief_questions:
 - id: aim
-  text: What is the study aim?
+  text: 'Aim in one sentence: what is predicted, for whom, and why?'
 - id: target
-  text: Which column is the target or duration?
+  text: Target column (exact name).
 - id: unit
-  text: What does one row represent?
+  text: What is one row (patient, sample, visit)? Can a subject have several rows?
 events:
 - onboard
 - data

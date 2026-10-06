@@ -1,18 +1,11 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: train_cox
 event: model
-title: Train a Cox model
+title: Train Cox proportional hazards (baseline)
 params: {}
-prompt: 'Train a Cox model. Target and study context are in the supplied brief. Read
-  declared inputs using mlca_runtime.inputs(). Save the required output model.pkl.
-  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
-  send data, install packages, access undeclared paths or use the test set outside
-  its event. Load the frozen training partition with its original row index. Fit every
-  estimator or pipeline with mlca_runtime.fit_record(estimator, X, "train", y=target_if_needed);
-  never call fit or fit_transform directly. Save fitted estimators with mlca_runtime.save_model.
-  Include fitted preprocessing/selection in the predictive pipeline so subsequent
-  evaluation uses identical transformations. This is a survival study: keep duration
-  and censoring indicator separate and use censoring-aware metrics. '
+prompt: |
+  Do: preprocessing (+ chosen selector) + lifelines CoxPHFitter(penalizer=0.0); fit with fit_record on train (duration and event columns as fit arguments).
+  Save: model.pkl (preprocessing + fitted model).
 inputs:
 - ref: train
 - ref: val
@@ -24,5 +17,5 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Train a Cox model.
+methods_text: A Cox proportional hazards model was fitted on training rows as the baseline.
 builtin: null

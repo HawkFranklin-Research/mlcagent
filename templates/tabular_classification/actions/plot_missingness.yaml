@@ -1,13 +1,11 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: plot_missingness
 event: eda
-title: Plot missingness
+title: Plot missingness per column
 params: {}
-prompt: 'Plot missingness. Target and study context are in the supplied brief. Read
-  declared inputs using mlca_runtime.inputs(). Save the required output missingness.png.
-  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
-  send data, install packages, access undeclared paths or use the test set outside
-  its event. '
+prompt: |
+  Do: bar chart of missing share for columns with any missing value, sorted.
+  Save: missingness.png (one figure).
 inputs:
 - ref: registered_data
 outputs:
@@ -17,6 +15,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Plot missingness.
+methods_text: Missingness was plotted per column.
 builtin: null
 role: supporting

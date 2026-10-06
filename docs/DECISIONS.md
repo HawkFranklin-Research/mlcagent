@@ -192,3 +192,14 @@
   guard checks pass. shellcheck, actionlint, act and native macOS/Windows execution are unavailable here.
 - D1 licence and D3 public name remain blockers; publishing additionally needs the one-time external
   infrastructure setup documented in releasing.md. Only local commits/builds/dry runs were performed.
+
+## 2026-10-06 — D2 content v0.2.0 and MCP direction
+- Template content written (reviewer, at the author's request), short by rule (docs/templates.md).
+  Concrete defaults to review per study:
+  - classification: 60/20/20 stratified split, seed 42; logistic baseline and gradient-boosting
+    alternative; ROC AUC primary; Youden threshold on validation; 1,000-resample bootstrap CI on test;
+  - survival: random split; Cox and penalised Cox; C-index primary.
+- MCP docking adopted as the integration path for external agents (plan_mcp.md). Brain mode is the
+  default for MCP; driver mode remains for standalone use. Human-only decisions (confirm, unlock test,
+  package approval) are never exposed as MCP tools. Implementation starts after the missing core
+  invariant tests.

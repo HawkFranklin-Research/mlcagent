@@ -1,14 +1,11 @@
-# DRAFT – author to finalise
+# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: count_target
 event: data
-title: Count target values
+title: Count events and censoring
 params: {}
-prompt: 'Count target values. Target and study context are in the supplied brief.
-  Read declared inputs using mlca_runtime.inputs(). Save the required output target_counts.csv.
-  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
-  send data, install packages, access undeclared paths or use the test set outside
-  its event. This is a survival study: keep duration and censoring indicator separate
-  and use censoring-aware metrics. '
+prompt: |
+  Do: number of events and censored rows; median follow-up (reverse Kaplan-Meier).
+  Save: target_counts.csv (status, n, share, median_follow_up).
 inputs:
 - ref: registered_data
 outputs:
@@ -18,6 +15,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Count target values.
+methods_text: Events, censoring and follow-up were counted.
 builtin: null
 role: supporting

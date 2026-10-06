@@ -28,3 +28,28 @@ Example action parameter: `seed: {type: integer, default: 42}`. Required outputs
 required. Unknown actions, unsafe output names, invalid defaults/checks and test reading outside the
 allowed events are rejected. Optional checks.py functions run as trusted engine code, not sandboxed
 model code. Review their implementation before installing a template.
+
+## Writing content
+
+Template content is the method MLCA guides a study through. Keep every field short, so that both the
+models and the person reading the log get precise, comparable outputs.
+
+| Field | Rule |
+|---|---|
+| `goal` | One sentence: what this event must establish. |
+| sub-goal `text` | At most 10 words, phrased as the state reached ("Partitions hashed and test partition sealed"). |
+| `custom_scope.description` | One sentence: what a custom instruction may do here, and the main thing it may not. |
+| action `title` | At most 8 words; this is what the user sees as the option. |
+| action `prompt` | Three lines, in this form: `Do:` (the computation, with concrete defaults), `Save:` (the exact required outputs), `Record:` (metrics and fact keys, each with its source output). Generic rules (inputs, fitting, test lock, no network) live in the Worker role prompt, not here. |
+| `fact_candidates` | Only keys that a sub-goal, a later action or the report uses. |
+| `methods_text` | One past-tense sentence for the generated methods draft. |
+| `max_options` | 3 by default: fewer, more natural options. |
+
+The Worker role prompt (`src/mlca/roles/prompts/worker_write.md`) adds an output contract to every action:
+the required outputs plus at most one figure, summary tables (at most 50 rows and 12 columns, 4 significant
+digits), at most 5 printed lines, and every important number recorded as a metric or a cited fact.
+
+Concrete defaults in the v0.2.0 templates, to be reviewed for each study:
+- classification: 60/20/20 stratified split with seed 42; logistic regression baseline and gradient-boosting
+  alternative; primary metric ROC AUC; threshold by Youden's J on validation; 1,000-resample bootstrap CI on test;
+- survival: 60/20/20 random split; Cox and penalised-Cox models; primary metric Harrell's C-index.
