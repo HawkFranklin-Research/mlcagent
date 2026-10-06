@@ -187,7 +187,9 @@ def replay_project(
 
 
 @app.command()
-def report(ctx: typer.Context, kind: str = "all", json_output: bool = typer.Option(False, "--json")) -> Any:
+def report(
+    ctx: typer.Context, kind: str = typer.Argument("all"), json_output: bool = typer.Option(False, "--json")
+) -> Any:
     with Session.open(_path(ctx)) as session:
         output(session.report(kind), json_output)
 
@@ -263,7 +265,8 @@ def validate_template(path: Path, json_output: bool = typer.Option(False, "--jso
             "template": workflow.spec.id,
             "events": len(workflow.events),
             "sha256": workflow.sha256,
-        }
+        },
+        json_output,
     )
 
 
