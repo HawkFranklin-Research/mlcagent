@@ -206,6 +206,9 @@ def work_order(session, action, params, step_id, inputs, attempt, error=None):
     order.update(step_id=step_id, attempt=attempt, max_attempts=session.config.budgets.worker_max_attempts)
     if error:
         order["previous_diagnostics"] = error
+    from mlca.config import redact_value
+
+    order = redact_value(order, session.config)
     session.emit(
         "ScriptRequested",
         {
@@ -345,8 +348,8 @@ def _worker(session, action, params, step_id, step, state, inputs):
 def submit(session, step_id, code):
     from mlca.templates.model import ActionSpec
 
-    saved = session.step_status(step_id)
-    if saved["status"] != "awaiting_script":
+    saved = next((s for s in session.state.steps if s["step_id"] == step_id), None)
+    if saved is None or saved["status"] != "awaiting_script":
         raise MlcaUserError("Step is not awaiting a script")
     if saved["event_id"] != session.state.current_event:
         raise MlcaUserError("Step belongs to another event")

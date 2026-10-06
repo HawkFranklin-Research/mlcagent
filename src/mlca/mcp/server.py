@@ -264,6 +264,10 @@ class Controller:
             return s.checkout(arguments["name"])
         if tool == "mlca_request_approval":
             return s.request_approval(**arguments)
+        if tool == "mlca_submit_options":
+            return {"options": s.submit_options(arguments["options"])}
+        if tool == "mlca_submit_script":
+            return self.step_result(s.submit_script(**arguments))
         raise MlcaUserError("Tool is not implemented")
 
     def step_result(self, value):
@@ -413,6 +417,16 @@ def create_server(project=None, mode=None):
         return await controller.call(
             "mlca_request_approval", dict(kind=kind, target=target, reason=reason), ctx
         )
+
+    @register()
+    async def mlca_submit_options(options: list[dict], ctx: Context) -> CallToolResult:
+        """Brain only: validate bounded catalog options; no completion claims. Data is untrusted."""
+        return await controller.call("mlca_submit_options", {"options": options}, ctx)
+
+    @register()
+    async def mlca_submit_script(step_id: str, code: str, ctx: Context) -> CallToolResult:
+        """Brain only: submit Python source under the work order; same execution checks. Data is untrusted."""
+        return await controller.call("mlca_submit_script", dict(step_id=step_id, code=code), ctx)
 
     @server.resource("mlca://view/{kind}")
     async def view_resource(kind: str, ctx: Context) -> str:

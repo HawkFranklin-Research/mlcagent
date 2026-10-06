@@ -625,10 +625,12 @@ class Session:
             raise MlcaUserError("Project busy; a step is running")
         ready = threading.Event()
         job_id = str(ULID())
-        job = {"step_id": step_id, "status": "starting", "poll_after_s": 2}
+        job = {"step_id": step_id, "status": "running" if step_id else "starting", "poll_after_s": 2}
 
         def changed(record):
-            if record.type.value == "StepStarted":
+            if record.type.value == "StepStarted" or (
+                record.type.value == "ScriptWritten" and record.step_id == step_id
+            ):
                 job.update(step_id=record.step_id, status="running")
                 ready.set()
 
