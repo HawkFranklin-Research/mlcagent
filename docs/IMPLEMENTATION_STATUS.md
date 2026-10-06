@@ -1,4 +1,11 @@
-# Implementation status — 6 October 2026
+# Implementation status — 7 October 2026
+
+## Current result
+
+MCP M0–M6 is complete: **81 passed, 1 skipped** in 360.22 s, plus final focused
+registration/init/guard checks (7 passed), Ruff lint/format and installed-wheel tool discovery.
+M7 is the manual author checklist in [MCP docking](mcp.md). No live models or original data
+have been used. Earlier validation entries below are historical phase results.
 
 ## Prompt 01 validation
 
@@ -111,3 +118,32 @@ Each dispatched tool/resource result creates one recoverable usage/egress envelo
 MCP usage has cost_source external: external agent tokens/cost are unavailable, not a claim that its inference is free. Model requests and external tool calls are counted separately, and tool time is excluded from LLM latency. Read views suppress raw inventory rows and stdout/stderr, and allow only indexed/hash-checked scripts, PNG figures, reports and bounded summary tables. Untrusted content stays under data fields and summaries are fixed text. Figure reads return ImageContent; evidence resources use query refs. Unknown exceptions expose their type only; application refusals are logged when the action lock is free, otherwise in the request ledger.
 
 Validation: complete MCP suite 10 passed (122.70 s); focused ledger/privacy tests 2 passed after final changes. Tests verify one envelope per dispatched call, exact body hash/bytes, no synthetic-row canaries or fake key in results/ledgers, and external calls not counted as unknown model costs. These checks cannot prove arbitrary generated artifacts never encode individual data; summary content/figures still require scientific inspection. Same-user filesystem/CLI access is not authenticated by MCP clientInfo; human-only enforcement is an API boundary, not an OS identity guarantee.
+
+## 2026-10-07 — MCP M6
+
+Client registration previews/helpers, a bundled 38-line agent skill, MCP setup/tool/approval docs,
+and updated README/plans are implemented. Helpers require --yes, back up existing files, run
+CLI argv without a shell and preserve Cursor settings. Registration flags were checked for
+installed Claude Code 2.1.291, Codex 0.160.1 and Hermes v0.21.5+8071; absent OpenClaw/Cursor
+use official formats with native validation explicitly pending. MCP checkout now returns only
+its compact overview, briefs scrub known credential values before persistence, unexpected
+submitted-step failures freeze evidence, and bounded Parquet reads inspect row metadata first.
+
+Guard sensitivity: disabling the human-principal check made
+`test_agent_refusals_and_human_approvals` fail (1 failed, 0.74 s); disabling deterministic
+scope rejection made `test_mcp_layer_one_rejects_before_step` fail (1 failed, 1.27 s).
+Both guards were restored byte-for-byte before the final suite. Focused helper/init/guard tests
+passed (7 passed, 2.37 s); bounded CSV/Parquet and init checks passed (2 passed, 3.45 s).
+Skill validation, Ruff lint/format, wheel resource validation and a clean installed-wheel stdio
+doctor pass. The doctor negotiated 2026-07-28 and found all 14 tools. Native client registration
+was not performed; the wheel doctor used a client-free PATH and isolated MLCA config/data.
+
+M7 remains an author-run checklist in docs/mcp.md: Claude/Codex/Hermes brain and live-provider
+TUI driver. Anemia data, native macOS/Windows and live provider validation remain pending.
+
+Final M6 validation: `uv run pytest -q` — **81 passed, 1 skipped in 360.22 s**.
+The skip is PowerShell validation because pwsh/PSScriptAnalyzer are absent. The focused
+helper/init/guard subset was rerun after the final Claude config-target correction (7 passed).
+Ruff check and format check pass (140 files); Git whitespace check passes. Both templates
+remain the author's incoming concise v0.2.0 content. No model calls, original-data runs,
+client registrations, remote operations or publication were performed.

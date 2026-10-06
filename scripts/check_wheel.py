@@ -14,6 +14,9 @@ def check(wheel: Path, verbose: bool = True) -> list[str]:
     required = {
         "mlca/__init__.py",
         "mlca/cli/main.py",
+        "mlca/mcp/server.py",
+        "mlca/mcp/install.py",
+        "mlca/resources/skills/mlca/SKILL.md",
         "mlca_runtime/__init__.py",
         "mlca/resources/packaging/NAME",
         "mlca/resources/styles/default.mplstyle",

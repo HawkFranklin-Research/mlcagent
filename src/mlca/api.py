@@ -526,6 +526,9 @@ class Session:
                     },
                     step_id=step_id,
                 )
+                from mlca.runner.artefacts import freeze
+
+                freeze(self.root / ".mlca/steps" / step_id)
                 raise
 
     def abandon_step(self, step_id, reason):

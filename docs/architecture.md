@@ -7,6 +7,7 @@ record check outcomes or unlock test access.
 ```mermaid
 flowchart LR
     UI[CLI or Textual] --> Session
+    MCP[Stdio MCP client] --> Session
     Session --> Engine[Options, gates and checks]
     Engine --> Navigator
     Engine --> Worker
@@ -35,8 +36,8 @@ Validation loops invalidate downstream checks and confirmations. Event generatio
 artifact from satisfying a new iteration. All fitting/partition changes close after any test unlock
 in the project, including other branches. Branches preserve history; they cannot undo exposure.
 
-P9 (RPC, Ink, desktop, npm launcher, account login, special free-provider access and image generation)
-is deliberately absent from this implementation.
+The stdio MCP server and npm launcher are implemented. General frontend RPC, Ink, desktop,
+account login, special free-provider access and image generation remain deferred.
 
 
 ## Distribution
@@ -57,3 +58,12 @@ flowchart LR
   Python --> TUI[CLI and Textual TUI]
   TUI --> Web[Optional local browser view]
 ```
+
+## MCP execution sources
+
+The official SDK server (`mcp/server.py`) is a thin Session client. Brain mode uses external
+options and persisted ScriptRequested work orders; driver mode retains Navigator/Worker.
+ExternalSource and WorkerSource share run_attempt, static checks, test exposure and artifact
+collection. Background threads retain the project action lock and publish pollable status.
+Only a human Session can resolve approval requests. Tool/resource results pass through compact
+serialization and one usage/egress envelope. See [MCP docking](mcp.md).

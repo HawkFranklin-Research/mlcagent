@@ -85,3 +85,42 @@ def test_unopened_refusal_is_accounted(tmp_path):
             assert len(entries) == 1 and entries[0]["status"] == "refused"
 
     asyncio.run(check())
+
+
+def test_summary_tables_are_bounded(project_factory):
+    from mlca.api import Session
+    from tests.helpers import advance_to
+    from tests.mcp.helpers import choose
+    from tests.mcp.test_brain import script, submit
+
+    root = project_factory()
+    with Session.open(root) as human:
+        advance_to(human, "data")
+    server = create_server(root, "brain")
+
+    async def check():
+        async with Client(server) as client:
+            outcome = await choose(client, "audit_schema")
+            source = script("audit_schema") + "\nimport pandas as pd\n"
+            source += 'm.save_table(pd.DataFrame({str(i): range(50) for i in range(12)}), "bounded.csv")\n'
+            source += 'm.save_table(pd.DataFrame({"count": range(51)}), "too_many.csv")\n'
+            source += 'm.save_table(pd.DataFrame({str(i): [1] for i in range(13)}), "too_wide.csv")\n'
+            outcome = await submit(client, outcome["step_id"], source)
+            assert outcome["status"] == "completed", outcome
+            outputs = server.controller.session.state.artefacts
+            for name in (
+                "bounded.csv",
+                "bounded.parquet",
+                "too_many.csv",
+                "too_many.parquet",
+                "too_wide.csv",
+            ):
+                ref = next(path for path in outputs if path.endswith("/" + name))
+                result = await client.call_tool("mlca_read", {"kind": "table", "ref": ref})
+                if name.startswith("bounded"):
+                    table = data(result)
+                    assert len(table["table_data"]) == 50 and len(table["columns_data"]) == 12
+                else:
+                    assert result.is_error
+
+    asyncio.run(check())

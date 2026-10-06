@@ -10,7 +10,7 @@ The audit hook supplies additional accidental-access checks. The runner kills th
 failure, timeout or interruption and caps captured output.
 
 Availability of the executable is not proof the host permits namespace creation. A failed namespace
-setup fails the attempt; there is no automatic downgrade. Actual enforcement has not yet been tested.
+setup fails the attempt; there is no automatic downgrade. Synthetic level-A execution and private-path/network refusals are covered on this Linux host.
 Trusted Python/system-library paths are visible read-only. This is not a formally verified sandbox and
 does not limit CPU/memory/disk consumption beyond a timeout/output cap. Treat untrusted native code and
 package installation as additional trust boundaries.
@@ -66,3 +66,19 @@ keeps fit evidence attached to every step in a fit event rather than trusting an
 `fit_record` requires the exact frozen training index, including order; mismatches report expected and
 received row counts. Equal counts alone do not pass: this prevents fitting on substituted, validation
 or test rows. Instrumentation and audit hooks cannot prove the semantics of arbitrary native code.
+
+## MCP boundary
+
+The MCP transport is local stdio. Every connected client is an agent principal; confirmations,
+test unlocks and package approvals refuse agents inside Session, not just in the tool schema.
+Human resolutions validate request branch, event generation and split. This is API authorization,
+not OS authentication: clientInfo is self-reported, and an unrestricted same-user agent can
+invoke the human CLI outside MCP. Keep approval commands under human control in that client.
+
+Brain mode disables model requests at Client. Deterministic scope checks always apply; semantic
+Navigator scope classification is explicitly skipped. Both script sources share execution guards.
+Test data is exposed per attempt only, and plaintext is removed before repair waiting.
+
+MCP returns indexed, hash-checked evidence and bounded summaries; it omits raw inventories and
+run stdout/stderr. Parquet metadata is checked before reading oversized tables. Content checks
+cannot prove that a generated plot/table never encodes an individual row. See [MCP privacy](mcp.md).

@@ -6,6 +6,7 @@ import yaml
 from ulid import ULID
 
 from mlca import __version__
+from mlca.config import Config, redact_value
 from mlca.errors import MlcaUserError
 from mlca.log.store import Store
 from mlca.paths import atomic_json, resource, sha256
@@ -62,6 +63,7 @@ def initialise(
     principal: str = "user",
 ) -> Path:
     root = path.resolve()
+    validated_config = Config.model_validate(config or {})
     if (root / ".mlca").exists():
         raise MlcaUserError("Project already initialized; refusing to overwrite it")
     workflow = get(template_id)
@@ -116,7 +118,11 @@ def initialise(
         store.append("DataRegistered", item)
     atomic_json(root / ".mlca/inventory.json", inventory)
     store.append("InventoryRecorded", {"files": inventory, "sha256": sha256(root / ".mlca/inventory.json")})
-    store.append("BriefRecorded", {"answers": brief, "columns": columns}, actor=principal)
+    store.append(
+        "BriefRecorded",
+        {"answers": redact_value(brief, validated_config), "columns": columns},
+        actor=principal,
+    )
     lock_data = create(root, workflow.spec.default_runtime_packages)
     store.append("EnvironmentRecorded", lock_data)
     store.append(

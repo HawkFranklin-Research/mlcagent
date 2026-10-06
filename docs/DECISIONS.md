@@ -241,3 +241,29 @@ Each dispatched tool/resource result creates one recoverable usage/egress envelo
 MCP usage has cost_source external: external agent tokens/cost are unavailable, not a claim that its inference is free. Model requests and external tool calls are counted separately, and tool time is excluded from LLM latency. Read views suppress raw inventory rows and stdout/stderr, and allow only indexed/hash-checked scripts, PNG figures, reports and bounded summary tables. Untrusted content stays under data fields and summaries are fixed text. Figure reads return ImageContent; evidence resources use query refs. Unknown exceptions expose their type only; application refusals are logged when the action lock is free, otherwise in the request ledger.
 
 Validation: complete MCP suite 10 passed (122.70 s); focused ledger/privacy tests 2 passed after final changes. Tests verify one envelope per dispatched call, exact body hash/bytes, no synthetic-row canaries or fake key in results/ledgers, and external calls not counted as unknown model costs. These checks cannot prove arbitrary generated artifacts never encode individual data; summary content/figures still require scientific inspection. Same-user filesystem/CLI access is not authenticated by MCP clientInfo; human-only enforcement is an API boundary, not an OS identity guarantee.
+
+## 2026-10-07 — MCP M6 implementation decisions
+
+- Registration previews never execute. `--yes` is the explicit consent flag; existing target
+  configs and overwritten skill files are backed up first. Claude/Codex/Hermes flags were
+  checked through installed CLI help; OpenClaw/Cursor formats use official documentation.
+- The plan's generic OpenClaw snippet was superseded: OpenClaw's native registry is
+  `mcp.servers`, with `mcp set <name> <json>`. Hermes uses its verified `mcp add` CLI and
+  documents equivalent YAML. Codex/Hermes/OpenClaw support user registration in this helper;
+  project scope is refused rather than silently targeting a different scope. Claude/Cursor
+  support both. Project registration pins an absolute study path.
+- Claude backups honor its `CLAUDE_CONFIG_DIR/.claude.json` override; default is
+  `~/.claude.json`. No real client configuration was inspected or changed during this work.
+- The optional 38-line skill is copied only with `--yes --with-skill` to supported clients,
+  and is included in the wheel. Generic JSON output is valid JSON and has no automatic target.
+- Doctor queries list commands with bounded timeouts and returns presence only, never
+  config contents. The wheel validation used an isolated PATH with no installed client CLIs.
+- Additional review fixes: MCP checkout returns a compact overview rather than Session's
+  internal state; new briefs redact known environment credentials before persistence while
+  retaining other verbatim answers; unexpected submitted-step failures freeze evidence.
+  Parquet row metadata and an 8 MiB table-file cap avoid reading oversized summary inputs.
+- ClientInfo is attribution, not authentication. A same-user unrestricted shell can invoke
+  the human CLI; claims and agent guide state this boundary. Arbitrary generated artifact
+  semantics are not proved by table/image bounds.
+- M7 belongs to the author and requires actual client/provider runs. It is not substituted
+  with SDK tests; no live provider or original-data run was attempted.

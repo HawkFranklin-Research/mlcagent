@@ -6,7 +6,19 @@ Written 2026-10-06. When the code is done, it will be reviewed against section 1
 
 ---
 
-## Status (reviewed 2026-10-06 at commit `61cb041`)
+## Current status — 2026-10-07
+
+MCP M0–M6 is implemented; see [plan_mcp.md](plan_mcp.md) and [docs/mcp.md](docs/mcp.md).
+The six missing engine-rule regressions, Worker repair, budget stop, rate-limit retry and
+credential canary tests are now permanent offline tests. Brain/driver synthetic MCP runs,
+submitted-code bypass checks, approvals, concurrency, attribution, privacy and registration
+helpers are covered. Final validation totals are in [implementation status](docs/IMPLEMENTATION_STATUS.md).
+M7 is explicitly an author-run client/provider checklist, pending. Original anemia data,
+live providers, full survival scientific validation and native macOS/Windows remain pending.
+
+## Baseline review (2026-10-06 at commit `61cb041`)
+
+The following baseline results are historical; the current MCP status above supersedes its test gaps.
 
 Legend: **✅ done** (code at the named location + test) · **🟡 done, untested or partial** · **⬜ not started** · **🔁 redesigned** (the code differs from the original spec; see R-list below).
 
@@ -23,21 +35,15 @@ History:
 - Test suite: `1820066`.
 - Distribution A–E: `b371aa5` … `61cb041`.
 
-Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_distribution.prompt.md`. **MCP docking is planned separately in [`plan_mcp.md`](plan_mcp.md)**; the core invariant tests below are its prerequisite. Running log: `docs/IMPLEMENTATION_STATUS.md`, `CHANGELOG.md`, `docs/DECISIONS.md`.
+Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_distribution.prompt.md`. **MCP docking is implemented through M6 in [`plan_mcp.md`](plan_mcp.md)**; its prerequisite tests are complete. Running log: `docs/IMPLEMENTATION_STATUS.md`, `CHANGELOG.md`, `docs/DECISIONS.md`.
 
 **Still open:**
-- **Invariant tests missing** (§13 item 1). Each needs a dedicated test:
-  - I3 (`GateBlocked`);
-  - I4 (model output cannot satisfy a sub-goal);
-  - I5 (invalid Navigator output → repair → fallback);
-  - I6 (layer-1 scope rejection makes zero model calls);
-  - I8 (step folder immutable after completion);
-  - I9 (`FactRejected` for a missing or invalid citation).
+- **Invariant test gaps closed in MCP M0:** `tests/integration/test_invariants.py` now covers I3/I4/I5/I6/I8/I9.
 - **No real model calls yet:** Navigator options, fact extraction, Inspector, OpenAI/OpenRouter providers.
 - **The §11 golden run on the real anemia data is not done;** the synthetic fixtures in `tests/fixtures/` stand in for it.
 - **Template content v0.2.0** (D2): short goals, sub-goals and Do/Save/Record action prompts were written for both templates, plus an output contract in the Worker prompt (`docs/templates.md` → *Writing content*). The author should review the concrete defaults (split fractions, model families, primary metrics).
 - **Native macOS/Windows not validated**; only level-B unit tests and CI definitions exist.
-- **P9 remainder:** JSON-RPC server, Ink/Electron clients, Illustrator, ChatGPT-account login, opencode free models.
+- **P9 remainder:** general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT-account login, opencode free models.
 
 ### Redesigns and additions relative to the original spec (R-list)
 
@@ -122,17 +128,17 @@ Machine (checked 2026-10-06): Linux, Python 3.13 (`/home/prime/miniconda3/bin/py
 
 ## 3. Invariants (each needs code plus a test)
 
-| ID | Invariant | Enforced in | Status (2026-10-06) |
+| ID | Invariant | Enforced in | Status (2026-10-07) |
 |---|---|---|---|
 | I1 | The event log is append-only. Each record carries `prev_hash` (sha256 of the previous line), and `mlca log verify` detects any edit | `mlca/log/store.py` | ✅ `log/store.py` (+R1) · `tests/unit/test_store.py` |
 | I2 | Project state is a pure function of the event log, so replay gives an identical state | `mlca/log/replay.py` | ✅ `log/replay.py: replay` · replay/`replay --verify` in `tests/integration/test_default_path.py` |
-| I3 | An event can be entered only if its gate passes. Otherwise a `GateBlocked` record is written and nothing runs | `mlca/engine/gates.py` | 🟡 `engine/gates.py: check` · used end to end; **no dedicated `GateBlocked` test** |
-| I4 | A sub-goal is satisfied only by its check (or by an explicit `user_confirm` check, logged as a human decision). Model output can never mark a sub-goal satisfied | `mlca/engine/checks.py` | 🟡 `engine/checks.py: run_all/evaluate` · **no test that model output cannot satisfy a sub-goal** |
-| I5 | Options are always instances of the current event's action catalog. The engine validates every option, and an invalid Navigator output gets one repair attempt, then falls back to the template's `default_options` | `mlca/engine/options.py` | 🟡 `engine/options.py: validate/fallback`, `roles/navigator.py: propose_options` (one repair) · fallback tested (`tests/unit/test_options.py`); **Navigator repair→fallback untested** |
-| I6 | The custom option is appended by the engine, never by the Navigator. A custom instruction passes the scope guard (two layers) before any code is generated | `mlca/engine/scope_guard.py` | 🟡 `engine/scope_guard.py: layer_one`, `api.py: custom` · **no test that layer-1 rejection makes zero model calls** |
+| I3 | An event can be entered only if its gate passes. Otherwise a `GateBlocked` record is written and nothing runs | `mlca/engine/gates.py` | ✅ MCP M0: `tests/integration/test_invariants.py`; MCP guard/bypass paths in `tests/mcp/`. |
+| I4 | A sub-goal is satisfied only by its check (or by an explicit `user_confirm` check, logged as a human decision). Model output can never mark a sub-goal satisfied | `mlca/engine/checks.py` | ✅ MCP M0: `tests/integration/test_invariants.py`; MCP guard/bypass paths in `tests/mcp/`. |
+| I5 | Options are always instances of the current event's action catalog. The engine validates every option, and an invalid Navigator output gets one repair attempt, then falls back to the template's `default_options` | `mlca/engine/options.py` | ✅ MCP M0: `tests/integration/test_invariants.py`; MCP guard/bypass paths in `tests/mcp/`. |
+| I6 | The custom option is appended by the engine, never by the Navigator. A custom instruction passes the scope guard (two layers) before any code is generated | `mlca/engine/scope_guard.py` | ✅ MCP M0: `tests/integration/test_invariants.py`; MCP guard/bypass paths in `tests/mcp/`. I6: brain mode deliberately skips semantic layer 2. |
 | I7 | The test partition is unreadable to step scripts until `TestUnlocked` is in the event log; enforcement level recorded (section 7.4) | `mlca/sandbox/` | ✅ `sandbox/vault.py`, `sandbox/bwrap.py`, `api.py: unlock_test` (+R7, R8) · `tests/integration/test_test_lock.py`, `test_sandbox.py` |
-| I8 | Every step is a standalone script that reads only declared inputs and writes only to its own step folder. Step folders are immutable after `StepCompleted` | `mlca/runner/` | 🟡 `runner/run_step.py`, `runner/artefacts.py: freeze` · standalone replay tested; **no immutability test** |
-| I9 | Every fact cites an existing artefact (path + sha256); facts without a valid citation are rejected | `mlca/engine/facts.py` | 🟡 `engine/facts.py: validate`, `engine/turn.py` · **no `FactRejected` test** |
+| I8 | Every step is a standalone script that reads only declared inputs and writes only to its own step folder. Step folders are immutable after `StepCompleted` | `mlca/runner/` | ✅ MCP M0: `tests/integration/test_invariants.py`; MCP guard/bypass paths in `tests/mcp/`. |
+| I9 | Every fact cites an existing artefact (path + sha256); facts without a valid citation are rejected | `mlca/engine/facts.py` | ✅ MCP M0: `tests/integration/test_invariants.py`; MCP guard/bypass paths in `tests/mcp/`. |
 | I10 | Every model request writes one usage record and one egress record; raw data rows are never sent unless `privacy.allow_sample_rows: true` | `mlca/llm/client.py` | ✅ `llm/client.py`, `llm/usage.py`, `llm/egress.py` · usage == egress lines in `test_default_path.py`; real providers untested |
 | I11 | Preprocessing transforms are fitted only on the training partition, so fitting on validation or test is a check failure (section 7.4.4) | `templates/*/checks.py` + runtime helper | ✅ `mlca_runtime/__init__.py: fit_record`, `engine/checks.py` (`fit_on_train_only`), `runner/static_checks.py` (+R10) · `tests/unit/test_scientific_guards.py` |
 
@@ -500,7 +506,7 @@ Budgets (config, defaults): `worker.max_attempts: 3`; `turn.max_cost_usd: 1.00`,
 
 ### 7.2 Gates and checks
 
-> **Status:** ✅ `engine/gates.py`, `engine/checks.py`; `user_confirm` via `api.py: confirm`. 🟡 No dedicated test for I3/I4.
+> **Status:** ✅ `engine/gates.py`, `engine/checks.py`; `user_confirm` via `api.py: confirm`. ✅ I3/I4 dedicated regressions in `test_invariants.py` (MCP M0).
 
 - Gates are lists of check specs evaluated against `ProjectState` (+ artefact files for file-based checks). Evaluation results are logged.
 - Checks run after every step and on `mlca status --recheck`. A check never calls a model.
@@ -508,7 +514,7 @@ Budgets (config, defaults): `worker.max_attempts: 3`; `turn.max_cost_usd: 1.00`,
 
 ### 7.3 Scope guard (`engine/scope_guard.py`)
 
-> **Status:** ✅ `engine/scope_guard.py: layer_one`, `roles/navigator.py: classify_scope`, `api.py: custom`. 🟡 The zero-model-call test for layer 1 is missing (I6).
+> **Status:** ✅ `engine/scope_guard.py: layer_one`, `roles/navigator.py: classify_scope`, `api.py: custom`. ✅ Layer-1 zero-model-call tests in `test_invariants.py` and `tests/mcp/test_guards.py`. Brain mode skips semantic layer 2 by design.
 
 Layer 1 (deterministic, no model):
 - reject if the text matches any `deny_patterns` of the current event;
@@ -830,7 +836,7 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 
 ### P5: LLM layer, usage, egress, fake provider
 
-> **Status:** 🟡 code done (`3bfa0c1`); usage/egress counted in `test_default_path.py`. **Missing:** a structured-output repair test, a 429 backoff test, the key-never-written grep test, and the `@pytest.mark.live` provider smoke test.
+> **Status:** 🟡 code done (`3bfa0c1`); usage/egress counted in `test_default_path.py`. **MCP M0 update:** deterministic structured repair/fallback, 429 retry and credential-canary persistence tests now pass in `test_invariants.py`. The live provider smoke test remains deferred.
 - `llm/*`.
 - **Tests:**
   - the fake provider replays a script;
@@ -845,7 +851,7 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 
 ### P6: roles and the turn loop, headless end to end
 
-> **Status:** 🟡 done (`94cdc06`). Full synthetic path + `replay --verify` pass (`tests/integration/test_default_path.py`). **Missing:** the invalid-Navigator-options test (I5), the layer-1 zero-call test (I6), the `FactRejected` test (I9), the Worker repair-loop test (`StaticCheckFailed`/failed run → repair → `StepFailed` after `max_attempts`) and the budget-stop test. The golden run uses synthetic data, not anemia (§11).
+> **Status:** 🟡 done (`94cdc06`). Full synthetic path + `replay --verify` pass (`tests/integration/test_default_path.py`). **MCP M0–M4 update:** invalid Navigator output, zero-call scope refusal, invalid facts, Worker repair, budget stop and terminal attempt limits now have offline regressions in `test_invariants.py`, `test_mcp_engine.py` and `tests/mcp/`. The golden run uses synthetic data, not anemia (§11).
 - `roles/*` (navigator, worker), `prompts/*.md`, `engine/turn.py`, `options.py`, `scope_guard.py`, `facts.py`, `state_view.py`, `api.py`, `cli/main.py` (all commands in 7.8 except `report`, which comes in P7).
 - **Tests:**
   - invalid Navigator options → repair → fallback to `default_options` (I5);
@@ -878,7 +884,7 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 
 ### P9: later (each needs the author's go-ahead; do not start without it)
 
-> **Status:** 🔁 partly started on the author's go-ahead: **distribution** done and prepared, not published (R16; prompt 02; `b371aa5` … `61cb041`). It includes `mlca web` (browser TUI through `textual-serve`). ⬜ Still open: JSON-RPC server, Ink/Electron clients, Illustrator, ChatGPT login, opencode free models.
+> **Status:** 🔁 partly started on the author's go-ahead: **distribution** done and prepared, not published (R16; prompt 02; `b371aa5` … `61cb041`). It includes `mlca web` (browser TUI through `textual-serve`). ⬜ Still open: general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT login, opencode free models.
 - JSON-RPC server over stdio exposing `api.Session` (records as notifications); reference architecture: Hermes `tui_gateway/` (Python) ↔ `ui-tui/` (Ink/React) and `apps/desktop/` (Electron).
 - Ink TUI and Electron desktop clients in `clients/`; banner rendering style from opencode `packages/tui/src/logo.ts` + `component/logo.tsx` (copy with attribution).
 - `npx mlca` launcher: an npm package that installs/updates the Python core with uv and starts it (reference: Hermes `apps/bootstrap-installer/`, deepseek `npx @deepseek-ai/dsh`).
@@ -944,7 +950,7 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 
 ## 12. Open decisions for the author (record answers in `docs/DECISIONS.md`)
 
-| ID | Decision | Default until decided | Status (2026-10-06) |
+| ID | Decision | Default until decided | Status (2026-10-07) |
 |---|---|---|---|
 | D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | placeholder file, no licence granted | ⬜ open; **blocks publishing** (`scripts/verify_release.py` refuses the placeholder) |
 | D2 | Content of the `tabular_classification` template: event goals, sub-goals, actions, prompts, scope text | agent writes short DRAFT content | 🟡 v0.2.0 content written with the author's direction (2026-10-06); defaults await author review |
@@ -960,7 +966,7 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 ## 13. Evaluation checklist (used to review the finished work)
 
 > **Review 2026-10-06 (`61cb041`):**
-> 1. 🟡 I1, I2, I7, I10, I11 have tests; I3, I4, I5, I6, I8, I9 do not.
+> 1. ✅ All eleven invariants have offline regression coverage after MCP M0; native/live validation remains pending.
 > 2. ✅ 54 passed / 1 skipped, ruff clean, `replay --verify` reproduces. Offline tests need a primed uv cache.
 > 3. ✅ No model names or keys in `src/`.
 > 4. 🟡 Mechanisms present; only some are proven by tests.
@@ -968,7 +974,7 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 > 6. ✅ Level A verified by test and manual probe; level-B limits documented in `docs/security-model.md`.
 > 7. ✅ Line counts match; the sample-row guard is untested.
 > 8. ✅ Reports regenerate from the log alone.
-> 9. 🟡 Freeze exists; edits are detected by `ScriptEditedByUser`; no immutability test.
+> 9. ✅ Freeze, edit detection and read-only permission regression are covered after MCP M0.
 > 10. ✅ No remote, nothing published.
 > 11. ✅ Nothing copied.
 > 12. ✅ `docs/DECISIONS.md` maintained.

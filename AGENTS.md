@@ -1,6 +1,6 @@
 # MLCA implementation instructions
 
-Read plan.md and docs/DECISIONS.md before editing. Implement P0–P8; P9 requires a separate request.
+Read plan.md and docs/DECISIONS.md before editing. Implement P0–P8 and the explicitly authorized MCP plan (M0–M6); M7 is the author-run checklist. Other P9 work requires a separate request.
 All code is new. Reference repositories, legacy data and the paper repository are read-only.
 Use the plan's neutral vocabulary. Enforce policies in code; describe enforcement limits accurately.
 Models are configured, not hard-coded. Credentials come only from environment variables.

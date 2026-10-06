@@ -48,6 +48,7 @@ packages = ["src/mlca", "src/mlca_runtime"]
 [tool.hatch.build.targets.wheel.force-include]
 "templates" = "mlca/resources/templates"
 "styles" = "mlca/resources/styles"
+"skills" = "mlca/resources/skills"
 "packaging/NAME" = "mlca/resources/packaging/NAME"
 "assets/banner.txt" = "mlca/resources/assets/banner.txt"
 "assets/logo.txt" = "mlca/resources/assets/logo.txt"

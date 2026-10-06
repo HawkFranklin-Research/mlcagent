@@ -22,3 +22,13 @@ creates a fresh analysis environment, reruns historical scripts and compares non
 metric manifests. It performs no new LLM generation. Floating-point/platform/library nondeterminism
 may produce mismatches; these are reported rather than hidden. Built-in report steps are checked for
 evidence consistency; split operations are regenerated using the recorded seed and parameters.
+
+## MCP records and pending work
+
+Actors include `agent:<client>/<version>` alongside historical engine/model/user actors.
+`ApprovalRequested` freezes request context; `ApprovalResolved` records the human decision.
+`ScriptRequested` persists a redacted work order, hash and attempt number. `ScriptWritten`
+identifies its Worker/agent source. A pending external step can resume after reopening.
+Abandoning a step records StepFailed and freezes its evidence. Branches cannot erase exposure.
+MCP usage envelopes count external tools separately from model requests and omit unavailable
+external inference costs; read-only MCP calls write request evidence, not SessionStarted log noise.

@@ -68,9 +68,26 @@ def mcp_command(
 def mcp_doctor():
     import asyncio
 
+    from mlca.mcp.install import client_status
     from mlca.mcp.server import probe
 
-    output(asyncio.run(probe()))
+    result = asyncio.run(probe())
+    result["clients"] = client_status()
+    output(result, True)
+
+
+@mcp_app.command("install")
+def mcp_install(
+    ctx: typer.Context,
+    client: str = typer.Option(...),
+    scope: str = typer.Option("user"),
+    mode: str = typer.Option("brain"),
+    yes: bool = typer.Option(False, "--yes"),
+    with_skill: bool = typer.Option(False, "--with-skill"),
+):
+    from mlca.mcp.install import install
+
+    print(install(client, scope, mode, _path(ctx), yes, with_skill))
 
 
 @app.command()

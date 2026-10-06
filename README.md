@@ -26,7 +26,7 @@ The template content is short by design; see [templates](docs/templates.md).
 
 ## Two ways to use MLCA
 
-| | **Standalone** (available now) | **Docked to another agent through MCP** (planned: [plan_mcp.md](plan_mcp.md)) |
+| | **Standalone** (available now) | **Docked to another agent through MCP** (available now) |
 |---|---|---|
 | Interface | terminal UI (`mlca`), CLI, browser view of the TUI (`mlca web`) | Claude Code, Codex, Hermes, OpenClaw, Cursor or any MCP client, connected with `mlca mcp` |
 | Who proposes options and writes scripts | MLCA's own **Navigator** and **Worker** models (your API keys: OpenAI, OpenRouter or a local OpenAI-compatible server) | **Brain mode** (default): the connected agent proposes options and writes each script; MLCA makes no model calls. **Driver mode**: the agent only chooses; MLCA's Navigator and Worker do the work |
@@ -39,6 +39,19 @@ In brain mode, a script written by Claude or Codex goes through exactly the same
 - the sandbox;
 - the training-only fit rule;
 - the test lock.
+
+## Connect an agent
+
+```sh
+mlca mcp install --client claude --with-skill       # preview
+mlca mcp install --client claude --with-skill --yes # register only with explicit consent
+mlca mcp install --client codex                    # preview
+mlca mcp doctor                                   # real stdio tool discovery
+```
+
+The server is included in the Python package. See [MCP docking](docs/mcp.md) for Hermes,
+OpenClaw, Cursor, work orders, polling, privacy and approval commands. Human-only enforcement
+is a Session/MCP boundary; MCP client identity is attribution, not OS authentication.
 
 ## Install
 
@@ -115,13 +128,12 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 
 ## Status
 
-- **Core (plan.md):** P0–P8 built; distribution prepared but not published. 54 offline tests pass.
+- **Core (plan.md):** P0–P8 built; distribution prepared but not published. **81 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
-  - tests for six engine rules (listed in [plan.md](plan.md) → *Status*);
   - runs with real providers;
   - the study on real data;
   - native macOS and Windows checks.
-- **MCP docking ([plan_mcp.md](plan_mcp.md)):** planned, not implemented.
+- **MCP docking ([plan_mcp.md](plan_mcp.md)):** M0–M6 implemented: 14 stdio tools, brain/driver modes, human approvals, filtered evidence and usage records. Manual runs in real clients (M7) remain pending.
 - **Licence and package name:** author decisions, still open; the placeholder `LICENSE` grants no licence.
 
 ## Documentation
@@ -129,6 +141,7 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 | Document | Contents |
 |---|---|
 | [plan.md](plan.md) | Core design, phases and current status |
+| [docs/mcp.md](docs/mcp.md) | Client setup, tool loop, approvals and manual validation |
 | [plan_mcp.md](plan_mcp.md) | MCP server: docking modes, tools, safety, phases |
 | [docs/architecture.md](docs/architecture.md) | Components and data flow |
 | [docs/templates.md](docs/templates.md) | Writing workflow templates (short-content rules) |
