@@ -1,0 +1,158 @@
+responses:
+- match:
+    role: worker
+    action_id: audit_schema
+  text: '```python
+
+    import pandas as pd, mlca_runtime as m
+
+    df = pd.read_csv(list(m.inputs().values())[0])
+
+    s = pd.DataFrame({"column": df.columns, "dtype": df.dtypes.astype(str).values,
+    "missing": df.isna().sum().values})
+
+    m.save_table(s, "schema.json")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: describe_distributions
+  text: '```python
+
+    import pandas as pd, mlca_runtime as m
+
+    df = pd.read_csv(list(m.inputs().values())[0])
+
+    m.save_table(df.describe().reset_index(), "distributions.csv")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: fit_preprocessing
+  text: '```python
+
+    import pandas as pd, mlca_runtime as m
+
+    from sklearn.preprocessing import StandardScaler
+
+    tr = pd.read_parquet(m.inputs()["train"])
+
+    X = tr.drop(columns="y")
+
+    sc = m.fit_record(StandardScaler(), X, "train")
+
+    m.save_model(sc, "preprocessor.pkl")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: select_features
+  text: '```python
+
+    import pandas as pd, mlca_runtime as m
+
+    from sklearn.feature_selection import SelectKBest
+
+    tr = pd.read_parquet(m.inputs()["train"])
+
+    sel = m.fit_record(SelectKBest(k=2), tr.drop(columns="y"), "train", y=tr["y"])
+
+    m.save_model(sel, "selector.pkl")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: train_logistic
+  text: '```python
+
+    import pandas as pd, mlca_runtime as m
+
+    from sklearn.pipeline import make_pipeline
+
+    from sklearn.preprocessing import StandardScaler
+
+    from sklearn.linear_model import LogisticRegression
+
+    tr = pd.read_parquet(m.inputs()["train"])
+
+    pipe = m.fit_record(make_pipeline(StandardScaler(), LogisticRegression()), tr.drop(columns="y"),
+    "train", y=tr["y"])
+
+    m.save_model(pipe, "model.pkl")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: score_validation
+  text: '```python
+
+    import pickle, pandas as pd, mlca_runtime as m
+
+    from sklearn.metrics import roc_auc_score
+
+    i = m.inputs(); va = pd.read_parquet(i["val"])
+
+    model = pickle.load(open(i["latest_model"], "rb"))
+
+    auc = roc_auc_score(va["y"], model.predict_proba(va.drop(columns="y"))[:, 1])
+
+    m.record_metric("roc_auc", auc, "val")
+
+    m.save_table(pd.DataFrame({"metric": ["roc_auc"], "value": [auc]}), "validation_metrics.csv")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: score_test
+  text: '```python
+
+    import pickle, pandas as pd, mlca_runtime as m
+
+    from sklearn.metrics import roc_auc_score
+
+    i = m.inputs(); te = pd.read_parquet(i["test"])
+
+    model = pickle.load(open(i["latest_model"], "rb"))
+
+    auc = roc_auc_score(te["y"], model.predict_proba(te.drop(columns="y"))[:, 1])
+
+    m.record_metric("roc_auc", auc, "test")
+
+    m.save_table(pd.DataFrame({"metric": ["roc_auc"], "value": [auc]}), "test_metrics.csv")
+
+    ```
+
+    '
+- match:
+    role: worker
+    action_id: explain_model
+  text: '```python
+
+    import pickle, pandas as pd, mlca_runtime as m
+
+    i = m.inputs(); model = pickle.load(open(i["latest_model"], "rb"))
+
+    lr = model[-1]
+
+    m.save_table(pd.DataFrame({"feature": ["x1","x2","x3","x4"], "coef": lr.coef_[0]}),
+    "interpretation.csv")
+
+    ```
+
+    '
+- match:
+    role: navigator
+    purpose: scope
+  text: '{"decision": "in_scope", "reason": "test"}'

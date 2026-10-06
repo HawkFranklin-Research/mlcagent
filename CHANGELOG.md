@@ -65,3 +65,6 @@
 - F6: lazy session records, incremental verified log reads and cached branch-head project replay.
 - F7: screen-specific keys, readable TUI logs, orphan-folder prevention, precise tamper/refusal messages
   and removal of the repository-local uv cache. Fit index checks retain exact-index enforcement.
+- Permanent offline regression suite: 40 passing tests, including slow synthetic classification paths,
+  fresh script replay, branch recovery, test-lock lifecycle, namespace denial and headless TUI behavior.
+- F3/F6 revert checks fail as expected; numerical threads and external test scratch keep runs bounded.

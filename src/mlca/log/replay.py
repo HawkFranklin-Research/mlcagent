@@ -31,7 +31,13 @@ def replay(records: list[Record]) -> ProjectState:
             state.pending_options = None
         elif kind == "OptionsProposed":
             state.pending_options = p["options"]
-        elif kind in ("OptionChosen", "CustomInstructionSubmitted", "TurnEnded"):
+        elif kind in (
+            "OptionChosen",
+            "CustomInstructionSubmitted",
+            "TurnEnded",
+            "BranchCreated",
+            "BranchCheckedOut",
+        ):
             state.pending_options = None
         elif kind == "StepStarted":
             state.steps.append(

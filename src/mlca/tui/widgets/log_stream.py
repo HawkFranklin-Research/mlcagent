@@ -27,9 +27,24 @@ def record_summary(record: Any) -> str:
     payload = record.payload
     parts = [
         str(payload[key])
-        for key in ("action_id", "event_id", "subgoal_id", "decision", "reason", "note")
+        for key in (
+            "action_id",
+            "event_id",
+            "step_id",
+            "subgoal_id",
+            "decision",
+            "reason",
+            "note",
+            "text",
+            "client",
+            "name",
+        )
         if key in payload
     ]
+    if "options" in payload:
+        parts.append(f"{len(payload['options'])} options")
+    if "outputs" in payload:
+        parts.append(f"{len(payload['outputs'])} outputs")
     if "passed" in payload:
         parts.append("passed" if payload["passed"] else "pending")
     if "exit_status" in payload:

@@ -10,5 +10,5 @@ class Options(Static):
         self.update(
             text("options")
             + "\n\n"
-            + "\n".join(f"{o['id']}. {o['title']}\n   {o.get('why_now', '')}" for o in options)
+            + "\n".join(f"{o['id']}. {o['title']}\n   {o.get('note', o.get('why_now', ''))}" for o in options)
         )

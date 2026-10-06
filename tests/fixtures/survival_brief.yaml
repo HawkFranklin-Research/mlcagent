@@ -1,0 +1,5 @@
+aim: Estimate survival from synthetic features (harness test only)
+target: duration
+duration: duration
+event_column: observed
+unit: one synthetic row

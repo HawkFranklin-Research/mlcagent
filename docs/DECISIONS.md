@@ -121,3 +121,15 @@
   standard external cache for offline testing, then removed .cache. Repository-local caches are forbidden.
 - Fit-stage requirements are unchanged. Refusals direct read-only work to validate/interpret;
   fit index mismatches report expected/received counts while retaining exact index-hash enforcement.
+
+## 2026-10-06 — Permanent functional suite completed
+- Reviewer-derived synthetic fixtures drive real separate analysis environments, both available
+  sandbox levels, script replay, test lock cleanup, branch recovery and headless Textual checks.
+- Dependency priming occurs before tests. The suite itself sets UV_OFFLINE=1. Its external scratch
+  root avoids /tmp quotas and every project fixture cleans its immutable step directories afterward.
+- Generated subprocesses limit BLAS/OpenMP numerical threads to one for bounded small-step overhead
+  and deterministic execution. This does not change fit partition or scope requirements.
+- Branch replay clears inherited pending options; the TUI displays exhaustion notes as readable text.
+- Full suite: 40 passed in 263.43s. Reverting F3 yielded KeyError: 'action'; reverting F6 yielded
+  Unexpected full log reread. Both fixed versions were restored before the passing full run.
+- Prompt 02 may now proceed: distribution files and local dry runs only; no publication authorization.
