@@ -1,0 +1,33 @@
+# DRAFT – author to finalise
+id: features
+title: Features
+goal: Choose features with training-only fitted transformations.
+gate:
+- event_done: preprocess
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: select_features
+    output: selector.pkl
+- id: fit_verified
+  text: Training-only fit evidence recorded
+  check:
+    type: fit_on_train_only
+actions:
+- select_features
+- retain_features
+default_options:
+- select_features
+done_when: all_subgoals
+custom_scope:
+  description: Choose features with training-only fitted transformations.
+  deny_patterns:
+  - (?i)\b(train|fit)\b.*\bmodel\b
+  - (?i)\btest (set|split|partition)\b
+  readable_inputs:
+  - train
+  - val
+  - prior_outputs
+max_options: 4

@@ -1,0 +1,27 @@
+# DRAFT – author to finalise
+id: report
+title: Report
+goal: Generate methods, provenance, figures and usage reports.
+gate:
+- event_done: interpret
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: generate_reports
+    output: report_index.json
+actions:
+- generate_reports
+default_options:
+- generate_reports
+done_when: all_subgoals
+custom_scope:
+  description: Generate methods, provenance, figures and usage reports.
+  deny_patterns: []
+  readable_inputs:
+  - train
+  - val
+  - prior_outputs
+  - test
+max_options: 4

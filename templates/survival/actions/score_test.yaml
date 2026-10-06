@@ -1,0 +1,27 @@
+# DRAFT – author to finalise
+id: score_test
+event: test
+title: Score the frozen model on test data
+params: {}
+prompt: 'Score the frozen model on test data. Target and study context are in the
+  supplied brief. Read declared inputs using mlca_runtime.inputs(). Save the required
+  output test_metrics.csv. Use mlca_runtime save_table, save_figure and record_metric
+  for evidence. Do not send data, install packages, access undeclared paths or use
+  the test set outside its event. Load the latest completed model and generate predictions
+  only; do not refit or select parameters. Record metrics with split="val" or split="test"
+  matching this event. This is a survival study: keep duration and censoring indicator
+  separate and use censoring-aware metrics. '
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+- ref: test
+outputs:
+- name: test_metrics.csv
+  kind: table
+  required: true
+fact_candidates: []
+reads_test: true
+timeout_s: 300
+methods_text: Score the frozen model on test data.
+builtin: null

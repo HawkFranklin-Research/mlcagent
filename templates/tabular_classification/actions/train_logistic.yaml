@@ -1,0 +1,27 @@
+# DRAFT – author to finalise
+id: train_logistic
+event: model
+title: Train logistic regression
+params: {}
+prompt: 'Train logistic regression. Target and study context are in the supplied brief.
+  Read declared inputs using mlca_runtime.inputs(). Save the required output model.pkl.
+  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
+  send data, install packages, access undeclared paths or use the test set outside
+  its event. Load the frozen training partition with its original row index. Fit every
+  estimator or pipeline with mlca_runtime.fit_record(estimator, X, "train", y=target_if_needed);
+  never call fit or fit_transform directly. Save fitted estimators with mlca_runtime.save_model.
+  Include fitted preprocessing/selection in the predictive pipeline so subsequent
+  evaluation uses identical transformations. '
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+outputs:
+- name: model.pkl
+  kind: model
+  required: true
+fact_candidates: []
+reads_test: false
+timeout_s: 300
+methods_text: Train logistic regression.
+builtin: null

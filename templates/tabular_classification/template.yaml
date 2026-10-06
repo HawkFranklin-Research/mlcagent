@@ -1,0 +1,41 @@
+# DRAFT – author to finalise
+id: tabular_classification
+version: 0.1.0
+title: Tabular Classification
+description: 'DRAFT: author review required.'
+brief_questions:
+- id: aim
+  text: What is the study aim?
+- id: target
+  text: Which column is the target or duration?
+- id: unit
+  text: What does one row represent?
+events:
+- onboard
+- data
+- eda
+- split
+- preprocess
+- features
+- model
+- validate
+- test
+- interpret
+- report
+transitions:
+  loops:
+  - from: validate
+    to:
+    - preprocess
+    - features
+    - model
+  goto: []
+style: default
+default_runtime_packages:
+- numpy
+- pandas
+- scipy
+- scikit-learn
+- matplotlib
+- seaborn
+- pyarrow

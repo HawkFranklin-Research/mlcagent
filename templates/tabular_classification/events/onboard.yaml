@@ -1,0 +1,29 @@
+# DRAFT – author to finalise
+id: onboard
+title: Onboard
+goal: Confirm the study aim, target, unit of analysis and supervision responsibilities.
+gate: []
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: confirm_brief
+    output: brief.json
+- id: brief_confirmed
+  text: Author confirms aim, unit and target
+  check:
+    type: user_confirm
+actions:
+- confirm_brief
+default_options:
+- confirm_brief
+done_when: all_subgoals
+custom_scope:
+  description: Confirm the study aim, target, unit of analysis and supervision responsibilities.
+  deny_patterns:
+  - (?i)\b(train|fit)\b.*\bmodel\b
+  - (?i)\btest (set|split|partition)\b
+  readable_inputs:
+  - registered_data
+max_options: 4

@@ -7,3 +7,7 @@
 ## P1 — Event log and state
 - Payload schemas, durable hash-chained append, head checkpoint, pure replay and branch ancestry implemented.
 - Runtime validation deferred.
+
+## P2 — Template model and deterministic checks
+- Declarative schemas, validation, gates and deterministic sub-goal checks implemented.
+- Draft template content follows in this phase. Validation deferred.

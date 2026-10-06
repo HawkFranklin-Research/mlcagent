@@ -1,0 +1,21 @@
+# DRAFT – author to finalise
+id: confirm_brief
+event: onboard
+title: Record the brief
+params: {}
+prompt: 'Record the brief. Target and study context are in the supplied brief. Read
+  declared inputs using mlca_runtime.inputs(). Save the required output brief.json.
+  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
+  send data, install packages, access undeclared paths or use the test set outside
+  its event. '
+inputs:
+- ref: registered_data
+outputs:
+- name: brief.json
+  kind: report
+  required: true
+fact_candidates: []
+reads_test: false
+timeout_s: 300
+methods_text: Record the brief.
+builtin: inventory

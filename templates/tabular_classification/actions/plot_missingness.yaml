@@ -1,0 +1,21 @@
+# DRAFT – author to finalise
+id: plot_missingness
+event: eda
+title: Plot missingness
+params: {}
+prompt: 'Plot missingness. Target and study context are in the supplied brief. Read
+  declared inputs using mlca_runtime.inputs(). Save the required output missingness.png.
+  Use mlca_runtime save_table, save_figure and record_metric for evidence. Do not
+  send data, install packages, access undeclared paths or use the test set outside
+  its event. '
+inputs:
+- ref: registered_data
+outputs:
+- name: missingness.png
+  kind: figure
+  required: true
+fact_candidates: []
+reads_test: false
+timeout_s: 300
+methods_text: Plot missingness.
+builtin: null

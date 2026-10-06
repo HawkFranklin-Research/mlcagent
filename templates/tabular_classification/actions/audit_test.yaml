@@ -1,0 +1,26 @@
+# DRAFT – author to finalise
+id: audit_test
+event: test
+title: Audit frozen test predictions
+params: {}
+prompt: 'Audit frozen test predictions. Target and study context are in the supplied
+  brief. Read declared inputs using mlca_runtime.inputs(). Save the required output
+  test_predictions.csv. Use mlca_runtime save_table, save_figure and record_metric
+  for evidence. Do not send data, install packages, access undeclared paths or use
+  the test set outside its event. Load the latest completed model and generate predictions
+  only; do not refit or select parameters. Record metrics with split="val" or split="test"
+  matching this event. '
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+- ref: test
+outputs:
+- name: test_predictions.csv
+  kind: table
+  required: true
+fact_candidates: []
+reads_test: true
+timeout_s: 300
+methods_text: Audit frozen test predictions.
+builtin: null

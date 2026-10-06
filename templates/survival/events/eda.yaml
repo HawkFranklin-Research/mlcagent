@@ -1,0 +1,27 @@
+# DRAFT – author to finalise
+id: eda
+title: Eda
+goal: Describe distributions and missingness without fitting predictive models.
+gate:
+- event_done: data
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: describe_distributions
+    output: distributions.csv
+actions:
+- describe_distributions
+- plot_missingness
+default_options:
+- describe_distributions
+done_when: all_subgoals
+custom_scope:
+  description: Describe distributions and missingness without fitting predictive models.
+  deny_patterns:
+  - (?i)\b(train|fit)\b.*\bmodel\b
+  - (?i)\btest (set|split|partition)\b
+  readable_inputs:
+  - registered_data
+max_options: 4

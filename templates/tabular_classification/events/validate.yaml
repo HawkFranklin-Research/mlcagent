@@ -1,0 +1,32 @@
+# DRAFT – author to finalise
+id: validate
+title: Validate
+goal: Compare models and freeze the selection using validation data only.
+gate:
+- event_done: model
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: score_validation
+    output: validation_metrics.csv
+- id: model_selected
+  text: Author freezes model selection and threshold
+  check:
+    type: user_confirm
+actions:
+- score_validation
+- audit_validation
+default_options:
+- score_validation
+done_when: all_subgoals
+custom_scope:
+  description: Compare models and freeze the selection using validation data only.
+  deny_patterns:
+  - (?i)\btest (set|split|partition)\b
+  readable_inputs:
+  - train
+  - val
+  - prior_outputs
+max_options: 4

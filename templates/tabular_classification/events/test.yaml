@@ -1,0 +1,32 @@
+# DRAFT – author to finalise
+id: test
+title: Test
+goal: Evaluate the frozen model on explicitly unlocked test data.
+gate:
+- event_done: validate
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: score_test
+    output: test_metrics.csv
+- id: test_unlocked
+  text: Test use explicitly authorized
+  check:
+    type: test_unlocked
+actions:
+- score_test
+- audit_test
+default_options:
+- score_test
+done_when: all_subgoals
+custom_scope:
+  description: Evaluate the frozen model on explicitly unlocked test data.
+  deny_patterns: []
+  readable_inputs:
+  - train
+  - val
+  - prior_outputs
+  - test
+max_options: 4

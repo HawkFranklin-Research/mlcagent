@@ -1,0 +1,33 @@
+# DRAFT – author to finalise
+id: preprocess
+title: Preprocess
+goal: Fit preprocessing on training rows and apply it to validation rows.
+gate:
+- event_done: split
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: fit_preprocessing
+    output: preprocessor.pkl
+- id: fit_verified
+  text: Training-only fit evidence recorded
+  check:
+    type: fit_on_train_only
+actions:
+- fit_preprocessing
+- audit_preprocessing
+default_options:
+- fit_preprocessing
+done_when: all_subgoals
+custom_scope:
+  description: Fit preprocessing on training rows and apply it to validation rows.
+  deny_patterns:
+  - (?i)\b(train|fit)\b.*\bmodel\b
+  - (?i)\btest (set|split|partition)\b
+  readable_inputs:
+  - train
+  - val
+  - prior_outputs
+max_options: 4

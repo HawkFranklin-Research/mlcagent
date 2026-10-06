@@ -1,0 +1,32 @@
+# DRAFT – author to finalise
+id: model
+title: Model
+goal: Train candidate models on training data with recorded fit evidence.
+gate:
+- event_done: features
+subgoals:
+- id: outputs_recorded
+  text: Required artifact produced
+  check:
+    type: output_exists
+    action: train_logistic
+    output: model.pkl
+- id: fit_verified
+  text: Training-only fit evidence recorded
+  check:
+    type: fit_on_train_only
+actions:
+- train_logistic
+- train_alternative
+default_options:
+- train_logistic
+done_when: all_subgoals
+custom_scope:
+  description: Train candidate models on training data with recorded fit evidence.
+  deny_patterns:
+  - (?i)\btest (set|split|partition)\b
+  readable_inputs:
+  - train
+  - val
+  - prior_outputs
+max_options: 4

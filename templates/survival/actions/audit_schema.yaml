@@ -1,0 +1,25 @@
+# DRAFT – author to finalise
+id: audit_schema
+event: data
+title: Audit schema and missingness
+params: {}
+prompt: 'Audit schema and missingness. Target and study context are in the supplied
+  brief. Read declared inputs using mlca_runtime.inputs(). Save the required output
+  schema.json. Use mlca_runtime save_table, save_figure and record_metric for evidence.
+  Do not send data, install packages, access undeclared paths or use the test set
+  outside its event. This is a survival study: keep duration and censoring indicator
+  separate and use censoring-aware metrics. '
+inputs:
+- ref: registered_data
+outputs:
+- name: schema.json
+  kind: table
+  required: true
+fact_candidates:
+- n_rows
+- n_columns
+- missing.total
+reads_test: false
+timeout_s: 300
+methods_text: Audit schema and missingness.
+builtin: null
