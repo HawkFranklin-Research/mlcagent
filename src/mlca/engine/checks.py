@@ -31,23 +31,25 @@ def evaluate(
             )
         return passed, f"Fact {spec['key']} recorded"
     if kind == "output_exists":
-        outputs = [
-            o
-            for s in state.steps
-            if s["status"] == "completed"
-            and s["action_id"] == spec["action"]
-            and s.get("generation", 0) == state.generations.get(s["event_id"], 0)
-            for o in s.get("outputs", [])
-        ]
-        for output in outputs:
-            if output["name"] == spec["output"]:
-                path = root / output["path"]
+        alternatives = spec.get("any_of", [{"action": spec.get("action"), "output": spec.get("output")}])
+        for candidate in alternatives:
+            for step in state.steps:
                 if (
-                    contained(path, root / ".mlca/steps")
-                    and path.is_file()
-                    and sha256(path) == output["sha256"]
+                    step["status"] != "completed"
+                    or step["action_id"] != candidate["action"]
+                    or (event_id is not None and step["event_id"] != event_id)
+                    or step.get("generation", 0) != state.generations.get(step["event_id"], 0)
                 ):
-                    return True, "Output exists and hash matches"
+                    continue
+                for output in step.get("outputs", []):
+                    path = root / output["path"]
+                    if (
+                        output["name"] == candidate["output"]
+                        and contained(path, root / ".mlca/steps")
+                        and path.is_file()
+                        and sha256(path) == output["sha256"]
+                    ):
+                        return True, "Output exists and hash matches"
         return False, "Required output missing or changed"
     if kind == "artefact_hash_recorded":
         paths = [spec["path"]] if "path" in spec else list(state.artefacts)

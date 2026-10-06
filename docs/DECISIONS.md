@@ -76,3 +76,11 @@
   as a grayscale `assets/logo.png` for later desktop use. The source image is the author's own; no
   third-party attribution applies.
 - Banner kept deliberately small (10 rows, no tables or tool lists), unlike Hermes' startup panel.
+
+## 2026-10-06 — Functional review: test authorization and F3
+- Prompt 01 authorizes permanent offline unit/integration/TUI tests, including slow runs; it overrides
+  the earlier test deferral for these fixes. Real-provider and original-data runs remain outside scope.
+- Output checks accept an any-of list as well as the original action/output form. Primary actions must
+  be covered by event sub-goal checks; supporting actions cannot supply required completion evidence.
+- Both draft templates cover alternate split, feature and model actions. Supporting target counts
+  no longer copy schema-audit fact candidates. Scientific template content remains DRAFT.

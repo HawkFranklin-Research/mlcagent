@@ -9,8 +9,11 @@ subgoals:
   text: Required artifact produced
   check:
     type: output_exists
-    action: freeze_stratified
-    output: split.json
+    any_of:
+    - action: freeze_stratified
+      output: split.json
+    - action: freeze_group
+      output: split.json
 - id: split_frozen
   text: Split frozen and hashed
   check:

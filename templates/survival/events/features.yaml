@@ -9,8 +9,11 @@ subgoals:
   text: Required artifact produced
   check:
     type: output_exists
-    action: select_features
-    output: selector.pkl
+    any_of:
+    - action: select_features
+      output: selector.pkl
+    - action: retain_features
+      output: selector_all.pkl
 - id: fit_verified
   text: Training-only fit evidence recorded
   check:

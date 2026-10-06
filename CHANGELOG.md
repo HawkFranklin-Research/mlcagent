@@ -57,3 +57,6 @@
 - Stale artifact/confirmation reuse, branch environment-lock mismatch and user-edited views are guarded.
 - Source formatted and linted; architecture, security, provider/template guides and status documented.
 - Tests, smoke runs and scientific/live validation remain deferred by the author.
+
+## Functional fixes after review
+- F3: any-of required-output checks and validated primary/supporting action roles in both templates.

@@ -21,3 +21,4 @@ reads_test: false
 timeout_s: 300
 methods_text: Create a labelled results figure.
 builtin: null
+role: supporting

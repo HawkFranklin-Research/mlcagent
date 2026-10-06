@@ -57,6 +57,7 @@ class ActionSpec(Spec):
     id: str
     event: str
     title: str
+    role: Literal["primary", "supporting"] = "primary"
     params: dict[str, ParamSpec] = Field(default_factory=dict)
     prompt: str
     inputs: list[dict] = Field(default_factory=list)

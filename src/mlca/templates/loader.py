@@ -79,7 +79,6 @@ def load(path: Path) -> Workflow:
                 raise MlcaUserError(f"{filename}: custom_scope.deny_patterns: {exc}") from exc
     required_check_fields = {
         "fact_present": {"key"},
-        "output_exists": {"action", "output"},
         "metric_present": {"name", "split"},
         "figure_count": {"min"},
         "template_check": {"function"},
@@ -91,11 +90,46 @@ def load(path: Path) -> Workflow:
             if missing:
                 raise MlcaUserError(f"events/{event.id}.yaml: check fields missing: {sorted(missing)}")
             if subgoal.check.type == "output_exists":
-                owner = actions.get(data["action"])
-                if not owner or data["output"] not in {o.name for o in owner.outputs}:
-                    raise MlcaUserError(f"events/{event.id}.yaml: check references unknown output")
+                alternatives = data.get("any_of")
+                if alternatives is None:
+                    alternatives = [{"action": data.get("action"), "output": data.get("output")}]
+                elif "action" in data or "output" in data:
+                    raise MlcaUserError(f"events/{event.id}.yaml: use action/output or any_of, not both")
+                if not isinstance(alternatives, list) or not alternatives:
+                    raise MlcaUserError(f"events/{event.id}.yaml: any_of must be a nonempty list")
+                for candidate in alternatives:
+                    if not isinstance(candidate, dict) or set(candidate) != {"action", "output"}:
+                        raise MlcaUserError(
+                            f"events/{event.id}.yaml: output check requires action and output"
+                        )
+                    owner = actions.get(candidate["action"])
+                    if (
+                        not owner
+                        or owner.event != event.id
+                        or candidate["output"] not in {o.name for o in owner.outputs}
+                    ):
+                        raise MlcaUserError(
+                            f"events/{event.id}.yaml: check references unknown output for {candidate['action']}"
+                        )
             if subgoal.check.type == "template_check" and not (path / "checks.py").is_file():
                 raise MlcaUserError(f"events/{event.id}.yaml: template_check requires trusted checks.py")
+    for event in events.values():
+        covered = set()
+        for subgoal in event.subgoals:
+            data = subgoal.check.model_dump()
+            if "action" in data:
+                covered.add(data["action"])
+            covered.update(item["action"] for item in data.get("any_of", []))
+        for identifier in event.actions:
+            action = actions[identifier]
+            if action.role == "primary" and identifier not in covered:
+                raise MlcaUserError(
+                    f"events/{event.id}.yaml: primary action {identifier} is not covered by a sub-goal check"
+                )
+            if action.role == "supporting" and identifier in covered:
+                raise MlcaUserError(
+                    f"events/{event.id}.yaml: supporting action {identifier} must not be covered by a sub-goal check"
+                )
     for action in actions.values():
         if not re.fullmatch(r"[a-z][a-z0-9_]*", action.id):
             raise MlcaUserError(f"actions/{action.id}.yaml: unsafe action identifier")

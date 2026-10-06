@@ -9,8 +9,11 @@ subgoals:
   text: Required artifact produced
   check:
     type: output_exists
-    action: train_logistic
-    output: model.pkl
+    any_of:
+    - action: train_logistic
+      output: model.pkl
+    - action: train_alternative
+      output: alternative_model.pkl
 - id: fit_verified
   text: Training-only fit evidence recorded
   check:

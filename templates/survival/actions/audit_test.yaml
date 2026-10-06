@@ -25,3 +25,4 @@ reads_test: true
 timeout_s: 300
 methods_text: Audit frozen test predictions.
 builtin: null
+role: supporting
