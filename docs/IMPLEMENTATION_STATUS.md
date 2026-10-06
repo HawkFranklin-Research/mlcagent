@@ -73,3 +73,7 @@ as native-OS validation. Full survival/original-data scientific studies and live
 D1 licence and D3 public name remain publication blockers. The protected GitHub environment and
 registry/tap setup must be configured by the author as described in [releasing](releasing.md).
 No remote, tag, push, workflow trigger, release, registration or publication was performed.
+
+## 2026-10-07 — MCP M0
+
+Core prerequisite regressions added: gate refusal, untrusted model completion claims, Navigator repair/fallback, zero-call deterministic scope rejection, immutable step modes, invalid fact rejection, Worker static-failure repair, budget refusal, rate-limit retry and a credential canary scan. Targeted offline run: 7 passed. Live providers remain deferred. Incoming author/reviewer edits were preserved in a separate local checkpoint.

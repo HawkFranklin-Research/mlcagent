@@ -299,3 +299,7 @@ Commit locally per phase (`MCP M<n>: …`). Update `CHANGELOG.md`, `docs/IMPLEME
 ## Status
 
 - **2026-10-06:** plan written. Nothing implemented. Starts after the core prerequisites (section 0).
+
+## 2026-10-07 — MCP M0
+
+Core prerequisite regressions added: gate refusal, untrusted model completion claims, Navigator repair/fallback, zero-call deterministic scope rejection, immutable step modes, invalid fact rejection, Worker static-failure repair, budget refusal, rate-limit retry and a credential canary scan. Targeted offline run: 7 passed. Live providers remain deferred. Incoming author/reviewer edits were preserved in a separate local checkpoint.

@@ -94,3 +94,7 @@
 - E: install/release documentation, shared test helpers and explicit UTF-8 portability for resources,
   logs, scripts and streams. Final offline suite: 54 passed, 1 skipped (PowerShell unavailable).
 - Local artifacts/installers are prepared; D1/D3 and author infrastructure setup still gate publication.
+
+## 2026-10-07 — MCP M0
+
+Core prerequisite regressions added: gate refusal, untrusted model completion claims, Navigator repair/fallback, zero-call deterministic scope rejection, immutable step modes, invalid fact rejection, Worker static-failure repair, budget refusal, rate-limit retry and a credential canary scan. Targeted offline run: 7 passed. Live providers remain deferred. Incoming author/reviewer edits were preserved in a separate local checkpoint.

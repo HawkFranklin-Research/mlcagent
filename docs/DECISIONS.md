@@ -203,3 +203,7 @@
   default for MCP; driver mode remains for standalone use. Human-only decisions (confirm, unlock test,
   package approval) are never exposed as MCP tools. Implementation starts after the missing core
   invariant tests.
+
+## 2026-10-07 — MCP M0
+
+Core prerequisite regressions added: gate refusal, untrusted model completion claims, Navigator repair/fallback, zero-call deterministic scope rejection, immutable step modes, invalid fact rejection, Worker static-failure repair, budget refusal, rate-limit retry and a credential canary scan. Targeted offline run: 7 passed. Live providers remain deferred. Incoming author/reviewer edits were preserved in a separate local checkpoint.
