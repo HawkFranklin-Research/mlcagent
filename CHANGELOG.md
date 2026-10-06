@@ -19,3 +19,8 @@
 ## P4 — Execution and test lock
 - Standalone subprocess lifecycle, static checks, Linux namespace mounts, explicit weaker fallback,
   engine-managed split and encrypted test vault implemented. Runtime validation deferred.
+
+## P5 — Providers and request evidence
+- Configured SDK adapters, fake response scripts, bounded retries, structured responses and conservative
+  request budgets implemented. Transactional request envelopes produce usage/egress ledger views.
+- Real requests, provider smoke checks and offline tests remain deferred.
