@@ -2,6 +2,8 @@
 
 TEXT = {
     "title": "MLCA — Guided machine learning workflows",
+    "tagline": "Machine Learning Copilot Agent",
+    "subtitle": "guided, event-based ML workflows",
     "project": "Project folder",
     "data": "Data file",
     "template": "Workflow template",

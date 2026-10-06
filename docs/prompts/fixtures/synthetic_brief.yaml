@@ -1,0 +1,3 @@
+aim: Predict y from x1-x4 (synthetic harness test)
+target: y
+unit: one synthetic row

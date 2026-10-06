@@ -1,5 +1,15 @@
 # Changelog
 
+## Logo and banner — 6 October 2026
+- Author-provided logo stored as `assets/logo_source.png`; `scripts/make_logo.py` (dev-only: pillow, numpy)
+  generates `assets/logo.txt` (36x10 Braille art of the figure) and `assets/logo.png` (512x512 grayscale).
+- New `mlca/tui/banner.py`: compact banner (logo, two-row wordmark, tagline, version, project path), a
+  wordmark-only form below 84 columns, and a one-line brand bar.
+- Welcome screen shows the banner centred; main screen shows the brand bar instead of the Textual header.
+- `mlca init` (interactive) and `mlca doctor` (human output) print the banner on a terminal only; JSON and
+  piped output are unchanged.
+- Checked: ruff, package build includes the assets, headless TUI welcome (110 and 70 columns) and main screen.
+
 ## Startup corrections — 6 October 2026
 - Defer branch annotations so the `list` method does not shadow the built-in annotation type at import.
 - Rename TUI helpers to `_can_act` and `run_session_action`, preserving Textual's startup and action dispatcher methods.

@@ -57,7 +57,10 @@ def init_project(
 ) -> Any:
     from mlca.project.init import initialise
     from mlca.templates.registry import get
+    from mlca.tui.banner import print_banner
 
+    if not (data and brief_file):
+        print_banner()
     if not data:
         data = [Path(typer.prompt(text("data")))]
     workflow = get(template)
@@ -226,6 +229,10 @@ def configuration(ctx: typer.Context, operation: str = typer.Argument("show")) -
 @app.command()
 def doctor(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")) -> Any:
     config = load(_path(ctx))
+    if not json_output:
+        from mlca.tui.banner import print_banner
+
+        print_banner()
     output(
         {
             "python": sys.version.split()[0],

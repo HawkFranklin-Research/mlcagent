@@ -69,3 +69,10 @@
 - Focused verification for these fixes passed: CLI --help and --version; headless Textual welcome-screen
   mounting, guarded choice/next actions without a project, and keyboard quit. No models or datasets used.
 - No permanent test suite was added. Full-cycle, scientific, provider and broader UI validation remain deferred.
+
+## 2026-10-06 — D5 resolved: logo
+- The author supplied the MLCA logo (robot head between two neural networks, "Machine Learning Copilot
+  Agent" lettering). It is used for the terminal banner (Braille art generated from the figure only) and
+  as a grayscale `assets/logo.png` for later desktop use. The source image is the author's own; no
+  third-party attribution applies.
+- Banner kept deliberately small (10 rows, no tables or tool lists), unlike Hermes' startup panel.

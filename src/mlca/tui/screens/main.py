@@ -3,7 +3,9 @@ from typing import Any
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Footer, Header
+from textual.widgets import Footer, Static
+
+from mlca.tui.banner import brand_line
 
 from ..widgets.event_graph import EventGraph
 from ..widgets.facts import Facts
@@ -14,8 +16,10 @@ from ..widgets.subgoals import Subgoals
 
 
 class MainScreen(Screen):
+    DEFAULT_CSS = "MainScreen #brand { height: 1; margin-bottom: 1; }"
+
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Static(brand_line(getattr(self.app, "project", None)), id="brand")
         with Horizontal(id="panels"):
             yield EventGraph(id="event-graph")
             with Vertical(id="center"):
