@@ -17,6 +17,8 @@ from mlca.errors import MlcaUserError
 from mlca.ui_text import text
 
 app = typer.Typer(invoke_without_command=True, no_args_is_help=False)
+mcp_app = typer.Typer(invoke_without_command=True)
+app.add_typer(mcp_app, name="mcp")
 templates_app = typer.Typer()
 approvals_app = typer.Typer(invoke_without_command=True)
 app.add_typer(approvals_app, name="approvals")
@@ -48,6 +50,27 @@ def root(
         from mlca.tui.app import MlcaApp
 
         MlcaApp(project=project.resolve()).run()
+
+
+@mcp_app.callback()
+def mcp_command(
+    ctx: typer.Context, project: Path | None = typer.Option(None), mode: str | None = typer.Option(None)
+):
+    if mode is not None and mode not in {"brain", "driver"}:
+        raise MlcaUserError("Mode must be brain or driver")
+    if ctx.invoked_subcommand is None:
+        from mlca.mcp.server import serve
+
+        serve(project or _path(ctx), mode)
+
+
+@mcp_app.command("doctor")
+def mcp_doctor():
+    import asyncio
+
+    from mlca.mcp.server import probe
+
+    output(asyncio.run(probe()))
 
 
 @app.command()
@@ -342,7 +365,7 @@ def main() -> Any:
     except MlcaUserError as exc:
         from rich.console import Console
 
-        Console().print(str(exc), markup=False)
+        Console(stderr=True).print(str(exc), markup=False)
         raise SystemExit(1) from exc
     except Exception:
         # No traceback containing credentials is emitted to stdout; local tracebacks are scrubbed.
@@ -355,5 +378,5 @@ def main() -> Any:
                 stream.write(text_value)
         from rich.console import Console
 
-        Console().print(text("failed"), markup=False)
+        Console(stderr=True).print(text("failed"), markup=False)
         raise SystemExit(1) from None

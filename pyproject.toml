@@ -12,7 +12,20 @@ authors = [{name = "MLCA contributors"}]
 keywords = ["machine-learning", "agents", "provenance", "workflow", "reproducibility"]
 classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.13", "Operating System :: OS Independent", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2", "typer>=0.12", "textual>=1", "rich", "pyyaml", "python-ulid", "openai>=1", "cryptography", "pandas", "pyarrow", "filelock"]
+dependencies = [
+    "pydantic>=2",
+    "typer>=0.12",
+    "textual>=1",
+    "rich",
+    "pyyaml",
+    "python-ulid",
+    "openai>=1",
+    "cryptography",
+    "pandas",
+    "pyarrow",
+    "filelock",
+    "mcp>=2.3,<3",
+]
 
 [project.urls]
 "Legacy implementation" = "https://github.com/VatsalPatel18/ml-copilot-agent"
