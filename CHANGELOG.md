@@ -62,3 +62,4 @@
 - F3: any-of required-output checks and validated primary/supporting action roles in both templates.
 - F4: re-check branch/checkout sub-goals and offer remaining primary fallback actions with exhaustion notes.
 - F5: validate and persist structured target/survival columns while preserving verbatim brief answers.
+- F6: lazy session records, incremental verified log reads and cached branch-head project replay.

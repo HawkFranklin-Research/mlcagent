@@ -36,6 +36,7 @@ class Session:
             raise MlcaUserError("No MLCA project here; initialize or open a project folder")
         self.settings = yaml.safe_load(settings.read_text())
         self.store = Store(self.root)
+        self.store.verify()
         self.branches = Branches(self.store)
         self.branch_name = self.branches.current()
         self.workflow = load_template(self.root / ".mlca/template")
@@ -52,16 +53,9 @@ class Session:
         self.client = Client(self.root, self.config, self.emit)
         self.client_name = client
         self.closed = False
-        self.emit(
-            "SessionStarted",
-            {
-                "client": client,
-                "mlca_version": __version__,
-                "config_hash": hashlib.sha256(
-                    canonical(self.config.model_dump(mode="json")).encode()
-                ).hexdigest(),
-            },
-        )
+        self.started = False
+        self._state_key = None
+        self._state_cache = None
 
     @classmethod
     def open(cls, path: Any, client: Any = "cli") -> Any:
@@ -69,7 +63,12 @@ class Session:
 
     @property
     def state(self) -> Any:
-        return replay(self.branches.records(self.branch_name))
+        head = self.store.heads.get(self.branch_name)
+        key = (self.branch_name, head)
+        if key != self._state_key:
+            self._state_cache = replay(self.branches.records(self.branch_name))
+            self._state_key = key
+        return self._state_cache
 
     def redact(self, text: Any) -> Any:
         return redact(text, self.config)
@@ -77,9 +76,10 @@ class Session:
     def emit(
         self, kind: Any, payload: Any, *, step_id: Any = None, actor: Any = "engine", event_id: Any = None
     ) -> Any:
+        self._start_session()
         event_id = event_id if event_id is not None else self.state.current_event
         payload = redact_value(payload, self.config)
-        return self.store.append(
+        record = self.store.append(
             kind,
             payload,
             branch=self.branch_name,
@@ -88,6 +88,26 @@ class Session:
             event_id=event_id,
             step_id=step_id,
         )
+        self._state_key = None
+        return record
+
+    def _start_session(self):
+        if self.started:
+            return
+        self.store.append(
+            "SessionStarted",
+            {
+                "client": self.client_name,
+                "mlca_version": __version__,
+                "config_hash": hashlib.sha256(
+                    canonical(self.config.model_dump(mode="json")).encode()
+                ).hexdigest(),
+            },
+            branch=self.branch_name,
+            session_id=self.session_id,
+        )
+        self.started = True
+        self._state_key = None
 
     @contextmanager
     def mutation(self) -> Any:
@@ -329,6 +349,7 @@ class Session:
 
     def branch(self, name: Any, from_id: Any) -> Any:
         with self.mutation():
+            self._start_session()
             self.branches.create(name, from_id, self.session_id)
             self.branch_name = name
             checks.run_all(self.state, self.workflow, self.root, self.emit)
@@ -337,6 +358,7 @@ class Session:
 
     def checkout(self, name: Any) -> Any:
         with self.mutation():
+            self._start_session()
             self.branches.checkout(name, self.session_id)
             self.branch_name = name
             checks.run_all(self.state, self.workflow, self.root, self.emit)
@@ -374,7 +396,8 @@ class Session:
 
     def close(self) -> Any:
         if not self.closed:
-            self.emit("SessionEnded", {"client": self.client_name})
+            if self.started:
+                self.emit("SessionEnded", {"client": self.client_name})
             self.closed = True
 
     def __enter__(self) -> Any:

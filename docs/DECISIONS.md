@@ -103,3 +103,11 @@
 - Existing survival briefs use target for duration; that value resolves both structured fields.
   Old projects accept verbatim columns only on exact inventory matches. Onboard evidence, role context
   and the facts panel show structured columns so author confirmation covers the resolution.
+
+## 2026-10-06 — Functional review F6
+- Session records are lazy: only the first mutation starts a session, and only started sessions end.
+  Branch operations explicitly start their session before their direct store appends.
+- Store caches parsed records, offsets, ids and branch heads; only appended bytes are parsed on growth.
+  File replacement, shrinkage, same-size metadata changes or checkpoint discrepancies force full verification.
+  Session open and explicit verify always inspect the entire log. Hashes are tamper evidence, not signatures.
+- Session replay is cached by branch/head id and invalidated on emits; direct appends also change the key.
