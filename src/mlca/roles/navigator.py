@@ -126,7 +126,15 @@ class Navigator(Role):
                     "role": "user",
                     "content": prompt(
                         "navigator_recap.md",
-                        records=[r.model_dump(mode="json") for r in records[-12:]],
+                        records=[
+                            {
+                                "type": r.type.value,
+                                "event_id": r.event_id,
+                                "step_id": r.step_id,
+                                "ts": r.ts.isoformat(),
+                            }
+                            for r in records[-12:]
+                        ],
                         schema=RecapResponse.model_json_schema(),
                     ),
                 }

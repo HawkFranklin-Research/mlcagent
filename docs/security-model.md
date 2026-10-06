@@ -48,7 +48,8 @@ Credentials are read from configured environment variables and scrubbed from req
 processes receive an explicit environment, not inherited credentials. Model builders label payload
 categories and reject sample-row attachments unless enabled. Free text, code, tracebacks and figure
 labels may contain data: inspect them; category tagging is not a complete content-level privacy filter.
-Stored payloads are sensitive and should remain private. Egress hashes describe the normalized request
+Runtime diagnostics sent for repair are reduced to exception type and script line by default; full
+diagnostics stay local. Recaps use event metadata. Stored payloads are sensitive and should remain private. Egress hashes describe the normalized request
 payload, not TLS/HTTP framing byte counts.
 
 Step folders are chmod read-only after completion and recorded hashes are checked before reuse.

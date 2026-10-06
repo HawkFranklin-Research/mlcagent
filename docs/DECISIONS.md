@@ -41,8 +41,7 @@
 - Only explicitly opted-in weaker execution is allowed without bubblewrap. No tests have established
   this host's namespace support yet.
 - P2/P8 draft template structures were generated together; the survival content is finalized structurally
-  in P8. The P3 commit landed after P4 because dependency provisioning was asynchronous; commit messages
-  describe implementation phases, not validation milestones.
+  in P8. Phase commits describe implemented source, not validated milestone completion.
 - Request envelopes are transactionally persisted; usage/egress JSONL are recoverable projections.
   Unknown/in-flight usage reserves the configured upper-bound cost. HTTP framing is not captured.
 - Report rebuilding also needs the frozen template snapshot and request sidecars; these are part of
@@ -58,3 +57,6 @@
 - Broad adapter/callback payload boundaries use Any annotations; persisted contracts use Pydantic.
 - Static checks completed: Ruff lint, Ruff formatting and Git whitespace checks. No application modules,
   analysis scripts, UI sessions or tests were executed for validation.
+
+- Runtime failure messages sent for Worker repair are reduced to exception type and script line when
+  sample-row egress is disabled. Full diagnostics stay local; recap prompts receive event metadata only.

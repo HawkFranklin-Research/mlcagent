@@ -1,3 +1,4 @@
+import re
 import shutil
 import time
 from contextlib import nullcontext
@@ -271,7 +272,18 @@ def _worker(session: Any, action: Any, params: Any, step_id: Any, step: Any, sta
             execution = {k: session.redact(v) if isinstance(v, str) else v for k, v in execution.items()}
             session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)
             if execution["exit_status"] != 0 or sha256(script) != script_hash:
-                error = execution["stderr"][-4000:] or "Execution failed or script was modified"
+                if session.config.privacy.allow_sample_rows:
+                    error = execution["stderr"][-4000:] or "Execution failed or script was modified"
+                else:
+                    diagnostics = execution["stderr"]
+                    types = re.findall(
+                        r"^([A-Za-z][A-Za-z0-9_]*(?:Error|Exception))(?::|$)", diagnostics, re.MULTILINE
+                    )
+                    locations = re.findall(r'File "[^"\n]*script.py", line (\d+)', diagnostics)
+                    error = "Execution failed: " + (types[-1] if types else "runtime failure")
+                    if locations:
+                        error += "; script line " + locations[-1]
+                    error += ". Detailed diagnostics remain local because sample-row egress is disabled."
                 continue
             try:
                 collect(session.root, directory, action, state)
