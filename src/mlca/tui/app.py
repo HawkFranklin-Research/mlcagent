@@ -1,0 +1,195 @@
+from pathlib import Path
+import json
+import webbrowser
+from textual.app import App
+from textual import work
+from textual.screen import ModalScreen
+from mlca.api import Session
+from mlca.config import Config,ProviderConfig,RoleConfig,load,save
+from mlca.errors import MlcaUserError
+from mlca.ui_text import text
+from .screens.welcome import WelcomeScreen
+from .screens.main import MainScreen
+from .screens.project import ProjectScreen
+from .screens.onboarding import OnboardingScreen
+from .screens.brief import FormScreen
+from .screens.report import ReportScreen
+from .widgets.event_graph import EventGraph
+from .widgets.subgoals import Subgoals
+from .widgets.options import Options
+from .widgets.facts import Facts
+from .widgets.log_stream import LogStream
+from .widgets.status_bar import StatusBar
+
+
+class MlcaApp(App):
+    TITLE=text('title')
+    CSS='''#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #status-bar { height: 2; }'''
+    BINDINGS=[('1','choose_1',text('choose')),('2','choose_2',text('choose')),('3','choose_3',text('choose')),
+              ('4','choose_4',text('choose')),('n','next',text('next')),('l','loop',text('loop')),
+              ('c','custom',text('custom')),('f','confirm',text('confirm')),('b','branches',text('branches')),
+              ('r','report',text('report')),('u','usage',text('usage')),('t','unlock',text('unlock')),
+              ('ctrl+o','open',text('open')),('ctrl+i','init',text('init')),('ctrl+s','configure',text('configure')),
+              ('q','quit',text('quit'))]
+
+    def __init__(self,project:Path,configure=False):
+        super().__init__()
+        self.project=project
+        self.configure_first=configure
+        self.session=None
+        self.busy=False
+
+    def on_mount(self):
+        self.push_screen(WelcomeScreen())
+        if self.configure_first:
+            self.action_configure()
+        elif (self.project/'.mlca/project.yaml').exists():
+            self.open_project(self.project)
+
+    def open_project(self,path):
+        try:
+            if self.session:
+                self.session.close()
+            self.project=Path(path).expanduser().resolve()
+            self.session=Session.open(self.project,client='tui')
+            self.session.output_callback=lambda channel,chunk:self.call_from_thread(self.write_log,channel+': '+chunk[-2000:])
+            self.session.subscribe(lambda record:self.call_from_thread(self.write_log,record.type.value)
+                                   if self.busy else None)
+            self.switch_screen(MainScreen())
+        except Exception as exc:
+            self.notify(str(exc),severity='error')
+
+    def refresh_project(self,options=None):
+        if not self.session or not isinstance(self.screen,MainScreen):
+            return
+        status=self.session.status()
+        self.screen.query_one(EventGraph).render_state(status)
+        self.screen.query_one(Subgoals).render_state(status)
+        self.screen.query_one(Facts).render_state(status)
+        self.screen.query_one(StatusBar).render_state(status)
+        if options is not None:
+            self.screen.query_one(Options).render_options(options)
+        else:
+            self.run_action('options',refresh_only=True)
+
+    def write_log(self,value):
+        if isinstance(self.screen,MainScreen):
+            self.screen.query_one(LogStream).write(value)
+
+    @work(thread=True,exclusive=True,group='session')
+    def run_action(self,method,*args,refresh_only=False):
+        if self.busy:
+            return
+        self.busy=True
+        try:
+            result=getattr(self.session,method)(*args)
+            self.call_from_thread(self.write_log,json.dumps(result,default=str,ensure_ascii=False))
+            options=result if method=='options' else self.session.options()
+            self.call_from_thread(self.refresh_project,options)
+        except Exception as exc:
+            self.call_from_thread(self.notify,str(exc),severity='error')
+        finally:
+            self.busy=False
+
+    def _ready(self):
+        if not self.session or isinstance(self.screen,ModalScreen) or self.busy:
+            return False
+        return True
+
+    def action_open(self):
+        self.push_screen(ProjectScreen(self.project),lambda result:self.open_project(result['path']) if result else None)
+
+    def action_init(self):
+        def selected(result):
+            if result:
+                self.initialise_project(result)
+        self.push_screen(ProjectScreen(self.project,initialise=True),selected)
+
+    @work(thread=True,exclusive=True,group='init')
+    def initialise_project(self,result):
+        from mlca.project.init import initialise
+        try:
+            path=initialise(Path(result['path']).expanduser(),[Path(result['data']).expanduser()],result['template'],
+                            {k:result[k] for k in ['aim','target','unit','event_column']})
+            self.call_from_thread(self.open_project,path)
+        except Exception as exc:
+            self.call_from_thread(self.notify,str(exc),severity='error')
+
+    def action_configure(self):
+        def selected(result):
+            if not result:
+                return
+            try:
+                config=load()
+                kind=result['kind']
+                provider=ProviderConfig(kind=kind,api_key_env=result['api_env'] or None,
+                         base_url=result['base_url'] or None,
+                         request_cost_bound_usd=float(result['request_bound']) if result['request_bound'] else None)
+                providers={**config.providers,'configured':provider}
+                roles={**config.roles}
+                for role in ['navigator','worker']:
+                    if result[role+'_model']:
+                        roles[role]=RoleConfig(provider='configured',model=result[role+'_model'])
+                updated=config.model_copy(update={'providers':providers,'roles':roles})
+                updated.sandbox.allow_level_b=result['allow_b'].lower()=='yes'
+                save(Config.model_validate(updated.model_dump()))
+                self.notify(text('saved'))
+                if self.session:
+                    self.session.close()
+                    self.open_project(self.project)
+            except Exception as exc:
+                self.notify(str(exc),severity='error')
+        self.push_screen(OnboardingScreen(load()),selected)
+
+    def action_choose_1(self):
+        if self._ready(): self.run_action('choose','1')
+    def action_choose_2(self):
+        if self._ready(): self.run_action('choose','2')
+    def action_choose_3(self):
+        if self._ready(): self.run_action('choose','3')
+    def action_choose_4(self):
+        if self._ready(): self.run_action('choose','4')
+    def action_next(self):
+        if self._ready(): self.run_action('next')
+
+    def action_custom(self):
+        if self._ready():
+            self.push_screen(FormScreen(text('custom'),[('instruction',text('custom'),'')]),
+                             lambda result:self.run_action('custom',result['instruction']) if result else None)
+
+    def action_confirm(self):
+        if self._ready():
+            self.push_screen(FormScreen(text('confirm'),[('goal',text('subgoal'),''),('note',text('note'),'')]),
+                             lambda result:self.run_action('confirm',result['goal'],result['note']) if result else None)
+
+    def action_unlock(self):
+        if self._ready():
+            self.push_screen(FormScreen(text('unlock'),[('phrase',text('unlock_phrase'),''),('reason',text('unlock_reason'),'')]),
+                             lambda result:self.run_action('unlock_test',result['phrase'],result['reason']) if result else None)
+
+    def action_loop(self):
+        if self._ready():
+            self.push_screen(FormScreen(text('loop'),[('event',text('events'),'model')]),
+                             lambda result:self.run_action('loop',result['event']) if result else None)
+
+    def action_branches(self):
+        if self._ready():
+            available=self.session.branches.list()
+            self.push_screen(FormScreen(text('branches')+'\n'+json.dumps(available),[
+                ('name',text('branch_name'),''),('from_id',text('from_id'),'')]),
+                lambda result:self.run_action('branch',result['name'],result['from_id']) if result and result['from_id'] else
+                self.run_action('checkout',result['name']) if result else None)
+
+    def action_report(self):
+        if self._ready(): self.run_action('report','all')
+
+    def action_usage(self):
+        if self._ready():
+            self.push_screen(ReportScreen('```json\n'+json.dumps(self.session.status()['usage'],indent=2)+'\n```'))
+
+    def action_quit(self):
+        if self.busy:
+            return
+        if self.session:
+            self.session.close()
+        self.exit()

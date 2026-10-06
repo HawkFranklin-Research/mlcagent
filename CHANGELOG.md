@@ -29,3 +29,9 @@
 - Navigator/Worker roles, prompt files, validated options, scoped custom actions, bounded repairs,
   fact citations, Session API and CLI implemented. Script reproduction is an explicit command.
 - No end-to-end, smoke or real-provider execution performed.
+
+## P7 — Terminal interface and reports
+- Textual project/configuration forms, event graph, options, sub-goals, facts, streaming execution log,
+  branch controls and explicit test unlocking implemented.
+- Deterministic methods/provenance/figure/usage reports and optional Inspector added.
+- Original text banner only; image-logo decision remains pending. Runtime/UI validation deferred.
