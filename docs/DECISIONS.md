@@ -133,3 +133,15 @@
 - Full suite: 40 passed in 263.43s. Reverting F3 yielded KeyError: 'action'; reverting F6 yielded
   Unexpected full log reread. Both fixed versions were restored before the passing full run.
 - Prompt 02 may now proceed: distribution files and local dry runs only; no publication authorization.
+
+## 2026-10-06 — Distribution A: artifact and browser view
+- Version metadata is dynamic from src/mlca/__init__.py. pyproject.toml remains the distribution-name
+  authority; packaging/NAME is a generated mirror for wrapper/resource consumers, not a second choice.
+- Package metadata labels its only current URL as the legacy implementation, since the v2 public
+  repository is undecided. Contributor names and final source URL can be updated before release.
+- Wheels contain both templates, styles, the derived logo/banner and mlca_runtime; source artwork is
+  excluded. The LICENSE placeholder remains explicitly unlicensed; release guards are added in C.
+- mlca web uses textual-serve's documented Server API and binds 127.0.0.1 only. The extra is optional
+  for users and included in dev dependencies so its offline smoke check always runs.
+- Three distribution checks pass: missing-extra refusal, HTTP start/stop and fresh uv-tool wheel install
+  with version, JSON doctor and terminal banner. No publishing occurred.

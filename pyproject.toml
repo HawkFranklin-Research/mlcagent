@@ -4,16 +4,30 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mlca"
-version = "0.2.0"
+dynamic = ["version"]
 description = "Guided, event-based machine learning workflows with recorded provenance"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "MLCA contributors"}]
+keywords = ["machine-learning", "agents", "provenance", "workflow", "reproducibility"]
+classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.13", "Operating System :: OS Independent", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2", "typer>=0.12", "textual>=1", "rich", "pyyaml", "python-ulid", "openai>=1", "cryptography", "pandas", "pyarrow", "filelock"]
+
+[project.urls]
+"Legacy implementation" = "https://github.com/VatsalPatel18/ml-copilot-agent"
+
+[project.optional-dependencies]
+web = ["textual-serve"]
 
 [project.scripts]
 mlca = "mlca.cli.main:main"
 
 [dependency-groups]
-dev = ["ruff", "pytest", "pytest-cov", "hatchling", "scipy", "scikit-learn", "matplotlib", "seaborn", "lifelines"]
+dev = ["ruff", "pytest", "pytest-cov", "hatchling", "scipy", "scikit-learn", "matplotlib", "seaborn", "lifelines", "textual-serve"]
+
+[tool.hatch.version]
+path = "src/mlca/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlca", "src/mlca_runtime"]
@@ -21,7 +35,10 @@ packages = ["src/mlca", "src/mlca_runtime"]
 [tool.hatch.build.targets.wheel.force-include]
 "templates" = "mlca/resources/templates"
 "styles" = "mlca/resources/styles"
-"assets" = "mlca/resources/assets"
+"packaging/NAME" = "mlca/resources/packaging/NAME"
+"assets/banner.txt" = "mlca/resources/assets/banner.txt"
+"assets/logo.txt" = "mlca/resources/assets/logo.txt"
+"assets/logo.png" = "mlca/resources/assets/logo.png"
 
 [tool.ruff]
 line-length = 110

@@ -3,6 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from mlca import __version__
 from mlca.errors import MlcaUserError
 from mlca.paths import directory_sha256, sha256
 
@@ -39,7 +40,7 @@ def create(
     )
     (runtime / "pyproject.toml").write_text(
         '[build-system]\nrequires=["hatchling"]\nbuild-backend="hatchling.build"\n'
-        '[project]\nname="mlca-runtime"\nversion="0.2.0"\n'
+        f'[project]\nname="mlca-runtime"\nversion="{__version__}"\n'
         '[tool.hatch.build.targets.wheel]\npackages=["mlca_runtime"]\n'
     )
     if frozen:

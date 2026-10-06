@@ -68,3 +68,7 @@
 - Permanent offline regression suite: 40 passing tests, including slow synthetic classification paths,
   fresh script replay, branch recovery, test-lock lifecycle, namespace denial and headless TUI behavior.
 - F3/F6 revert checks fail as expected; numerical threads and external test scratch keep runs bounded.
+
+## Distribution preparation
+- A: dynamic version metadata, verified wheel resources, optional loopback browser TUI and clean-home
+  uv-tool installation checks. The source artwork is excluded from wheels.

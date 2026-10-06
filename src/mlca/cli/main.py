@@ -48,6 +48,13 @@ def root(
         MlcaApp(project=project.resolve()).run()
 
 
+@app.command()
+def web(ctx: typer.Context, port: int = typer.Option(8000, min=1, max=65535)) -> None:
+    from mlca.web import serve
+
+    serve(_path(ctx), port)
+
+
 @app.command("init")
 def init_project(
     path: Path = typer.Argument(Path(".")),
