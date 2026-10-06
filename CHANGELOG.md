@@ -24,3 +24,8 @@
 - Configured SDK adapters, fake response scripts, bounded retries, structured responses and conservative
   request budgets implemented. Transactional request envelopes produce usage/egress ledger views.
 - Real requests, provider smoke checks and offline tests remain deferred.
+
+## P6 — Guided turn loop and headless interface
+- Navigator/Worker roles, prompt files, validated options, scoped custom actions, bounded repairs,
+  fact citations, Session API and CLI implemented. Script reproduction is an explicit command.
+- No end-to-end, smoke or real-provider execution performed.
