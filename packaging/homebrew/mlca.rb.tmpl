@@ -1,0 +1,21 @@
+# Generated wrapper for the same Python artifact; no bundled ML dependency tree.
+class Mlca < Formula
+  desc "Guided machine learning workflows with recorded provenance"
+  homepage "@HOMEPAGE@"
+  url "https://files.pythonhosted.org/packages/source/@INITIAL@/@NAME@/@NAME@-@VERSION@.tar.gz"
+  sha256 "@SHA256@"
+  version "@VERSION@"
+
+  depends_on "uv"
+
+  def install
+    (bin/"mlca").write <<~EOS
+      #!/bin/sh
+      exec "#{Formula["uv"].opt_bin}/uv" tool run --from "@NAME@==@VERSION@" mlca "$@"
+    EOS
+  end
+
+  test do
+    assert_match "@VERSION@", shell_output("#{bin}/mlca --version")
+  end
+end

@@ -1,0 +1,23 @@
+{
+  "name": "mlca",
+  "version": "0.2.0",
+  "description": "Launcher for the MLCA Python workflow harness",
+  "bin": {
+    "mlca": "bin/mlca.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/mlca.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "mlca": {
+    "pythonName": "mlca"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

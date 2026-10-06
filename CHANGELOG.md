@@ -76,3 +76,5 @@
   explicit per-OS doctor guidance. Weaker execution remains opt-in.
 - C: cross-platform CI and a sequential, decision-gated release workflow with protected publication
   jobs, checksums, PyPI OIDC, npm provenance and an optional Homebrew PR. Workflows are files only.
+- D: consent-based shell/PowerShell installers, a version-pinned npm launcher with no install hooks,
+  generated wrapper identities and Homebrew formula rendering. Local fake-uv dry runs pass.

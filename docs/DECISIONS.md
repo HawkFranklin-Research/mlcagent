@@ -165,3 +165,15 @@
 - Homebrew updates are conditional on HOMEBREW_TAP and need a tap-scoped token to propose a PR.
 - Workflow YAML syntax and local negative/positive metadata guards pass. actionlint and act are not
   installed here, so actionlint validation and act -n were not run. No workflow was triggered.
+
+## 2026-10-06 — Distribution D: generated wrappers
+- POSIX and PowerShell installers offer consent for Astral uv bootstrap, version pinning, upgrades and
+  optional PATH modification. They print isolation guidance; they never run sudo or add telemetry.
+- npm has no installation hooks. Its small launcher finds uv, pins the Python artifact version,
+  forwards arguments/status/signals and never downloads uv. Windows tests create a genuine fake uv
+  console executable from a local fixture wheel rather than invoking untrusted command strings.
+- sync_versions.py reads the two authoritative sources, refreshes packaging/NAME and generates npm
+  identity/licence and standalone installers. Homebrew's renderer reads NAME and the release sdist hash.
+- Installer dry runs, Node forwarding/status/missing-uv/signal checks, intended npm-pack file listing,
+  wrapper identity checks and Ruby formula syntax pass. PowerShell parsing is skipped because pwsh
+  and PSScriptAnalyzer are unavailable; shellcheck is unavailable, but sh -n passes.
