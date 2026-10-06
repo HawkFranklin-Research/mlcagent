@@ -9,6 +9,7 @@ import pandas as pd
 
 from mlca.errors import IntegrityError, MlcaUserError
 from mlca.paths import sha256
+from mlca.project.init import column_for
 from mlca.project.inventory import read_table
 from mlca.sandbox.vault import seal
 
@@ -80,7 +81,7 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
     if sha256(path) != registered["sha256"]:
         raise IntegrityError("Registered input changed")
     frame = read_table(path).reset_index(drop=True)
-    assignments = partitions(frame, params, state.brief.get("target", ""))
+    assignments = partitions(frame, params, column_for(state))
     directory = root / ".mlca/data/splits" / step_id
     directory.mkdir(parents=True, exist_ok=False)
     manifest = directory / "split_manifest.csv"

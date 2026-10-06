@@ -93,3 +93,13 @@
 - Prompt 01 conflicts: completed events must have no fallback action options, but its branch test
   requests an alternative after the completed model step is re-checked. Pending author clarification,
   completed events retain next; alternatives are tested when model completion remains open.
+
+## 2026-10-06 — Functional review F5 and branch clarification
+- Author confirmed: completed events keep next; branch recovery tests and unfinished-event alternative
+  tests are separate. This resolves the conflicting F4 acceptance wording.
+- Init resolves target/duration/event columns against inventory before creating project folders.
+  Exact names win, then unique case-insensitive names; CLI/TUI ask on unresolved interactive input.
+  Non-interactive errors list the columns. Original brief answers are preserved separately.
+- Existing survival briefs use target for duration; that value resolves both structured fields.
+  Old projects accept verbatim columns only on exact inventory matches. Onboard evidence, role context
+  and the facts panel show structured columns so author confirmation covers the resolution.

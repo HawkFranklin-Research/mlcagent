@@ -9,6 +9,7 @@ from mlca.engine.split import partitions
 from mlca.errors import IntegrityError
 from mlca.paths import atomic_json, directory_sha256, sha256
 from mlca.project.env import create, python
+from mlca.project.init import column_for
 from mlca.project.inventory import read_table
 from mlca.sandbox.level import detect
 from mlca.sandbox.vault import exposed
@@ -54,7 +55,7 @@ def verify(session: Any) -> Any:
                     if sha256(source) != data["sha256"]:
                         raise IntegrityError("Original input changed")
                     frame = read_table(source).reset_index(drop=True)
-                    assigned = partitions(frame, split["parameters"], state.brief.get("target", ""))
+                    assigned = partitions(frame, split["parameters"], column_for(state))
                     import pandas as pd
 
                     reproduced = root / "split_manifest.csv"
@@ -64,7 +65,11 @@ def verify(session: Any) -> Any:
                     ok = sha256(reproduced) == split["sha256"]
                 elif builtin == "inventory":
                     saved = json.loads((historical / "outputs" / step["outputs"][0]["name"]).read_text())
-                    ok = saved == {"brief": state.brief, "inventory": state.inventory}
+                    ok = saved == {
+                        "brief": state.brief,
+                        "inventory": state.inventory,
+                        **({"columns": state.columns} if state.columns else {}),
+                    }
                 else:
                     # Report contents are deterministic projections; integrity plus regenerate comparison.
                     ok = all(

@@ -55,7 +55,7 @@ def init_project(
     template: str = typer.Option("tabular_classification", "--template"),
     brief_file: Path | None = typer.Option(None, "--brief-file"),
 ) -> Any:
-    from mlca.project.init import initialise
+    from mlca.project.init import initialise, resolve_column
     from mlca.templates.registry import get
     from mlca.tui.banner import print_banner
 
@@ -69,7 +69,20 @@ def init_project(
         if brief_file
         else {q["id"]: typer.prompt(q["text"]) for q in workflow.spec.brief_questions}
     )
-    output({"project": str(initialise(path, data, template, brief))})
+
+    def pick_column(field, available):
+        typer.echo(f"Available columns for {field}: {', '.join(available)}")
+        return resolve_column(typer.prompt(f"Choose the {field} column"), available, field)
+
+    output(
+        {
+            "project": str(
+                initialise(
+                    path, data, template, brief, column_picker=pick_column if brief_file is None else None
+                )
+            )
+        }
+    )
 
 
 @app.command()

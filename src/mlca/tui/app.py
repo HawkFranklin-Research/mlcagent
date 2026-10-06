@@ -1,3 +1,4 @@
+from concurrent.futures import Future
 import json
 import shutil
 import subprocess
@@ -146,10 +147,24 @@ class MlcaApp(App):
                 [Path(result["data"]).expanduser()],
                 result["template"],
                 {k: result[k] for k in ["aim", "target", "unit", "event_column"]},
+                column_picker=self.pick_column,
             )
             self.call_from_thread(self.open_project, path)
         except Exception as exc:
             self.call_from_thread(self.notify, str(exc), severity="error")
+
+    def pick_column(self, field: str, available: list[str]) -> str:
+        answer = Future()
+
+        def selected(result):
+            answer.set_result(result["column"] if result else "")
+
+        self.call_from_thread(
+            self.push_screen,
+            FormScreen(f"Choose {field}. Available columns: {', '.join(available)}", [("column", field, "")]),
+            selected,
+        )
+        return answer.result()
 
     def action_configure(self) -> Any:
         if self.busy:

@@ -28,7 +28,7 @@ class Worker(Role):
                         "worker_write.md",
                         action=rendered,
                         inputs={k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()},
-                        brief=state.brief,
+                        brief={"answers": state.brief, "columns": state.columns},
                         params=params,
                         packages=self.session.packages(),
                         outputs=[o.model_dump() for o in action.outputs],

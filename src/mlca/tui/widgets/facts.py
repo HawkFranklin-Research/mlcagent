@@ -10,5 +10,7 @@ class Facts(Static):
         self.update(
             text("facts")
             + "\n\n"
+            + "\n".join(f"{key} column: {value}" for key, value in status.get("columns", {}).items())
+            + "\n"
             + "\n".join(f"{key}: {fact['value']}" for key, fact in status["facts"].items())
         )

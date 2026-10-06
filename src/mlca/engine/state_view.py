@@ -14,6 +14,7 @@ def build(state: Any, workflow: Any) -> Any:
         },
         "inventory": state.inventory,
         "brief": state.brief,
+        "columns": state.columns,
         "last_observation": {"outputs": latest.get("outputs", []), "metrics": latest.get("metrics", [])}
         if latest
         else {},

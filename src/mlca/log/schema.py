@@ -163,6 +163,7 @@ class ProjectState(StrictModel):
     data: dict[str, dict] = Field(default_factory=dict)
     inventory: list[dict] = Field(default_factory=list)
     brief: dict = Field(default_factory=dict)
+    columns: dict[str, str] = Field(default_factory=dict)
     split: dict | None = None
     test_unlocked: bool = False
     pending_options: list[dict] | None = None

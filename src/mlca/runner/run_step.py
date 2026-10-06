@@ -165,7 +165,7 @@ def _builtin(session: Any, action: Any, params: Any, step_id: Any, step: Any, st
     if action.builtin == "split":
         value = freeze_split(session.root, state, params, step_id, session.emit)
     elif action.builtin == "inventory":
-        value = {"brief": state.brief, "inventory": state.inventory}
+        value = {"brief": state.brief, "inventory": state.inventory, "columns": state.columns}
     else:
         from mlca.report import generate
 
