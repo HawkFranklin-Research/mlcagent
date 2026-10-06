@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mlca"
+version = "0.2.0"
+description = "Guided, event-based machine learning workflows with recorded provenance"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2", "typer>=0.12", "textual>=1", "rich", "pyyaml", "python-ulid", "openai>=1", "cryptography", "pandas", "pyarrow", "filelock"]
+
+[project.scripts]
+mlca = "mlca.cli.main:main"
+
+[dependency-groups]
+dev = ["ruff", "pytest", "pytest-cov"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mlca", "src/mlca_runtime"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"templates" = "mlca/resources/templates"
+"styles" = "mlca/resources/styles"
+"assets" = "mlca/resources/assets"
+
+[tool.ruff]
+line-length = 110
+
+[tool.pytest.ini_options]
+markers = ["live: explicitly enabled real provider calls", "slow: project environment creation"]
+addopts = "-m 'not live'"
