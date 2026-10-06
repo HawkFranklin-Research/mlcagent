@@ -33,7 +33,8 @@ def build(state: Any, requests: Any, records: Any) -> Any:
         "repairs": sum(max(0, len(s.get("scripts", [])) - 1) for s in state.steps),
         "wall_time_s": sum(s.get("wall_time_s", 0) for s in state.steps),
         "compute_time_s": sum(r.get("duration", 0) for s in state.steps for r in s.get("runs", [])),
-        "llm_latency_s": sum(r.get("latency_ms", 0) for r in requests) / 1000,
+        "llm_latency_s": sum(r.get("latency_ms", 0) for r in requests if r.get("role") != "mcp") / 1000,
+        "mcp_tool_time_s": sum(r.get("duration_s", 0) for r in requests if r.get("role") == "mcp"),
         "human_interventions": {
             k: sum(r.type.value == k and r.actor == "user" for r in records)
             for k in [

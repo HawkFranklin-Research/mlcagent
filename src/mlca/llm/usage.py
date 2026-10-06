@@ -57,6 +57,9 @@ def summary(records: list[dict]) -> dict:
         groups[axis] = dict(result)
     return {
         "requests": len(records),
+        "model_requests": sum(r.get("role") != "mcp" for r in records),
+        "external_tool_calls": sum(r.get("role") == "mcp" for r in records),
+        "external_model_usage_unavailable": any(r.get("role") == "mcp" for r in records),
         "known_cost_usd": sum(r.get("cost_usd") or 0 for r in records),
         "unknown_cost_requests": sum(
             r.get("cost_usd") is None and r.get("cost_source") != "external" for r in records

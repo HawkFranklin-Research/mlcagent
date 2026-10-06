@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import re
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -12,15 +13,16 @@ import pandas as pd
 from mcp.server import MCPServer
 from mcp.server.mcpserver import Context
 from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
+from ulid import ULID
 
 from mlca import __version__
 from mlca.api import Session
 from mlca.config import Config, load
 from mlca.errors import MlcaUserError
-from mlca.paths import canonical, contained, sha256
+from mlca.paths import canonical, contained, sha256, user_data_dir
 from mlca.project.init import initialise
 
-from . import serialize
+from . import accounting, serialize
 
 INSTRUCTIONS = """MLCA executes guided ML workflows and preserves evidence.
 Use status → options → choose → step_status → move, one step at a time.
@@ -56,15 +58,18 @@ class Controller:
         self.principal = None
         self.lock = asyncio.Lock()
         self.protocol_versions = set()
+        self.server_ledger = user_data_dir() / "mcp" / str(ULID())
 
     def open(self, path, actor):
         if self.session:
             if any(j["thread"].is_alive() for j in self.session._jobs.values()):
                 raise MlcaUserError("Project busy; wait for the current step before opening another project")
-            self.session.close()
         path = Path(path).expanduser().resolve()
         mode = self.mode_override or load(path).mcp.mode
-        self.session = Session.open(path, client="mcp", principal=actor, mode=mode, non_blocking=True)
+        opened = Session.open(path, client="mcp", principal=actor, mode=mode, non_blocking=True)
+        if self.session:
+            self.session.close()
+        self.session = opened
         self.project = path
         return self.overview()
 
@@ -157,7 +162,7 @@ class Controller:
             path = s.root / "reports/generated" / (ref + suffix)
             if not contained(path, s.root / "reports/generated") or path.is_symlink() or not path.is_file():
                 raise MlcaUserError("Generate the report before reading it")
-            return {"report_data": path.read_text(encoding="utf-8")[:20000]}
+            return {"report_data": s.redact(path.read_text(encoding="utf-8"))[:20000]}
         if kind == "script":
             saved = s.step_status(ref)
             if saved["status"] != "completed":
@@ -170,7 +175,7 @@ class Controller:
                 or sha256(path) != script["sha256"]
             ):
                 raise MlcaUserError("Script evidence changed")
-            return {"script_data": path.read_text(encoding="utf-8")[:100000]}
+            return {"script_data": s.redact(path.read_text(encoding="utf-8"))[:100000]}
         output = s.state.artefacts.get(ref)
         path = s.root / ref
         if (
@@ -215,13 +220,28 @@ class Controller:
         if tool == "mlca_open":
             return self.open(arguments["path"], actor)
         if tool == "mlca_init":
-            root = initialise(
-                Path(arguments["path"]),
-                [Path(p) for p in arguments["data"]],
-                arguments["template"],
-                arguments["brief"],
-                principal=actor,
-            )
+            if self.session and self.session.active_step():
+                raise MlcaUserError("Complete the active step before initializing another project")
+            try:
+                root = initialise(
+                    Path(arguments["path"]),
+                    [Path(p) for p in arguments["data"]],
+                    arguments["template"],
+                    arguments["brief"],
+                    principal=actor,
+                )
+            except MlcaUserError as exc:
+                if str(exc).startswith("Unresolved") and arguments["data"]:
+                    from mlca.project.inventory import scan
+
+                    path = Path(arguments["data"][0])
+                    inventory = scan(path.stem, path)
+                    return {
+                        "initialized": False,
+                        "columns_data": inventory["columns"],
+                        "error_data": str(exc),
+                    }
+                raise
             return self.open(root, actor)
         s = self.require(actor)
         if tool == "mlca_status":
@@ -286,19 +306,18 @@ class Controller:
 
     async def call(self, tool, arguments, ctx):
         async with self.lock:
+            started = time.monotonic()
             actor = principal(ctx)
-            if self.principal is None:
-                self.principal = actor
-            elif actor != self.principal:
-                return CallToolResult(
-                    content=[TextContent(type="text", text="Client identity changed; reconnect.")],
-                    is_error=True,
-                )
-            self.protocol_versions.add(ctx.protocol_version)
+            error = None
             try:
+                if self.principal is None:
+                    self.principal = actor
+                elif actor != self.principal:
+                    raise MlcaUserError("Client identity changed; reconnect")
+                self.protocol_versions.add(ctx.protocol_version)
                 value = await asyncio.to_thread(self.handle, tool, arguments, actor)
                 if isinstance(value, ImageContent):
-                    return CallToolResult(
+                    response = CallToolResult(
                         content=[
                             TextContent(
                                 type="text", text=canonical({"summary": "Indexed figure.", "data": {}})
@@ -306,21 +325,46 @@ class Controller:
                             value,
                         ]
                     )
-                result = serialize.result(value, self.session.config if self.session else Config())
-                return CallToolResult(
-                    content=[TextContent(type="text", text=canonical(result))], structured_content=result
+                else:
+                    result = serialize.result(value, self.session.config if self.session else Config())
+                    response = CallToolResult(
+                        content=[TextContent(type="text", text=canonical(result))], structured_content=result
+                    )
+            except Exception as exc:
+                error = exc
+                # Unknown failures return only their type, never an exception containing data rows.
+                diagnostic = (
+                    str(exc) if isinstance(exc, (MlcaUserError, ValueError, OSError)) else type(exc).__name__
                 )
-            except (MlcaUserError, ValueError, OSError) as exc:
                 result = serialize.result(
-                    {"error_data": str(exc)},
+                    {"error_data": diagnostic},
                     self.session.config if self.session else Config(),
                     "MLCA request refused.",
                 )
-                return CallToolResult(
+                response = CallToolResult(
                     content=[TextContent(type="text", text=canonical(result))],
                     structured_content=result,
                     is_error=True,
                 )
+            if error and self.session:
+                try:
+                    with self.session.mutation():
+                        self.session.emit(
+                            "Note",
+                            {"text": "MCP request refused", "tool": tool, "error_type": type(error).__name__},
+                            actor=actor,
+                        )
+                except MlcaUserError:
+                    pass  # Busy projects still have the refusal in the independent request ledger.
+            root = self.session.root if self.session else self.server_ledger
+            await asyncio.to_thread(
+                accounting.record, root, self.session, tool, arguments, actor, response, started
+            )
+            if tool in {"mlca_choose", "mlca_submit_script", "mlca_step_status"}:
+                await ctx.report_progress(
+                    1, 1, "MLCA request processed; poll step_status for long operations"
+                )
+            return response
 
 
 def create_server(project=None, mode=None):
@@ -437,6 +481,11 @@ def create_server(project=None, mode=None):
         else:
             raise MlcaUserError("Resource view must be status or facts")
         return result.content[0].text
+
+    @server.resource("mlca://evidence/{kind}{?ref}")
+    async def evidence_resource(kind: str, ctx: Context, ref: str = "") -> str:
+        result = await controller.call("mlca_read", {"kind": kind, "ref": ref}, ctx)
+        return canonical(result.model_dump(mode="json", by_alias=True, exclude_none=True))
 
     return server
 
