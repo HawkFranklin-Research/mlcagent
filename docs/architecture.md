@@ -37,3 +37,23 @@ in the project, including other branches. Branches preserve history; they cannot
 
 P9 (RPC, Ink, desktop, npm launcher, account login, special free-provider access and image generation)
 is deliberately absent from this implementation.
+
+
+## Distribution
+
+The wheel/source archive contains the Python engine, runtime helper and resources. PyPI installs it
+directly; shell, PowerShell, npm and Homebrew wrappers delegate to the same artifact/version with uv.
+The optional loopback browser view serves the existing Textual app. No second engine or model router
+is introduced by packaging. Version and distribution-name sources are shared; releases require
+licence/name approval and a protected environment. See [releasing](releasing.md).
+
+```mermaid
+flowchart LR
+  Source[Python engine and bundled resources] --> Artifact[Wheel and source archive]
+  Artifact --> Python[uv or pipx]
+  Shell[Shell and PowerShell installers] --> Python
+  Npm[npm launcher] --> Python
+  Brew[Homebrew wrapper] --> Python
+  Python --> TUI[CLI and Textual TUI]
+  TUI --> Web[Optional local browser view]
+```

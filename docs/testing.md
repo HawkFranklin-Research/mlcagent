@@ -27,3 +27,12 @@ The suite covers required-output alternatives, primary/supporting template valid
 column resolution and legacy compatibility, lazy sessions, incremental reads and full verification,
 5,000 appends within 30 seconds, scientific fit refusals, test lock lifecycle, reports, request ledgers,
 full standalone-script replay and headless TUI behavior. Synthetic metrics are harness test evidence.
+
+
+## Distribution checks
+
+The suite also builds/inspects the wheel, installs it into a clean temporary uv-tool home, starts and
+stops the loopback browser server, tests the npm launcher against fake uv executables, dry-runs the
+shell installer and checks release guards/workflow syntax. Node >=18 and npm are needed for launcher
+checks. PowerShell parsing runs only when pwsh is available; Ruby and shellcheck checks use those tools
+when installed. Source/resource/log text explicitly uses UTF-8, including the Braille logo on Windows.

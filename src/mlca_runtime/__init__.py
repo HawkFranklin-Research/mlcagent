@@ -16,7 +16,8 @@ def _step() -> Path:
 
 def inputs() -> dict[str, Path]:
     return {
-        name: Path(value["path"]) for name, value in json.loads((_step() / "inputs.json").read_text()).items()
+        name: Path(value["path"])
+        for name, value in json.loads((_step() / "inputs.json").read_text(encoding="utf-8")).items()
     }
 
 
@@ -37,7 +38,7 @@ def _output(name: str) -> Path:
 def _record(kind: str, value: dict) -> None:
     path = _step() / "manifest.json"
     data = (
-        json.loads(path.read_text())
+        json.loads(path.read_text(encoding="utf-8"))
         if path.exists()
         else {"outputs": [], "metrics": [], "facts": [], "fits": []}
     )
@@ -74,7 +75,7 @@ def save_table(df: Any, name: str, caption: str = "") -> Path:
     if path.suffix.lower() not in {".csv", ".parquet", ".json"}:
         path = path.with_suffix(".csv")
     if path.suffix == ".json":
-        path.write_text(df.to_json(orient="table"))
+        path.write_text(df.to_json(orient="table"), encoding="utf-8")
     elif path.suffix == ".parquet":
         df.to_parquet(path, index=True)
     else:
@@ -97,7 +98,7 @@ def save_model(model: Any, name: str) -> Path:
 
 def save_json(value: object, name: str, kind: str = "report") -> Path:
     path = _output(name)
-    path.write_text(json.dumps(value, sort_keys=True, allow_nan=False))
+    path.write_text(json.dumps(value, sort_keys=True, allow_nan=False), encoding="utf-8")
     _artifact(path, kind)
     return path
 

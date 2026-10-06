@@ -31,7 +31,7 @@ def generate(root: Path, state: Any, workflow: Any, records: Any, kind: Any = "a
         value = builders[name]()
         file = directory / (name + ".md" if isinstance(value, str) else name + ".json")
         if isinstance(value, str):
-            file.write_text(value)
+            file.write_text(value, encoding="utf-8")
         else:
             atomic_json(file, value)
         outputs[name] = str(file.relative_to(root))

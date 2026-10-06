@@ -41,7 +41,8 @@ def create(
     (runtime / "pyproject.toml").write_text(
         '[build-system]\nrequires=["hatchling"]\nbuild-backend="hatchling.build"\n'
         f'[project]\nname="mlca-runtime"\nversion="{__version__}"\n'
-        '[tool.hatch.build.targets.wheel]\npackages=["mlca_runtime"]\n'
+        '[tool.hatch.build.targets.wheel]\npackages=["mlca_runtime"]\n',
+        encoding="utf-8",
     )
     if frozen:
         command([uv, "pip", "install", "--python", str(python(env)), "-r", str(frozen)], root)
@@ -57,7 +58,7 @@ def lock(root: Path) -> dict:
     file = root / ".mlca/requirements.lock"
     # Exclude the local runtime path; copied and installed separately during reproduction.
     lines = [line for line in content.splitlines() if not line.lower().startswith("mlca-runtime")]
-    file.write_text("\n".join(lines) + "\n")
+    file.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return {
         "lock_sha256": sha256(file),
         "packages": lines,

@@ -1,7 +1,7 @@
 import pytest
-from conftest import advance_to, choose_action
 
 from mlca.api import Session
+from tests.helpers import advance_to, choose_action
 
 
 @pytest.mark.slow

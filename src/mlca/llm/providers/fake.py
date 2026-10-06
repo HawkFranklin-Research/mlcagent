@@ -13,7 +13,7 @@ class FakeProvider:
     def __init__(self, config: Any) -> None:
         if not config.script:
             raise MlcaUserError("Fake provider requires a response-script path")
-        raw = yaml.safe_load(Path(config.script).read_text())
+        raw = yaml.safe_load(Path(config.script).read_text(encoding="utf-8"))
         self.responses = raw if isinstance(raw, list) else raw["responses"]
         self.used = set()
 

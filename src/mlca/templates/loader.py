@@ -27,7 +27,7 @@ CHECK_TYPES = {
 
 def parse(path: Path, model: Any) -> Any:
     try:
-        return model.model_validate(yaml.safe_load(path.read_text()))
+        return model.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
     except (OSError, yaml.YAMLError, ValidationError) as exc:
         raise MlcaUserError(f"{path}: {exc}") from exc
 

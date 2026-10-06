@@ -19,3 +19,19 @@ def test_native_platform_level_b_requires_opt_in(monkeypatch):
 def test_audit_path_comparison_is_case_normalized():
     assert "os.path.normcase" in SOURCE
     assert "os.path.commonpath" in SOURCE
+
+
+def test_banner_resource_uses_utf8(monkeypatch):
+    from pathlib import Path
+
+    from mlca.tui.banner import logo_lines
+
+    original = Path.read_text
+
+    def read(path, *args, **kwargs):
+        if path.name == "logo.txt":
+            assert kwargs.get("encoding") == "utf-8"
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read)
+    assert logo_lines()

@@ -6,7 +6,7 @@ from mlca.llm.client import RequestContext
 
 
 def prompt(name: str, **values: Any) -> str:
-    text = (Path(__file__).parent / "prompts" / name).read_text()
+    text = (Path(__file__).parent / "prompts" / name).read_text(encoding="utf-8")
     # Replace declared placeholders only; JSON braces in inserted content are left untouched.
     for key, value in values.items():
         text = text.replace(

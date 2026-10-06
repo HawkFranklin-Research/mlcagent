@@ -78,3 +78,6 @@
   jobs, checksums, PyPI OIDC, npm provenance and an optional Homebrew PR. Workflows are files only.
 - D: consent-based shell/PowerShell installers, a version-pinned npm launcher with no install hooks,
   generated wrapper identities and Homebrew formula rendering. Local fake-uv dry runs pass.
+- E: install/release documentation, shared test helpers and explicit UTF-8 portability for resources,
+  logs, scripts and streams. Final offline suite: 54 passed, 1 skipped (PowerShell unavailable).
+- Local artifacts/installers are prepared; D1/D3 and author infrastructure setup still gate publication.

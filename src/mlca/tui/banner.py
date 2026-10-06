@@ -25,7 +25,7 @@ MIN_WIDTH = 84  # below this, show the wordmark only
 
 def logo_lines() -> list[str]:
     path = resource("assets") / "logo.txt"
-    return path.read_text().splitlines() if path.exists() else []
+    return path.read_text(encoding="utf-8").splitlines() if path.exists() else []
 
 
 def logo() -> Text:

@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--output", type=Path, default=ROOT / "packaging/homebrew/mlca.rb")
     args = parser.parse_args()
     name, version = metadata()
-    assert (ROOT / "packaging/NAME").read_text().strip() == name, "Run sync_versions.py first"
+    assert (ROOT / "packaging/NAME").read_text(encoding="utf-8").strip() == name, "Run sync_versions.py first"
     digest = args.sha256
     if args.from_dist:
         files = list(args.from_dist.glob("*.tar.gz"))
@@ -33,11 +33,11 @@ def main():
         "INITIAL": name[0],
         "HOMEPAGE": "https://github.com/" + repository,
     }
-    text = (ROOT / "packaging/homebrew/mlca.rb.tmpl").read_text()
+    text = (ROOT / "packaging/homebrew/mlca.rb.tmpl").read_text(encoding="utf-8")
     for key, value in values.items():
         text = text.replace("@" + key + "@", value)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(text)
+    args.output.write_text(text, encoding="utf-8")
     print(args.output)
 
 

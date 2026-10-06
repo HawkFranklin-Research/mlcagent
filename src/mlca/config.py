@@ -83,9 +83,9 @@ def merge(base: dict, overrides: dict) -> dict:
 
 def load(root: Path | None = None) -> Config:
     file = user_config_dir() / "config.yaml"
-    data = yaml.safe_load(file.read_text()) or {} if file.exists() else {}
+    data = yaml.safe_load(file.read_text(encoding="utf-8")) or {} if file.exists() else {}
     if root and (root / ".mlca/project.yaml").exists():
-        project = yaml.safe_load((root / ".mlca/project.yaml").read_text())
+        project = yaml.safe_load((root / ".mlca/project.yaml").read_text(encoding="utf-8"))
         data = merge(data, project.get("config", {}))
     try:
         return Config.model_validate(data)
@@ -96,7 +96,7 @@ def load(root: Path | None = None) -> Config:
 def save(config: Config) -> Path:
     path = user_config_dir() / "config.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False))
+    path.write_text(yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False), encoding="utf-8")
     path.chmod(0o600)
     return path
 

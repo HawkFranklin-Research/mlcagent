@@ -150,7 +150,7 @@ def _builtin(session: Any, action: Any, params: Any, step_id: Any, step: Any, st
     started_at = time.monotonic()
     # Engine actions are reproducible operations with parameters, not LLM-written privileged code.
     script = """# Engine-managed action. Reproduce through mlca replay --verify.\n"""
-    (step / "script.py").write_text(script)
+    (step / "script.py").write_text(script, encoding="utf-8")
     session.emit(
         "ScriptWritten",
         {
@@ -222,7 +222,7 @@ def _worker(session: Any, action: Any, params: Any, step_id: Any, step: Any, sta
                     raise
                 continue
             script = directory / "script.py"
-            script.write_text(source)
+            script.write_text(source, encoding="utf-8")
             script_hash = sha256(script)
             session.emit(
                 "ScriptWritten",

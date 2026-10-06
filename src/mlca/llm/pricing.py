@@ -7,7 +7,7 @@ from mlca.paths import user_config_dir
 
 def table() -> dict:
     file = user_config_dir() / "pricing.yaml"
-    return yaml.safe_load(file.read_text()) or {} if file.exists() else {}
+    return yaml.safe_load(file.read_text(encoding="utf-8")) or {} if file.exists() else {}
 
 
 def estimate(provider: str, model: str, input_tokens: int, output_tokens: int, cached_tokens: Any = 0) -> Any:

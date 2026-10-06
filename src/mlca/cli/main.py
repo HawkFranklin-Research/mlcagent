@@ -72,7 +72,7 @@ def init_project(
         data = [Path(typer.prompt(text("data")))]
     workflow = get(template)
     brief = (
-        yaml.safe_load(brief_file.read_text())
+        yaml.safe_load(brief_file.read_text(encoding="utf-8"))
         if brief_file
         else {q["id"]: typer.prompt(q["text"]) for q in workflow.spec.brief_questions}
     )
@@ -302,6 +302,9 @@ def validate_template(path: Path, json_output: bool = typer.Option(False, "--jso
 
 
 def main() -> Any:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     try:
         app()
     except MlcaUserError as exc:
@@ -316,7 +319,7 @@ def main() -> Any:
         text_value = redact(traceback.format_exc(), load())
         directory = Path.cwd() / ".mlca/log"
         if directory.exists():
-            with (directory / "errors.log").open("a") as stream:
+            with (directory / "errors.log").open("a", encoding="utf-8") as stream:
                 stream.write(text_value)
         from rich.console import Console
 

@@ -49,7 +49,7 @@ class Store:
         if not self.anchor.exists():
             return None
         try:
-            return json.loads(self.anchor.read_text())
+            return json.loads(self.anchor.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise IntegrityError("Invalid event log head checkpoint") from exc
 

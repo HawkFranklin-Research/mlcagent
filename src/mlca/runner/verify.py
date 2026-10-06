@@ -64,7 +64,9 @@ def verify(session: Any) -> Any:
                     )
                     ok = sha256(reproduced) == split["sha256"]
                 elif builtin == "inventory":
-                    saved = json.loads((historical / "outputs" / step["outputs"][0]["name"]).read_text())
+                    saved = json.loads(
+                        (historical / "outputs" / step["outputs"][0]["name"]).read_text(encoding="utf-8")
+                    )
                     ok = saved == {
                         "brief": state.brief,
                         "inventory": state.inventory,
@@ -92,7 +94,8 @@ def verify(session: Any) -> Any:
                 environment_root.mkdir(parents=True)
                 snapshot = environment_root / "requirements.lock"
                 snapshot.write_text(
-                    "\n".join(step.get("environment_packages", state.environment_packages)) + "\n"
+                    "\n".join(step.get("environment_packages", state.environment_packages)) + "\n",
+                    encoding="utf-8",
                 )
                 if sha256(snapshot) != environment_id:
                     raise IntegrityError("Recorded package snapshot does not match its hash")
@@ -104,7 +107,7 @@ def verify(session: Any) -> Any:
             (run / "outputs").mkdir()
             (run / "scratch").mkdir()
             shutil.copyfile(script, run / "script.py")
-            original_inputs = json.loads((historical / "inputs.json").read_text())
+            original_inputs = json.loads((historical / "inputs.json").read_text(encoding="utf-8"))
             inputs = {}
             for name, entry in original_inputs.items():
                 source = Path(entry["path"])
@@ -151,7 +154,11 @@ def verify(session: Any) -> Any:
                 elif reproduced.exists():
                     mapping[str(session.root / output["path"])] = reproduced
             manifest = run / "manifest.json"
-            metrics = json.loads(manifest.read_text()).get("metrics", []) if manifest.exists() else []
+            metrics = (
+                json.loads(manifest.read_text(encoding="utf-8")).get("metrics", [])
+                if manifest.exists()
+                else []
+            )
             if metrics != step.get("metrics", []):
                 differences.append("metrics")
             results.append(

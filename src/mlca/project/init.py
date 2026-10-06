@@ -99,7 +99,7 @@ def initialise(
         "template_sha256": workflow.sha256,
         "config": config or {},
     }
-    (root / ".mlca/project.yaml").write_text(yaml.safe_dump(settings, sort_keys=False))
+    (root / ".mlca/project.yaml").write_text(yaml.safe_dump(settings, sort_keys=False), encoding="utf-8")
     store = Store(root)
     store.append(
         "ProjectCreated",

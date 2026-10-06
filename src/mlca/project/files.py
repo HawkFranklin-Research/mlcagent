@@ -10,7 +10,7 @@ def materialise(root: Path, state: Any, emit: Any = None) -> list[dict]:
     cache = root / ".mlca/views.json"
     import json
 
-    previous = json.loads(cache.read_text()) if cache.exists() else {}
+    previous = json.loads(cache.read_text(encoding="utf-8")) if cache.exists() else {}
     changes = []
     for relative, expected in previous.items():
         path = root / relative
@@ -58,5 +58,5 @@ def materialise(root: Path, state: Any, emit: Any = None) -> list[dict]:
     atomic_json(root / ".mlca/state.json", state.model_dump(mode="json"))
     lines = ["# Project log", "", f"Event: {state.current_event}", ""]
     lines.extend(f"- {s['step_id']}: {s['status']}" for s in state.steps)
-    (root / "PROJECT_LOG.md").write_text("\n".join(lines) + "\n")
+    (root / "PROJECT_LOG.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return []

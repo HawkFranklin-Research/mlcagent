@@ -177,3 +177,18 @@
 - Installer dry runs, Node forwarding/status/missing-uv/signal checks, intended npm-pack file listing,
   wrapper identity checks and Ruby formula syntax pass. PowerShell parsing is skipped because pwsh
   and PSScriptAnalyzer are unavailable; shellcheck is unavailable, but sh -n passes.
+
+## 2026-10-06 — Distribution E: documentation and final verification
+- Install/release guides distinguish prepared channels from publication and explain all OS levels,
+  removals, config/data/key locations and author-only registry/environment/tap setup.
+- Generated formula previews are excluded from the sdist to avoid embedding an archive's own hash
+  in its source. The template remains included; release rendering uses the built sdist SHA256.
+- Artifact identity validation requires a common lowercase unscoped name for Python and npm.
+- Text resource/log/script reads and writes use UTF-8 explicitly; CLI streams and analysis subprocesses
+  also use UTF-8 so Windows locale defaults cannot corrupt Braille artwork or Unicode evidence.
+- Test helpers have their own module; nested conftest files no longer collide during full collection.
+- Final suite: 54 passed, 1 skipped in 227.66s; the skip is unavailable PowerShell parsing/analyzer.
+  Node reports 4/4 passing; shell/Ruby syntax, wrapper sync, wheel install, web smoke, YAML and release
+  guard checks pass. shellcheck, actionlint, act and native macOS/Windows execution are unavailable here.
+- D1 licence and D3 public name remain blockers; publishing additionally needs the one-time external
+  infrastructure setup documented in releasing.md. Only local commits/builds/dry runs were performed.

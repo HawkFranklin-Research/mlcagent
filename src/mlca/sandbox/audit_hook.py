@@ -35,5 +35,5 @@ sys.addaudithook(guard)
 def install(directory: Path) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "sitecustomize.py"
-    path.write_text(SOURCE)
+    path.write_text(SOURCE, encoding="utf-8")
     return directory

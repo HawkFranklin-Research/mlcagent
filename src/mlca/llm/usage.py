@@ -10,7 +10,9 @@ from mlca.paths import atomic_json, canonical
 def read(root: Path) -> list[dict]:
     folder = root / ".mlca/requests"
     return (
-        [json.loads(p.read_text())["usage"] for p in sorted(folder.glob("*.json"))] if folder.exists() else []
+        [json.loads(p.read_text(encoding="utf-8"))["usage"] for p in sorted(folder.glob("*.json"))]
+        if folder.exists()
+        else []
     )
 
 
@@ -19,11 +21,11 @@ def persist(root: Path, usage: dict, egress: dict) -> None:
     folder.mkdir(exist_ok=True)
     with FileLock(str(folder) + ".lock"):
         atomic_json(folder / f"{usage['request_id']}.json", {"usage": usage, "egress": egress})
-        records = [json.loads(p.read_text()) for p in sorted(folder.glob("*.json"))]
+        records = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(folder.glob("*.json"))]
         # The committed request envelopes are recoverable truth; ledgers are replaceable views.
         for category, filename in [("usage", "usage.jsonl"), ("egress", "egress.jsonl")]:
             temporary = root / ".mlca" / f".{filename}.tmp"
-            temporary.write_text("".join(canonical(r[category]) + "\n" for r in records))
+            temporary.write_text("".join(canonical(r[category]) + "\n" for r in records), encoding="utf-8")
             temporary.replace(root / ".mlca" / filename)
 
 

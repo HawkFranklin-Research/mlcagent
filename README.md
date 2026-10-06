@@ -4,24 +4,28 @@ MLCA guides a machine learning project through declared workflow events. A Navig
 actions; a Worker writes standalone analysis scripts. The engine controls gates, scope, artifact
 provenance, validation loops and test access. CLI and Textual clients share the same Session API.
 
-P0–P8 source implementation is present. The permanent offline suite passes, including synthetic
+P0–P8 source implementation and distribution preparation are present. The permanent offline suite
+passes (54 tests; one unavailable PowerShell check skipped), including synthetic
 classification workflows, script replay and headless TUI checks. Real providers, original-data studies
 and broader UI validation remain untested. See [implementation status](docs/IMPLEMENTATION_STATUS.md),
 [decisions](docs/DECISIONS.md) and the original [plan](plan.md). Workflow content is DRAFT.
 
 ## Installation
 
-Python 3.11+ and uv are required. From this repository:
+Prepared installation channels (the package and installer URL are not published yet):
 
-```bash
-uv sync --group dev
-uv run mlca --version
-uv run mlca
+```sh
+uv tool install mlca
+curl -LsSf <release-base-url>/install.sh | sh
+npx mlca
 ```
 
-For the offline test setup and dependency-cache preparation, see [testing](docs/testing.md).
-Linux bubblewrap is required for level A. Other systems require explicit
-opt-in to weaker trusted-code execution; read the [security model](docs/security-model.md).
+For this checkout: `uv sync --group dev`, then `uv run mlca`. Python >=3.11 is required.
+See [installation](docs/install.md) for every channel, OS support and removal, [testing](docs/testing.md)
+for offline cache preparation, and [releasing](docs/releasing.md) for the author-only release setup.
+Linux requires working bubblewrap namespaces for level A. macOS/native Windows require explicit
+level B opt-in for trusted code; WSL2 is recommended for level A on Windows. `mlca web` serves the
+same TUI locally with the optional web extra.
 
 ## Configuration
 

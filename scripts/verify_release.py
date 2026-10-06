@@ -8,7 +8,7 @@ from release_metadata import ROOT, metadata
 
 def verify(root: Path, tag: str, approved_name: str) -> tuple[str, str]:
     name, version = metadata(root)
-    license_text = (root / "LICENSE").read_text().strip()
+    license_text = (root / "LICENSE").read_text(encoding="utf-8").strip()
     if not license_text or any(
         marker in license_text.lower()
         for marker in ("placeholder", "license to be chosen", "no license is granted")
@@ -18,7 +18,7 @@ def verify(root: Path, tag: str, approved_name: str) -> tuple[str, str]:
         raise ValueError("D3 unresolved: PACKAGE_NAME_APPROVED must match project.name in pyproject.toml")
     if tag != "v" + version:
         raise ValueError(f"Release tag must be v{version}, received {tag!r}")
-    if (root / "packaging/NAME").read_text().strip() != name:
+    if (root / "packaging/NAME").read_text(encoding="utf-8").strip() != name:
         raise ValueError("Generated packaging/NAME is stale; run scripts/sync_versions.py")
     return name, version
 

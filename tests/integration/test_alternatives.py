@@ -1,10 +1,10 @@
 import json
 
 import pytest
-from conftest import advance_to, choose_action
 
 from mlca.api import Session
 from mlca.project.inventory import read_table
+from tests.helpers import advance_to, choose_action
 
 
 @pytest.mark.slow

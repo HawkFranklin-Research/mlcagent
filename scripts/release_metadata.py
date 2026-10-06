@@ -9,11 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def metadata(root: Path = ROOT) -> tuple[str, str]:
-    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     name = project["name"]
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
+    if not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", name):
         raise ValueError("The distribution name must be an unscoped Python/npm-compatible name")
-    tree = ast.parse((root / "src/mlca/__init__.py").read_text())
+    tree = ast.parse((root / "src/mlca/__init__.py").read_text(encoding="utf-8"))
     version = next(
         ast.literal_eval(node.value)
         for node in tree.body

@@ -9,7 +9,7 @@ from mlca.paths import sha256
 
 def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
     manifest_file = step / "manifest.json"
-    manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {}
+    manifest = json.loads(manifest_file.read_text(encoding="utf-8")) if manifest_file.exists() else {}
     if not isinstance(manifest, dict):
         raise MlcaUserError("Runtime manifest must be an object")
     if any(path.is_symlink() for path in step.rglob("*")):

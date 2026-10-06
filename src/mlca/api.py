@@ -34,7 +34,7 @@ class Session:
         settings = self.root / ".mlca/project.yaml"
         if not settings.exists():
             raise MlcaUserError("No MLCA project here; initialize or open a project folder")
-        self.settings = yaml.safe_load(settings.read_text())
+        self.settings = yaml.safe_load(settings.read_text(encoding="utf-8"))
         self.store = Store(self.root)
         self.store.verify()
         self.branches = Branches(self.store)
@@ -120,7 +120,7 @@ class Session:
 
     def packages(self) -> Any:
         file = self.root / ".mlca/requirements.lock"
-        return file.read_text().splitlines() if file.exists() else []
+        return file.read_text(encoding="utf-8").splitlines() if file.exists() else []
 
     def status(self, recheck: Any = False) -> Any:
         if recheck:

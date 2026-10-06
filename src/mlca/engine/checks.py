@@ -92,7 +92,7 @@ def evaluate(
             return False, "No completed fit evidence"
         for step in relevant:
             manifest = root / ".mlca/steps" / step["step_id"] / "manifest.json"
-            data = json.loads(manifest.read_text())
+            data = json.loads(manifest.read_text(encoding="utf-8"))
             fits = data.get("fits", [])
             if not fits or any(
                 f["partition"] != "train" or f["index_sha256"] != state.split["train_index_sha256"]

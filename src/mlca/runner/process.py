@@ -42,6 +42,7 @@ def execute(
             "MKL_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
             "PYTHONHASHSEED": "0",
+            "PYTHONUTF8": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
             "MLCA_STEP_DIR": str(step),
             "MLCA_STYLE": str(style),

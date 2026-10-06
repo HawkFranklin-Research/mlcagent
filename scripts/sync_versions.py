@@ -10,7 +10,7 @@ def sync(check: bool = False):
     name, version = metadata()
     updates = {ROOT / "packaging/NAME": name + "\n"}
     # Consumers read the generated mirror after syncing it from the sole authority.
-    chosen = name if not check else (ROOT / "packaging/NAME").read_text().strip()
+    chosen = name if not check else (ROOT / "packaging/NAME").read_text(encoding="utf-8").strip()
     package = {
         "name": chosen,
         "version": version,
@@ -23,22 +23,22 @@ def sync(check: bool = False):
         "publishConfig": {"access": "public"},
     }
     updates[ROOT / "packaging/npm/package.json"] = json.dumps(package, indent=2) + "\n"
-    updates[ROOT / "packaging/npm/LICENSE"] = (ROOT / "LICENSE").read_text()
+    updates[ROOT / "packaging/npm/LICENSE"] = (ROOT / "LICENSE").read_text(encoding="utf-8")
     for kind in ("sh", "ps1"):
         updates[ROOT / f"installers/install.{kind}"] = (
-            (ROOT / f"installers/install.{kind}.tmpl").read_text().replace("@NAME@", chosen)
+            (ROOT / f"installers/install.{kind}.tmpl").read_text(encoding="utf-8").replace("@NAME@", chosen)
         )
     mismatches = [
         str(path.relative_to(ROOT))
         for path, value in updates.items()
-        if not path.exists() or path.read_text() != value
+        if not path.exists() or path.read_text(encoding="utf-8") != value
     ]
     if check and mismatches:
         raise SystemExit("Generated wrapper metadata is stale: " + ", ".join(mismatches))
     if not check:
         for path, value in updates.items():
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(value)
+            path.write_text(value, encoding="utf-8")
         (ROOT / "installers/install.sh").chmod(0o755)
         (ROOT / "packaging/npm/bin/mlca.js").chmod(0o755)
     print(f"{name} {version}: wrapper metadata " + ("checked" if check else "synced"))

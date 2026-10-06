@@ -41,3 +41,35 @@ case-study results. Full survival, live providers, broad UI navigation, adversar
 coverage and cross-platform execution still need validation. Template content remains DRAFT.
 Licence, public package/repository names and default models remain author decisions. No remote,
 tag, push, release or publication has been created.
+
+
+## Prompt 02 distribution validation
+
+Final command: `uv run pytest -q` (offline, slow tests included).
+Final result: **54 passed, 1 skipped in 227.66s (0:03:47)**. The skip is PowerShell syntax/analyzer
+validation: neither pwsh nor PSScriptAnalyzer is installed on this Linux host.
+
+Prepared: dynamic Python metadata, wheel/sdist with templates/styles/derived artwork/runtime helper,
+loopback-only browser TUI, portable scrubbed processes and audit paths, shell/PowerShell installers,
+version-pinned npm launcher, generated Homebrew formula, cross-platform CI and gated release workflows.
+
+Additional checks:
+
+- Ruff lint and full format check; Git whitespace check: pass.
+- `uv build` / check_wheel.py; fresh clean-home `uv tool install` and version/doctor JSON/banner: pass.
+- Missing web-extra refusal and real loopback HTTP start/stop: pass.
+- `node --test packaging/npm/test/`: four tests pass (arguments/pinning/debug, status, missing uv, signals).
+- Shell installer fake-uv install/upgrade/pin/PATH dry runs and `sh -n`: pass.
+- `npm pack --dry-run`: exactly package.json, bin/mlca.js, README.md and LICENSE.
+- Homebrew dummy-hash rendering and `ruby -c`: pass. Final preview uses the local sdist hash.
+- Workflow YAML syntax and licence/name/tag/sequence guard tests: pass.
+- 5,000 append test under concurrent suite load: 7.576 seconds, below the 30-second bound.
+
+Unavailable here: shellcheck, pwsh/PSScriptAnalyzer, actionlint, act and Homebrew execution; the tools
+are absent. Native macOS/Windows and Python 3.11 execution were not run on this Linux/Python 3.13
+host; the six-job CI matrix is prepared but not triggered. Level B is exercised locally, not presented
+as native-OS validation. Full survival/original-data scientific studies and live providers remain untested.
+
+D1 licence and D3 public name remain publication blockers. The protected GitHub environment and
+registry/tap setup must be configured by the author as described in [releasing](releasing.md).
+No remote, tag, push, workflow trigger, release, registration or publication was performed.

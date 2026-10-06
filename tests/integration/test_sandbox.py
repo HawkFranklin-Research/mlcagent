@@ -2,12 +2,12 @@ import json
 import shutil
 
 import pytest
-from conftest import advance_to, choose_action
 
 from mlca.api import Session
 from mlca.paths import atomic_json, user_data_dir
 from mlca.project.env import python
 from mlca.runner.process import execute
+from tests.helpers import advance_to, choose_action
 
 
 @pytest.mark.slow

@@ -40,6 +40,9 @@ packages = ["src/mlca", "src/mlca_runtime"]
 "assets/logo.txt" = "mlca/resources/assets/logo.txt"
 "assets/logo.png" = "mlca/resources/assets/logo.png"
 
+[tool.hatch.build.targets.sdist]
+exclude = ["packaging/homebrew/mlca.rb", "**/__pycache__/**"]
+
 [tool.ruff]
 line-length = 110
 extend-exclude = ["plan.md", "docs/prompts"]

@@ -282,9 +282,9 @@ class MlcaApp(App):
             path = self.project / relative
             sections.append("## " + name + "\n" + str(path) + "\n")
             if path.suffix == ".md":
-                sections.append(path.read_text())
+                sections.append(path.read_text(encoding="utf-8"))
             else:
-                sections.append("```json\n" + path.read_text()[:20000] + "\n```")
+                sections.append("```json\n" + path.read_text(encoding="utf-8")[:20000] + "\n```")
         self.push_screen(ReportScreen("\n".join(sections)))
 
     def action_view_figure(self) -> None:

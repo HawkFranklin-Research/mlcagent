@@ -8,7 +8,7 @@ def main():
     if not files:
         raise SystemExit("No distributions to checksum")
     lines = [hashlib.sha256(file.read_bytes()).hexdigest() + "  " + file.name for file in files]
-    (directory / "SHA256SUMS").write_text("\n".join(lines) + "\n")
+    (directory / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
 
 
