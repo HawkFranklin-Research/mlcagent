@@ -84,3 +84,12 @@
   be covered by event sub-goal checks; supporting actions cannot supply required completion evidence.
 - Both draft templates cover alternate split, feature and model actions. Supporting target counts
   no longer copy schema-audit fact candidates. Scientific template content remains DRAFT.
+
+## 2026-10-06 — Functional review F4
+- Branch and checkout re-check current event sub-goals before materialising views.
+- Fallback considers default actions and remaining primary alternatives. Exhausted parameterised
+  actions explain that different parameters are needed; an exhausted parameterless event explains
+  that a custom instruction or branch is required.
+- Prompt 01 conflicts: completed events must have no fallback action options, but its branch test
+  requests an alternative after the completed model step is re-checked. Pending author clarification,
+  completed events retain next; alternatives are tested when model completion remains open.

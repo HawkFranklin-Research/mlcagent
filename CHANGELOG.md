@@ -60,3 +60,4 @@
 
 ## Functional fixes after review
 - F3: any-of required-output checks and validated primary/supporting action roles in both templates.
+- F4: re-check branch/checkout sub-goals and offer remaining primary fallback actions with exhaustion notes.

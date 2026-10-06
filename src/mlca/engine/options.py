@@ -88,34 +88,50 @@ def validate(options: Any, state: Any, workflow: Any) -> Any:
 
 def fallback(state: Any, workflow: Any) -> Any:
     event = workflow.events[state.current_event]
-    options = []
-    for identifier in event.default_options:
+    if state.event_statuses.get(event.id) == "done":
+        return []
+    identifiers = list(
+        dict.fromkeys(
+            [
+                *event.default_options,
+                *(name for name in event.actions if workflow.actions[name].role == "primary"),
+            ]
+        )
+    )
+    options, exhausted = [], []
+    for identifier in identifiers:
         action = workflow.actions[identifier]
         values = {
-            name: (
-                next(iter(state.data)) if spec.type == "data_ref" and spec.default is None else spec.default
-            )
+            name: next(iter(state.data)) if spec.type == "data_ref" and spec.default is None else spec.default
             for name, spec in action.params.items()
         }
-        params = parameters(action, values, state)
-        if any(
-            s["status"] == "completed"
-            and s["action_id"] == identifier
-            and s["params"] == params
-            and s.get("generation", 0) == state.generations.get(s["event_id"], 0)
-            for s in state.steps
-        ):
+        try:
+            params = parameters(action, values, state)
+        except MlcaUserError:
+            # A required parameter without a default needs a custom instruction.
             continue
-        options.append(
-            {
-                "id": str(len(options) + 1),
-                "action_id": identifier,
-                "params": params,
-                "title": action.title,
-                "why_now": "Template default action",
-                "advances": [],
-                "expected_outputs": [o.name for o in action.outputs],
-                "est_cost_usd": None,
-            }
+        duplicate = any(
+            step["status"] == "completed"
+            and step["action_id"] == identifier
+            and step["params"] == params
+            and step.get("generation", 0) == state.generations.get(step["event_id"], 0)
+            for step in state.steps
         )
-    return options[: event.max_options]
+        option = {
+            "id": "",
+            "action_id": identifier,
+            "params": params,
+            "title": action.title,
+            "why_now": "Template default action"
+            if identifier in event.default_options
+            else "Alternative primary action",
+            "advances": [],
+            "expected_outputs": [output.name for output in action.outputs],
+            "est_cost_usd": None,
+        }
+        if not duplicate:
+            options.append(option)
+        elif action.role == "primary" and action.params:
+            exhausted.append({**option, "why_now": "Repeat with different parameters"})
+    options = (options or exhausted)[: event.max_options]
+    return [{**option, "id": str(index)} for index, option in enumerate(options, 1)]

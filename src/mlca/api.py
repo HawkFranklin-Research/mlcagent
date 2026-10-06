@@ -172,7 +172,12 @@ class Session:
                                 len(action.prompt.encode()),
                                 worker.max_output_tokens,
                             )
-            options.append({"id": "custom", "title": "Custom instruction (current event scope)"})
+            custom = {"id": "custom", "title": "Custom instruction (current event scope)"}
+            if not options and state.event_statuses.get(state.current_event) != "done":
+                custom["note"] = (
+                    "All available actions are exhausted; this event needs a custom instruction or a branch."
+                )
+            options.append(custom)
             return options
 
     def choose(self, n: Any) -> Any:
@@ -326,6 +331,7 @@ class Session:
         with self.mutation():
             self.branches.create(name, from_id, self.session_id)
             self.branch_name = name
+            checks.run_all(self.state, self.workflow, self.root, self.emit)
             materialise(self.root, self.state, self.emit)
             return self.branches.list()
 
@@ -333,6 +339,7 @@ class Session:
         with self.mutation():
             self.branches.checkout(name, self.session_id)
             self.branch_name = name
+            checks.run_all(self.state, self.workflow, self.root, self.emit)
             materialise(self.root, self.state, self.emit)
             return self.status()
 
