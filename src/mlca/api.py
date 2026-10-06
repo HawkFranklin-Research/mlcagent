@@ -233,7 +233,11 @@ class Session:
         return self._choose(n)
 
     def _choose(self, n):
-        self._ensure_idle()
+        with self.mutation():
+            self._ensure_idle()
+            return self._choose_available(n)
+
+    def _choose_available(self, n):
         options = self.options()
         choice = next((o for o in options if o["id"] == str(n)), None)
         if choice is None:
@@ -262,6 +266,8 @@ class Session:
     def _custom(self, text):
         with self.mutation():
             self._ensure_idle()
+            if self.state.event_statuses.get(self.state.current_event) == "done":
+                raise MlcaUserError("Completed events offer next, not custom actions")
             state = self.state
             event = self.workflow.events[state.current_event]
             self.emit("CustomInstructionSubmitted", {"text": text}, actor="user")
@@ -487,7 +493,10 @@ class Session:
         step = next((s for s in self.state.steps if s["step_id"] == step_id), None)
         if step is None:
             raise MlcaUserError("Unknown step id on this branch")
-        return {**step, "poll_after_s": 2}
+        active_job = next(
+            (j for j in self._jobs.values() if j.get("step_id") == step_id and j["thread"].is_alive()), None
+        )
+        return {**step, "status": "running" if active_job else step["status"], "poll_after_s": 2}
 
     def submit_script(self, step_id, code):
         if self.mode != "brain":

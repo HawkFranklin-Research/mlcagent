@@ -20,7 +20,7 @@ def test_stdio_and_read_schemas():
             StdioServerParameters(command=sys.executable, args=["-m", "mlca", "mcp"]), read_timeout_seconds=10
         ) as client:
             tools = await client.list_tools()
-            assert len(tools.tools) == 7
+            assert len(tools.tools) == 12
             assert all("ctx" not in tool.input_schema["properties"] for tool in tools.tools)
             assert all(tool.annotations.destructive_hint is False for tool in tools.tools)
             assert client.protocol_version in {"2026-07-28", "2025-11-25", "2025-06-18"}
