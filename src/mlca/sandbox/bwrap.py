@@ -1,3 +1,4 @@
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,9 +14,13 @@ def build(
     runtime: Path,
     style: Path,
     allow_network: Any = False,
+    temporary: Path | None = None,
 ) -> list[str]:
+    executable = shutil.which("bwrap")
+    if executable is None:
+        raise MlcaUserError("Bubblewrap executable is unavailable")
     command = [
-        "bwrap",
+        executable,
         "--die-with-parent",
         "--new-session",
         "--unshare-user",
@@ -29,6 +34,8 @@ def build(
         "--tmpfs",
         "/tmp",
     ]
+    if temporary is not None:
+        command += ["--tmpfs", str(temporary)]
     if not allow_network:
         command += ["--unshare-net"]
     # Do not bind / or a home directory. Python binaries may point into a base interpreter.

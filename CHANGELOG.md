@@ -72,3 +72,5 @@
 ## Distribution preparation
 - A: dynamic version metadata, verified wheel resources, optional loopback browser TUI and clean-home
   uv-tool installation checks. The source artwork is excluded from wheels.
+- B: portable scrubbed subprocess paths, private temporary homes, Windows-normalized audit roots and
+  explicit per-OS doctor guidance. Weaker execution remains opt-in.

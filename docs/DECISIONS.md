@@ -145,3 +145,12 @@
   for users and included in dev dependencies so its offline smoke check always runs.
 - Three distribution checks pass: missing-extra refusal, HTTP start/stop and fresh uv-tool wheel install
   with version, JSON doctor and terminal banner. No publishing occurred.
+
+## 2026-10-06 — Distribution B: platform execution
+- Scrubbed processes use a per-step temporary home/temp directory, os.pathsep and runtime-derived
+  read roots from the base interpreter, sysconfig and analysis environment. Windows receives only
+  whitelisted SystemRoot/WINDIR values for interpreter/DLL loading, never arbitrary user environment.
+- Linux namespaces mount that temporary home separately. The level-B audit hook no longer grants
+  blanket access to the host's /tmp; path comparisons normalize case on Windows and handle drives.
+- Level B remains opt-in. Doctor explains macOS/native Windows limitations and recommends WSL2 with
+  bubblewrap for Windows users who require level A. Native platform execution awaits the CI matrix.

@@ -249,6 +249,8 @@ def configuration(ctx: typer.Context, operation: str = typer.Argument("show")) -
 @app.command()
 def doctor(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")) -> Any:
     config = load(_path(ctx))
+    from mlca.sandbox.level import explanation
+
     if not json_output:
         from mlca.tui.banner import print_banner
 
@@ -261,6 +263,8 @@ def doctor(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")
             "sandbox_detected": "A (unverified until execution)"
             if shutil.which("bwrap") and sys.platform == "linux"
             else "B (opt-in required)",
+            "sandbox_guidance": explanation(),
+            "sandbox_allow_level_b": config.sandbox.allow_level_b,
             "providers": {
                 name: {
                     "kind": p.kind,

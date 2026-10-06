@@ -3,6 +3,7 @@ import os
 import signal
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import threading
 import time
@@ -31,8 +32,9 @@ def execute(
 ) -> dict:
     with tempfile.TemporaryDirectory(prefix="mlca-home-") as temporary:
         env = {
-            "PATH": str(python.parent) + os.pathsep + "/usr/bin:/bin",
-            "HOME": "/tmp",
+            "PATH": os.pathsep.join(dict.fromkeys([str(python.parent), str(Path(sys.executable).parent)])),
+            "HOME": temporary,
+            "USERPROFILE": temporary,
             "LANG": "C.UTF-8",
             "MPLBACKEND": "Agg",
             "OPENBLAS_NUM_THREADS": "1",
@@ -45,26 +47,25 @@ def execute(
             "MLCA_STYLE": str(style),
             "MLCA_TRAIN_INDEX_SHA256": train_index_sha256,
             "MLCA_TRAIN_ROW_COUNT": str(expected_train_rows),
-            "TMPDIR": "/tmp",
+            "TMPDIR": temporary,
+            "TEMP": temporary,
+            "TMP": temporary,
         }
-        if level == "B":
-            env["HOME"] = temporary
+        for name in ("SYSTEMROOT", "WINDIR"):
+            if name in os.environ:
+                env[name] = os.environ[name]
         hooks = install(step / "hooks")
         read_roots = [str(p) for p in declared] + [
             str(step),
             str(env_root),
             str(runtime),
             str(style),
-            "/usr",
-            "/lib",
-            "/lib64",
-            "/bin",
-            str(Path(sys.base_prefix) / "lib"),
-            str(Path(sys.base_prefix) / "bin"),
-            "/dev/null",
-            "/dev/urandom",
-            "/tmp",
+            temporary,
+            str(Path(sys.base_prefix)),
+            *sysconfig.get_paths().values(),
         ]
+        if os.name != "nt":
+            read_roots.extend([os.devnull, "/dev/urandom"])
         env["PYTHONPATH"] = str(hooks)
         env["MLCA_AUDIT_RULES"] = json.dumps(
             {
@@ -73,14 +74,14 @@ def execute(
                     str(step / "outputs"),
                     str(step / "manifest.json"),
                     str(step / "scratch"),
-                    "/tmp",
+                    temporary,
                 ],
                 "network": allow_network,
             }
         )
         # Both levels use the hook. A also has filesystem/network namespaces.
         args = (
-            build(python, step, declared, env_root, runtime, style, allow_network)
+            build(python, step, declared, env_root, runtime, style, allow_network, Path(temporary))
             if level == "A"
             else [str(python), str(step / "script.py")]
         )

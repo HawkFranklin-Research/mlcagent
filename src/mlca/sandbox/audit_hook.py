@@ -6,7 +6,16 @@ rules = json.loads(os.environ["MLCA_AUDIT_RULES"])
 read_roots = [pathlib.Path(p).resolve() for p in rules["read_roots"]]
 write_roots = [pathlib.Path(p).resolve() for p in rules["write_roots"]]
 def inside(path, roots):
-    return any(path == root or path.is_relative_to(root) for root in roots)
+    # normcase preserves POSIX case and folds Windows drive/path case.
+    path = os.path.normcase(str(path))
+    for root in roots:
+        root = os.path.normcase(str(root))
+        try:
+            if os.path.commonpath([path, root]) == root:
+                return True
+        except ValueError:
+            pass  # Different Windows drives cannot share a root.
+    return False
 def guard(event, args):
     if event == "open" and isinstance(args[0], (str, bytes, os.PathLike)):
         path = pathlib.Path(os.fsdecode(args[0])).resolve()
