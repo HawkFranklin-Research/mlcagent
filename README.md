@@ -181,5 +181,6 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 | [docs/security-model.md](docs/security-model.md) | Isolation levels and their limits |
 | [docs/providers.md](docs/providers.md) | Model providers and roles |
 | [docs/install.md](docs/install.md), [docs/releasing.md](docs/releasing.md) | Install channels; author-only release setup |
+| [docs/m7-vm-brain-mode.md](docs/m7-vm-brain-mode.md) | Manual end-to-end test on a fresh VM with Claude Code in brain mode |
 | [docs/testing.md](docs/testing.md) | Running the offline tests (prime the uv cache once: `uv run python scripts/prime_test_cache.py`) |
 | [docs/DECISIONS.md](docs/DECISIONS.md), [CHANGELOG.md](CHANGELOG.md) | Decisions and history |

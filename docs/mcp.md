@@ -218,6 +218,8 @@ No HTTP listener, A2A, ACP or MCP tasks extension is implemented; polling works 
 
 ## Validation and M7 author checklist
 
+Step-by-step VM walkthrough for the brain-mode run: [m7-vm-brain-mode.md](m7-vm-brain-mode.md).
+
 Automated offline tests cover real stdio discovery, legacy/modern initialization, full synthetic
 brain and driver studies, zero-model brain execution, bypass attempts, repairs, human approvals,
 locks in both directions, privacy/ledger hashes, image reads and registration previews/backups.
