@@ -26,6 +26,8 @@ def check(wheel: Path, verbose: bool = True) -> list[str]:
         "mlca/resources/assets/logo.png",
         "mlca/resources/assets/banner.txt",
     }
+    for module in ("snapshot", "timing", "failures", "metrics", "import_usage", "bench"):
+        required.add(f"mlca/evaluation/{module}.py")
     for template in ("tabular_classification", "survival"):
         required.add(f"mlca/resources/templates/{template}/template.yaml")
         for source in (ROOT / "templates" / template).rglob("*.yaml"):

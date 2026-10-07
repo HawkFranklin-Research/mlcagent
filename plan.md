@@ -8,7 +8,10 @@ Written 2026-10-06. When the code is done, it will be reviewed against section 1
 
 ## Current status — 2026-10-07
 
-### Beta publication attempt — 2026-10-07
+**Latest work:** P10.1–P10.7 implemented with sourced metrics, usage imports and independent task-card benchmarks. The author-approved distribution is `mlcagent` 0.2.0b1; command/import remain `mlca`. Release validation has passed (137 tests passed, 1 skipped); the authorized PyPI upload follows. Older upload results below describe the rejected `mlca` name, not this release.
+
+
+### Historical beta publication attempt as `mlca` — 2026-10-07
 
 - D1 is resolved as CC-BY-NC-ND-4.0; D3 was author-approved as `mlca`. Release source is local commit `ac4bcc8`; incoming VM docs were committed separately as `45344a5`.
 - Release gates pass: **106 passed, 1 skipped** (PowerShell unavailable), Ruff lint/format, approved-name/version guard, synchronized wrappers, wheel/sdist build, Twine checks and all 179 wheel resources.
@@ -78,7 +81,7 @@ Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_dist
   - **tests:** `tests/unit/test_options.py`, `tests/mcp/test_supporting.py`: `count_target`
     reachable before/after `audit_schema`, scoped custom execution preserves completed checks,
     primary proposals remain refused, and out-of-scope custom instructions still fail.
-- **P10 evaluation instrumentation** (planned 2026-10-07; run snapshot, decision timing, failure categories, `mlca metrics`, client-usage import, `mlca bench`): do before the author's VM test (section 8, P10).
+- **P10 evaluation instrumentation:** implemented in local sub-phase commits (section 8, P10); targeted tests pass. Full release-suite validation passed: 137 passed, 1 skipped. Original-data and live-provider measurements remain pending.
 - **P9 remainder:** general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT-account login, opencode free models.
 
 ### Redesigns and additions relative to the original spec (R-list)
@@ -923,14 +926,14 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 > **Status:** 🔁 partly started on the author's go-ahead: **distribution** done and prepared, not published (R16; prompt 02; `b371aa5` … `61cb041`). It includes `mlca web` (browser TUI through `textual-serve`). ⬜ Still open: general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT login, opencode free models.
 - JSON-RPC server over stdio exposing `api.Session` (records as notifications); reference architecture: Hermes `tui_gateway/` (Python) ↔ `ui-tui/` (Ink/React) and `apps/desktop/` (Electron).
 - Ink TUI and Electron desktop clients in `clients/`; banner rendering style from opencode `packages/tui/src/logo.ts` + `component/logo.tsx` (copy with attribution).
-- `npx mlca` launcher: an npm package that installs/updates the Python core with uv and starts it (reference: Hermes `apps/bootstrap-installer/`, deepseek `npx @deepseek-ai/dsh`).
+- `npx mlcagent` launcher: an npm package that installs/updates the Python core with uv and starts it (reference: Hermes `apps/bootstrap-installer/`, deepseek `npx @deepseek-ai/dsh`).
 - Illustrator role (image generation via OpenRouter image models), only for diagrams and graphical abstracts, with outputs in `reports/illustrations/`, never as analysis artefacts.
 - ChatGPT-account login and free models (7.6.6), only after the terms check.
 - Web client hosted on Firebase (static), only as a front end to a locally running core.
 
 ### P10: evaluation instrumentation (metrics for the paper; do before the author's first VM test)
 
-> **Status:** ⬜ planned 2026-10-07. Authorised by the author: do it now, before M7.
+> **Status:** ✅ P10.1–P10.7 implemented in local sub-phase commits. Full beta release-suite validation passed: 137 passed, 1 skipped. M7 remains an author-run client/provider test.
 
 **Purpose.** MLCA itself should record, with minimal extra tracking, the agent-level evidence the reviewers ask for. The comment IDs refer to `ES/submission2/review1/review1_es_working.md` in the paper repository:
 - completion, failures and recovery: R1-2a, R2-2;
@@ -1116,7 +1119,7 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 |---|---|---|---|
 | D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | CC-BY-NC-ND-4.0 | ✅ resolved by the author for 0.2.0b1; official legal code in `LICENSE`, SPDX Python/npm metadata |
 | D2 | Content of the `tabular_classification` template: event goals, sub-goals, actions, prompts, scope text | agent writes short DRAFT content | 🟡 v0.2.0 content written with the author's direction (2026-10-06); defaults await author review |
-| D3 | PyPI/npm package name | `mlca` | 🟡 author-approved `mlca`, but PyPI rejected it as too similar to another project; replacement name or registry resolution required. npm publishing remains unauthorized |
+| D3 | PyPI/npm package name | `mlcagent` | ✅ author chose `mlcagent` on 2026-10-07; command/import remain `mlca`. Authorized beta PyPI upload awaits validation; npm publishing remains unauthorized |
 | D4 | Default models per role | none; onboarding asks | ⬜ open |
 | D5 | Reuse v1 logo (black-and-white) or design a new one | original text banner only | ✅ resolved: the author's logo → `assets/logo_source.png`, `assets/logo.txt`, `assets/logo.png` |
 | D6 | GitHub: new repository or v2 branch of `VatsalPatel18/ml-copilot-agent` (tag v1 `v0.1.9-legacy`) | local repository only, no remote | ⬜ open; no remote (needed before CI and releases run) |
@@ -1153,3 +1156,11 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 10. Nothing outside this repository was modified; no remote added; nothing published.
 11. `THIRD_PARTY_NOTICES.md` lists every copied file; nothing was copied that section 9 marks reimplement/reference.
 12. `docs/DECISIONS.md` records each deviation from this plan, with its reason.
+
+## 2026-10-07 — Author-approved replacement distribution
+
+The author chose `mlcagent` for the 0.2.0b1 PyPI beta, superseding `mlca` and the suggested legacy name. The executable, imports, MCP tools and state folders remain `mlca`. Wrapper identities, installers and metadata now use `mlcagent`. The earlier rejected upload is retained above as historical evidence. One beta PyPI upload is authorized after release validation; GitHub pushes, new remotes and npm publication are not authorized.
+
+## 2026-10-07 — P10 and mlcagent beta release gates
+
+P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped in 603.43 s** (PowerShell unavailable); supporting-action/failure targeted subset: 20 passed. Ruff lint/format, approved-name/version guard, wrapper synchronization, build/Twine and 186-entry wheel resource checks pass. The final isolated HOME/XDG wheel walkthrough passes install/version/doctor, synthetic init, Claude project/skill permission preview without writes, bubblewrap namespace probe and stdio discovery of all 14 tools. No live models, original anemia data or native client/OS validation were performed. The authorized PyPI upload as `mlcagent` 0.2.0b1 follows; npm/GitHub operations remain unauthorized.

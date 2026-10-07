@@ -240,7 +240,7 @@ def summarize(out):
     for event in sorted(events):
         for sequence in sequences:
             event_sequences[event].append(
-                tuple(d[1] for d in sequence if d[0] == event) if sequence is not None else ()
+                tuple(d[1] for d in sequence if d[0] == event) if sequence is not None else None
             )
     failures = Counter()
     for run, m in zip(manifest["runs"], loaded):
@@ -327,11 +327,19 @@ def summarize(out):
         "results": metrics,
         "decision_consistency": {
             "exact_sequences": measured(
-                max(Counter(canonical(s) for s in sequences).values()) / count if count else None
+                max(Counter(canonical(s) for s in sequences if s is not None).values())
+                / sum(s is not None for s in sequences)
+                if any(s is not None for s in sequences)
+                else None
             ),
+            "available_sequences": measured(sum(s is not None for s in sequences)),
+            "unavailable_sequences": measured(sum(s is None for s in sequences)),
             "pairwise": distribution(pairs),
             "per_event": {
-                event: measured(max(Counter(seq).values()) / count) for event, seq in event_sequences.items()
+                event: measured(
+                    max(Counter(s for s in seq if s is not None).values()) / sum(s is not None for s in seq)
+                )
+                for event, seq in event_sequences.items()
             },
         },
         "limits": "Sample SD needs at least two available values. Failures are retained; unavailable fields are excluded only from each numeric statistic and counted explicitly. Recovery rate is undefined without failures.",

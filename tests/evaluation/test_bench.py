@@ -7,6 +7,19 @@ import yaml
 from mlca.evaluation.bench import run, summarize
 
 
+def test_missing_run_metrics_are_not_consistent_decisions(tmp_path):
+    (tmp_path / "bench.json").write_text(
+        json.dumps(
+            {"runs": [{"project": "run-001", "status": "failed"}, {"project": "run-002", "status": "failed"}]}
+        )
+    )
+    summary = summarize(tmp_path)
+    consistency = summary["decision_consistency"]
+    assert consistency["exact_sequences"] == {"value": None, "source": "unavailable"}
+    assert consistency["unavailable_sequences"]["value"] == 2
+    assert consistency["pairwise"]["mean"]["value"] is None
+
+
 @pytest.mark.parametrize("forced_failure", [False, True])
 def test_three_independent_runs(project_factory, tmp_path, monkeypatch, forced_failure):
     import mlca.evaluation.bench as bench

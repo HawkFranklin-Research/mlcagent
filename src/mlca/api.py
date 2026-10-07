@@ -555,7 +555,9 @@ class Session:
             self._ensure_idle()
             try:
                 result = validate([Option.model_validate(o) for o in options], self.state, self.workflow)
-            except (ValueError, TypeError, MlcaUserError) as exc:
+            except MlcaUserError as exc:
+                raise MlcaUserError(str(exc), category="invalid_options") from exc
+            except (ValueError, TypeError) as exc:
                 raise MlcaUserError("Invalid submitted options", category="invalid_options") from exc
             self.emit("OptionsProposed", {"options": result, "source": self.principal}, actor=self.principal)
             return result

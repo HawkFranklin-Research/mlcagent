@@ -8,6 +8,7 @@ import zipfile
 import pytest
 
 from mlca import __version__
+from mlca.distribution import name as distribution_name
 
 
 @pytest.mark.slow
@@ -48,5 +49,5 @@ def test_wheel_resources_and_fresh_tool(built_wheel, tmp_path):
         [str(executable), "doctor"], cwd=home, env={**env, "FORCE_COLOR": "1", "COLUMNS": "120"}, text=True
     )
     assert "Machine Learning Copilot Agent" in banner
-    subprocess.run(["uv", "tool", "uninstall", "mlca"], env=env, check=True, capture_output=True)
+    subprocess.run(["uv", "tool", "uninstall", distribution_name()], env=env, check=True, capture_output=True)
     shutil.rmtree(home)

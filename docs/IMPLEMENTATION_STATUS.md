@@ -2,6 +2,9 @@
 
 ## Current result
 
+**Latest work:** P10.1–P10.7 implemented with sourced metrics, usage imports and independent task-card benchmarks. The author-approved distribution is `mlcagent` 0.2.0b1; command/import remain `mlca`. Release validation has passed (137 tests passed, 1 skipped); the authorized PyPI upload follows. Older upload results below describe the rejected `mlca` name, not this release.
+
+
 MCP M0–M6 and review fixes R-MCP1/R-MCP2/R-MCP1b are implemented. The author approved the supporting
 action/custom-after-completion change, which is also implemented. Final validation of these
 changes is recorded in the review section below. The historical M6 result was 81 passed,
@@ -231,3 +234,15 @@ Headless task-card driver benchmarks create independent projects, invoke fresh p
 ## P10.7 — 7 October 2026
 
 Documented sourced measurements, client-usage import, task cards and measurement limits in docs/metrics.md; added a task-card example and VM evidence commands. Strengthened failure-origin tests, metadata redaction and completed brain-mode metrics coverage. Targeted validation: 28 tests passed, plus the complete stdio brain-mode study test passed; Ruff passes. Full release-suite validation follows with the approved distribution name.
+
+## 2026-10-07 — Author-approved replacement distribution
+
+The author chose `mlcagent` for the 0.2.0b1 PyPI beta, superseding `mlca` and the suggested legacy name. The executable, imports, MCP tools and state folders remain `mlca`. Wrapper identities, installers and metadata now use `mlcagent`. The earlier rejected upload is retained above as historical evidence. One beta PyPI upload is authorized after release validation; GitHub pushes, new remotes and npm publication are not authorized.
+
+## 2026-10-07 — Final release regression check
+
+The first complete P10/replacement-name suite ran 135 passed, 2 failed, 1 skipped in 591.85 s. Both failures were the completed-event supporting-action refusal explanation: the new invalid_options wrapper discarded the controlled engine reason. The wrapper now preserves MlcaUserError explanations while retaining generic schema-error messages and the category. The strict refusal is unchanged. A full suite rerun is required before publication. Missing benchmark sequence evidence is excluded from agreement statistics and counted as unavailable.
+
+## 2026-10-07 — P10 and mlcagent beta release gates
+
+P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped in 603.43 s** (PowerShell unavailable); supporting-action/failure targeted subset: 20 passed. Ruff lint/format, approved-name/version guard, wrapper synchronization, build/Twine and 186-entry wheel resource checks pass. The final isolated HOME/XDG wheel walkthrough passes install/version/doctor, synthetic init, Claude project/skill permission preview without writes, bubblewrap namespace probe and stdio discovery of all 14 tools. No live models, original anemia data or native client/OS validation were performed. The authorized PyPI upload as `mlcagent` 0.2.0b1 follows; npm/GitHub operations remain unauthorized.

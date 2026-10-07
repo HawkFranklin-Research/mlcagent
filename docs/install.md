@@ -1,6 +1,6 @@
 # Installation channels
 
-The author-approved Python package name is `mlca`; the beta is `0.2.0b1`. npm, shell download
+The author-approved Python package name is `mlcagent`; the beta is `0.2.0b1`. npm, shell download
 and Homebrew channels remain unpublished. Replace
 `<release-base-url>` and `<tap>` only after the author chooses the public repository and publishes.
 All channels delegate to the same versioned Python wheel/source distribution; they need uv and
@@ -15,19 +15,17 @@ Python >=3.11. uv can provision a compatible Python interpreter.
 
 ## Python / PyPI
 
-The initial upload was refused for project-name similarity; nothing is published under `mlca`.
-The pinned commands below are prepared instructions pending an accepted name. For now, install
-the built local wheel.
+The distribution is `mlcagent`; the command remains `mlca`. The beta must be requested explicitly.
 
 ```sh
-uv tool install mlca==0.2.0b1
+uv tool install mlcagent==0.2.0b1
 # or
-pipx install mlca==0.2.0b1
+pipx install mlcagent==0.2.0b1
 ```
 
 `pipx` users also need uv available on PATH for MLCA's separate analysis environments. To try this
-local checkout, run `uv build`, then `uv tool install dist/mlca-*.whl` (select one wheel).
-For the browser view: `uv tool install 'mlca[web]==0.2.0b1' --reinstall`, then `mlca web`.
+local checkout, run `uv build`, then `uv tool install dist/mlcagent-*.whl` (select one wheel).
+For the browser view: `uv tool install 'mlcagent[web]==0.2.0b1' --reinstall`, then `mlca web`.
 
 ## Shell installer: Linux, macOS, WSL
 
@@ -52,9 +50,9 @@ It recommends WSL2, asks before Astral bootstrap, installs the Python artifact a
 ## npm
 
 ```sh
-npx mlca
+npx mlcagent
 # persistent launcher
-npm install -g mlca
+npm install -g mlcagent
 ```
 
 Install uv first. Node >=18 is required. The package has no install hooks; its launcher never downloads
@@ -79,8 +77,8 @@ render is a preview for the unpublished artifact, not a usable public tap.
 - Project state: `<project>/.mlca/`; original data files remain at their registered locations.
 - Test-lock keys: `$XDG_DATA_HOME/mlca/keys/`, or `~/.local/share/mlca/keys/`. They are outside projects.
   Preserve these when keeping encrypted study evidence. Installers do not inspect or delete them.
-- Uninstall Python tool: `uv tool uninstall mlca` (or `pipx uninstall mlca`).
-- Remove npm wrapper: `npm rm -g mlca`; a Python tool installed separately needs its own removal.
+- Uninstall Python tool: `uv tool uninstall mlcagent` (or `pipx uninstall mlcagent`).
+- Remove npm wrapper: `npm rm -g mlcagent`; a Python tool installed separately needs its own removal.
 - Remove Homebrew wrapper: `brew uninstall mlca`.
 
 Run `mlca doctor` in a terminal for the logo, environment status and OS-specific isolation guidance.

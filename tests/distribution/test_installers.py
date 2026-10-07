@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from mlca import __version__
+from mlca.distribution import name as distribution_name
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -32,7 +33,7 @@ def test_shell_installer_dry_run(tmp_path, installed, version, no_modify):
     record = tmp_path / "commands.txt"
     uv = bin_dir / "uv"
     uv.write_text(
-        '#!/bin/sh\nprintf "%s\\n" "$*" >> "$FAKE_COMMANDS"\ncase "$*" in\n "tool list") [ "$FAKE_INSTALLED" = yes ] && echo "mlca v0.1.0"; exit 0 ;;\n "tool dir --bin") echo "$FAKE_BIN" ;;\nesac\n'
+        '#!/bin/sh\nprintf "%s\\n" "$*" >> "$FAKE_COMMANDS"\ncase "$*" in\n "tool list") [ "$FAKE_INSTALLED" = yes ] && echo "$FAKE_PACKAGE v0.1.0"; exit 0 ;;\n "tool dir --bin") echo "$FAKE_BIN" ;;\nesac\n'
     )
     uv.chmod(0o755)
     mlca = bin_dir / "mlca"
@@ -45,6 +46,7 @@ def test_shell_installer_dry_run(tmp_path, installed, version, no_modify):
         "FAKE_COMMANDS": str(record),
         "FAKE_INSTALLED": "yes" if installed else "no",
         "FAKE_BIN": str(bin_dir),
+        "FAKE_PACKAGE": distribution_name(),
     }
     args = ["sh", str(ROOT / "installers/install.sh"), "--yes"]
     if version:
@@ -57,11 +59,11 @@ def test_shell_installer_dry_run(tmp_path, installed, version, no_modify):
     default_version = __version__ if any(c.isalpha() for c in __version__) else None
     pin = version or default_version
     expected = (
-        "tool install --reinstall mlca==" + pin
+        "tool install --reinstall " + distribution_name() + "==" + pin
         if pin
-        else "tool upgrade mlca"
+        else "tool upgrade " + distribution_name()
         if installed
-        else "tool install mlca"
+        else "tool install " + distribution_name()
     )
     assert expected in calls
     assert ("tool update-shell" in calls) == (not no_modify)
@@ -116,6 +118,6 @@ def test_render_homebrew(tmp_path):
         capture_output=True,
     )
     content = formula.read_text()
-    assert 'depends_on "uv"' in content and 'tool run --from "mlca==' in content
+    assert 'depends_on "uv"' in content and f'tool run --from "{distribution_name()}==' in content
     if shutil.which("ruby"):
         subprocess.run(["ruby", "-c", str(formula)], check=True, capture_output=True)

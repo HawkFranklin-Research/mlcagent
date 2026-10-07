@@ -5,7 +5,7 @@ param(
     [switch]$NoModifyPath
 )
 $ErrorActionPreference = 'Stop'
-$PackageName = 'mlca'
+$PackageName = 'mlcagent'
 Write-Host 'For full isolation use WSL2: wsl --install, then run install.sh inside WSL.'
 Write-Host "Installing MLCA for Windows/$env:PROCESSOR_ARCHITECTURE"
 if ($Version -and $Version -notmatch '^[A-Za-z0-9._+-]+$') { throw 'Invalid version' }

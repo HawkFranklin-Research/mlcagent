@@ -9,9 +9,9 @@ uv run mlca mcp --project /absolute/study --mode brain
 uv run mlca mcp doctor
 ```
 
-For a published package, `uvx mlca mcp` or `npx mlca mcp` forwards to the same server.
-Those first runs can fetch packages and exceed a client's startup timeout; install once with
-`uv tool install mlca` first when publication is available. The current checkout remains unpublished.
+`uvx --from mlcagent==0.2.0b1 mlca mcp` starts the versioned Python server.
+The first run can fetch packages and exceed a client's startup timeout; install once with
+`uv tool install mlcagent==0.2.0b1` first. The prepared `npx mlcagent mcp` launcher remains unpublished.
 
 The server speaks MCP on stdout; diagnostics use stderr. The official Python SDK negotiates
 modern or legacy initialization. Doctor starts a real subprocess and lists the 14 tools;

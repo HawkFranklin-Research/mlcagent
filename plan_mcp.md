@@ -6,7 +6,10 @@ Written 2026-10-06. Companion to `plan.md`, which covers the core harness; read 
 
 ---
 
-## 0. Prerequisite (core work, tracked in `plan.md`)
+## 0. Prerequisite
+
+**Latest work:** P10.1–P10.7 implemented with sourced metrics, usage imports and independent task-card benchmarks. The author-approved distribution is `mlcagent` 0.2.0b1; command/import remain `mlca`. Release validation has passed (137 tests passed, 1 skipped); the authorized PyPI upload follows. Older upload results below describe the rejected `mlca` name, not this release.
+ (core work, tracked in `plan.md`)
 
 Do not start M1 until the missing core invariant tests listed in `plan.md` → *Status* → *Still open* are written and pass:
 - I3: gate blocked;
@@ -219,8 +222,8 @@ OpenClaw implementation update (M6): its native registry is `mcp.servers`, regis
 Before writing exact flags, check each client's current CLI help on this machine (`claude mcp add --help`, `codex mcp add --help`). Record the versions checked in `docs/mcp.md`.
 
 ### 7.2 Without a permanent install
-- `uvx mlca mcp` and `npx mlca mcp` (the npm launcher forwards arguments).
-- `docs/mcp.md` warns that the first run downloads packages and may exceed a client's server start timeout. Recommend `uv tool install mlca` first.
+- `uvx --from mlcagent==0.2.0b1 mlca mcp` and `npx mlcagent mcp` (the npm launcher forwards arguments).
+- `docs/mcp.md` warns that the first run downloads packages and may exceed a client's server start timeout. Recommend `uv tool install mlcagent==0.2.0b1` first.
 
 ### 7.3 Agent skill
 - `skills/mlca/SKILL.md`, at most 60 lines: what MLCA is, the two modes, the tool loop, the work-order contract, human-only decisions, and "do not try to bypass rules; failures are evidence".
@@ -476,3 +479,11 @@ helper/init/guard subset was rerun after the final Claude config-target correcti
 Ruff check and format check pass (140 files); Git whitespace check passes. Both templates
 remain the author's incoming concise v0.2.0 content. No model calls, original-data runs,
 client registrations, remote operations or publication were performed.
+
+## 2026-10-07 — Author-approved replacement distribution
+
+The author chose `mlcagent` for the 0.2.0b1 PyPI beta, superseding `mlca` and the suggested legacy name. The executable, imports, MCP tools and state folders remain `mlca`. Wrapper identities, installers and metadata now use `mlcagent`. The earlier rejected upload is retained above as historical evidence. One beta PyPI upload is authorized after release validation; GitHub pushes, new remotes and npm publication are not authorized.
+
+## 2026-10-07 — P10 and mlcagent beta release gates
+
+P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped in 603.43 s** (PowerShell unavailable); supporting-action/failure targeted subset: 20 passed. Ruff lint/format, approved-name/version guard, wrapper synchronization, build/Twine and 186-entry wheel resource checks pass. The final isolated HOME/XDG wheel walkthrough passes install/version/doctor, synthetic init, Claude project/skill permission preview without writes, bubblewrap namespace probe and stdio discovery of all 14 tools. No live models, original anemia data or native client/OS validation were performed. The authorized PyPI upload as `mlcagent` 0.2.0b1 follows; npm/GitHub operations remain unauthorized.

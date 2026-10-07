@@ -100,7 +100,7 @@ reserve conservative cost; total-budget exhaustion is retained as a failed run. 
 principal-separated interventions, time, usage/cost and final-metric mean/sample SD/min/max.
 It includes failures in the run list and completion denominator. Numeric means use available values
 and label missing counts. A recovery rate without any failed steps is undefined. Decision consistency
-reports the dominant complete sequence share, per-event action-sequence share, and pairwise aligned
+reports the dominant observed sequence share, available/unavailable sequence counts, per-event action-sequence share, and pairwise aligned
 (event, action, parameter hash) agreement. Intentional seed/policy changes can change agreement.
 `bench_summary.md` provides a readable run list linked to the detailed numbers.
 

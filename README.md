@@ -55,15 +55,15 @@ is a Session/MCP boundary; MCP client identity is attribution, not OS authentica
 
 ## Install
 
-**Publication is blocked:** PyPI rejected the approved name `mlca` as too similar to another project. The beta is not available from PyPI. For local testing, use `uv tool install dist/mlca-0.2.0b1-py3-none-any.whl` after `uv build`. The index command below is awaiting an accepted project name.
+The distribution name is `mlcagent`; the command and Python imports remain `mlca`.
 
 Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/) are required. Install the beta with an explicit version:
 
 ```sh
-uv tool install mlca==0.2.0b1
+uv tool install mlcagent==0.2.0b1
 ```
 
-Plain `uv tool install mlca` does not select this prerelease. Shell download, npm and Homebrew channels remain unpublished.
+Plain `uv tool install mlcagent` does not select this prerelease. Shell download, npm and Homebrew channels remain unpublished.
 
 From this checkout: `uv sync --group dev`, then `uv run mlca`. See [installation](docs/install.md).
 

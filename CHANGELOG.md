@@ -223,3 +223,11 @@ Headless task-card driver benchmarks create independent projects, invoke fresh p
 ## P10.7 — 7 October 2026
 
 Documented sourced measurements, client-usage import, task cards and measurement limits in docs/metrics.md; added a task-card example and VM evidence commands. Strengthened failure-origin tests, metadata redaction and completed brain-mode metrics coverage. Targeted validation: 28 tests passed, plus the complete stdio brain-mode study test passed; Ruff passes. Full release-suite validation follows with the approved distribution name.
+
+## 0.2.0b1 — evaluation instrumentation and distribution identity
+
+Implemented P10.1–P10.7; approved distribution name is `mlcagent`, with unchanged `mlca` CLI/import/MCP names. Benchmark sequence agreement excludes unavailable metrics and reports the missing-run count. Release validation and publication results are recorded in docs/IMPLEMENTATION_STATUS.md.
+
+## 2026-10-07 — P10 and mlcagent beta release gates
+
+P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped in 603.43 s** (PowerShell unavailable); supporting-action/failure targeted subset: 20 passed. Ruff lint/format, approved-name/version guard, wrapper synchronization, build/Twine and 186-entry wheel resource checks pass. The final isolated HOME/XDG wheel walkthrough passes install/version/doctor, synthetic init, Claude project/skill permission preview without writes, bubblewrap namespace probe and stdio discovery of all 14 tools. No live models, original anemia data or native client/OS validation were performed. The authorized PyPI upload as `mlcagent` 0.2.0b1 follows; npm/GitHub operations remain unauthorized.

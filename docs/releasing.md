@@ -1,6 +1,6 @@
 # Release preparation and author setup
 
-D1 is resolved as CC-BY-NC-ND-4.0 and D3 as `mlca`. The author authorized one manual PyPI
+D1 is resolved as CC-BY-NC-ND-4.0 and D3 as `mlcagent`. The author authorized one manual PyPI
 upload of 0.2.0b1. This does not authorize GitHub pushes, npm publication or a new remote.
 The GitHub release pipeline remains unconfigured; the steps below describe future setup.
 See [implementation status](IMPLEMENTATION_STATUS.md) for the actual publication result.
@@ -9,7 +9,7 @@ See [implementation status](IMPLEMENTATION_STATUS.md) for the actual publication
 
 1. D1 is resolved: the official CC-BY-NC-ND-4.0 legal code is in `LICENSE`; Python metadata uses
    the SPDX expression and `license-files`. Keep licence mirrors synchronized.
-2. D3 is resolved as `mlca`. Maintain the shared unscoped Python/npm name in `pyproject.toml` (`project.name`). The version lives
+2. D3 is resolved as `mlcagent`. Maintain the shared unscoped Python/npm name in `pyproject.toml` (`project.name`). The version lives
    only in `src/mlca/__init__.py`. Run `uv run python scripts/sync_versions.py` to refresh NAME, installers
    and npm identity/licence. `packaging/NAME` and package.json are generated mirrors, not edit points.
 3. Choose/create the v2 GitHub repository and update the public metadata URLs and contributor list.
@@ -34,7 +34,7 @@ changed those settings or stored secrets.
 
 ## Release checklist
 
-- Review the scientific DRAFT templates and supported OS claims; original-data and live-provider
+- Review the authored workflow templates and supported OS claims; original-data and live-provider
   validation remain separate from the synthetic harness suite.
 - Update the single version source and run sync_versions.py. Keep generated files committed.
 - Run `uv sync --locked --group dev`, dependency-cache priming, `uv run pytest -q`, lint/format,

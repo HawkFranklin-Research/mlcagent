@@ -1666,7 +1666,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mlca"
+name = "mlcagent"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },

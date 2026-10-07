@@ -1,5 +1,5 @@
 {
-  "name": "mlca",
+  "name": "mlcagent",
   "version": "0.2.0-beta.1",
   "description": "Launcher for the MLCA Python workflow harness",
   "bin": {
@@ -15,7 +15,7 @@
   ],
   "license": "CC-BY-NC-ND-4.0",
   "mlca": {
-    "pythonName": "mlca",
+    "pythonName": "mlcagent",
     "pythonVersion": "0.2.0b1"
   },
   "publishConfig": {

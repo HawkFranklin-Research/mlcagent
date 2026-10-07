@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mlca"
+name = "mlcagent"
 dynamic = ["version"]
 description = "Guided, event-based machine learning workflows with recorded provenance"
 readme = "README.md"
