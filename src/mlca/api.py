@@ -110,9 +110,15 @@ class Session:
             self.branches.records(self.branch_name),
             event_id,
             self.timing_context if self.client_name == "tui" else None,
+            [event_id + "." + goal.id for goal in self.workflow.events[event_id].subgoals]
+            if event_id in self.workflow.events
+            else [],
         )
         if kind in {"OptionChosen", "CustomInstructionSubmitted", "ApprovalResolved", "UserConfirmed"}:
             payload["principal"] = self.principal
+        from mlca.evaluation.failures import enrich as failure_fields
+
+        payload = failure_fields(kind, payload)
         payload = redact_value(payload, self.config)
         record = self.store.append(
             kind,
@@ -160,7 +166,21 @@ class Session:
         try:
             with self._action_lock:
                 self.branch_name = self.branches.current()
-                yield
+                try:
+                    yield
+                except MlcaUserError as exc:
+                    if not getattr(exc, "recorded_refusal", False):
+                        self.emit(
+                            "Refusal",
+                            {
+                                "category": exc.category,
+                                "operation": "session",
+                                "error_type": type(exc).__name__,
+                            },
+                            actor=self.principal,
+                        )
+                        exc.recorded_refusal = True
+                    raise
         except Timeout as exc:
             raise MlcaUserError("Project busy; another client is changing it") from exc
 
@@ -282,7 +302,7 @@ class Session:
         options = self.options()
         choice = next((o for o in options if o["id"] == str(n)), None)
         if choice is None:
-            raise MlcaUserError("Choose an available option")
+            raise MlcaUserError("Choose an available option", category="invalid_options")
         if choice["id"] == "next":
             return self.next()
         if choice["id"].startswith("loop:"):
@@ -381,7 +401,7 @@ class Session:
             ids = self.workflow.spec.events
             index = ids.index(state.current_event)
             if state.event_statuses.get(state.current_event) != "done":
-                raise MlcaUserError("Current event still has incomplete sub-goals")
+                raise MlcaUserError("Current event still has incomplete sub-goals", category="gate_blocked")
             if index + 1 == len(ids):
                 return {"complete": True}
             return self._enter(ids[index + 1], "next")
@@ -491,7 +511,11 @@ class Session:
         if self.principal != "user":
             self.emit(
                 "Note",
-                {"text": "Human-only decision refused", "principal": self.principal},
+                {
+                    "text": "Human-only decision refused",
+                    "principal": self.principal,
+                    "category": "gate_blocked",
+                },
                 actor=self.principal,
             )
             raise MlcaUserError(
@@ -560,6 +584,7 @@ class Session:
                         "step_id": step_id,
                         "attempts": active.get("attempt", 0),
                         "last_error": self.redact(str(exc)),
+                        "category": getattr(exc, "category", "runtime_error:" + type(exc).__name__),
                     },
                     step_id=step_id,
                 )
@@ -579,6 +604,7 @@ class Session:
                     "step_id": step_id,
                     "attempts": active.get("attempt", 0),
                     "last_error": "abandoned",
+                    "category": "abandoned",
                     "reason": reason,
                 },
                 step_id=step_id,

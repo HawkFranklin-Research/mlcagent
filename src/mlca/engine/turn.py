@@ -11,7 +11,9 @@ from mlca.runner.run_step import run_step
 
 def execute(session: Any, action: Any, params: Any) -> Any:
     if action.event in {"split", "preprocess", "features", "model"} and session._ever_unlocked():
-        raise MlcaUserError("Fitting and split changes are closed after project-wide test exposure")
+        raise MlcaUserError(
+            "Fitting and split changes are closed after project-wide test exposure", category="test_lock"
+        )
     session.turn_id = str(ULID())
     session.emit("TurnStarted", {"turn_id": session.turn_id})
     try:
@@ -34,6 +36,7 @@ def finish(session, action, observation):
                 {
                     "candidate": {k: candidate.get(k) for k in ("key", "source")},
                     "reason": "Fact value contains a registered data row",
+                    "category": "privacy_refusal",
                 },
                 step_id=observation["step_id"],
             )
@@ -68,7 +71,15 @@ def finish(session, action, observation):
             valid, reason = False, "Fact key not declared by action"
         session.emit(
             "FactRecorded" if valid else "FactRejected",
-            candidate if valid else {"candidate": candidate, "reason": reason},
+            candidate
+            if valid
+            else {
+                "candidate": candidate,
+                "reason": reason,
+                "category": "privacy_refusal"
+                if "registered data row" in reason
+                else "runtime_error:FactValidationError",
+            },
             step_id=observation["step_id"],
             actor="engine" if session.mode == "brain" else "navigator",
         )

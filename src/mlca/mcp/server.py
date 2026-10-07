@@ -82,7 +82,9 @@ class Controller:
         if not self.session.config.privacy.allow_sample_rows:
             guard = self.session.row_guard
             if any(guard.contains_full_row(fact.get("value")) for fact in self.session.state.facts.values()):
-                raise MlcaUserError("Fact view refused: a value contains a registered data row")
+                raise MlcaUserError(
+                    "Fact view refused: a value contains a registered data row", category="privacy_refusal"
+                )
         return self.session
 
     def overview(self):
@@ -226,7 +228,9 @@ class Controller:
                     "Only declared summary tables may be read; raw data artifacts are private"
                 )
             if not s.config.privacy.allow_sample_rows and output.get("contains_data_rows"):
-                raise MlcaUserError("Table read refused: artifact contains registered data rows")
+                raise MlcaUserError(
+                    "Table read refused: artifact contains registered data rows", category="privacy_refusal"
+                )
             if path.stat().st_size > 8 * 1024 * 1024:
                 raise MlcaUserError("Summary table file must be at most 8 MiB")
             if path.suffix == ".csv":
@@ -243,7 +247,9 @@ class Controller:
             if len(frame.columns) > 12 or len(frame) > 50:
                 raise MlcaUserError("Summary tables must be at most 50 rows by 12 columns")
             if not s.config.privacy.allow_sample_rows and s.row_guard.contains_rows(frame):
-                raise MlcaUserError("Table read refused: values match registered data rows")
+                raise MlcaUserError(
+                    "Table read refused: values match registered data rows", category="privacy_refusal"
+                )
             return {
                 "columns_data": list(frame.columns),
                 "table_data": json.loads(frame.to_json(orient="records")),
@@ -372,7 +378,10 @@ class Controller:
                     str(exc) if isinstance(exc, (MlcaUserError, ValueError, OSError)) else type(exc).__name__
                 )
                 result = serialize.result(
-                    {"error_data": diagnostic},
+                    {
+                        "error_data": diagnostic,
+                        "category": getattr(exc, "category", "runtime_error:" + type(exc).__name__),
+                    },
                     self.session.config if self.session else Config(),
                     "MLCA request refused.",
                 )
@@ -386,7 +395,14 @@ class Controller:
                     with self.session.mutation():
                         self.session.emit(
                             "Note",
-                            {"text": "MCP request refused", "tool": tool, "error_type": type(error).__name__},
+                            {
+                                "text": "MCP request refused",
+                                "tool": tool,
+                                "error_type": type(error).__name__,
+                                "category": getattr(
+                                    error, "category", "runtime_error:" + type(error).__name__
+                                ),
+                            },
                             actor=actor,
                         )
                 except MlcaUserError:

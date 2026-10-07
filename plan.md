@@ -972,6 +972,8 @@ Most raw signals already exist in the event log, `usage.jsonl` and `egress.jsonl
 - **Test:** timings are present and non-negative; idle gaps are excluded in a Textual pilot test with simulated keystrokes and a fake clock.
 
 #### P10.3 Failure categories (R2-2, R1-2a)
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 Every refusal or failure record gets a `category` from a fixed list, set where it is written (not guessed later):
 `static_check`, `sandbox_denied`, `runtime_error:<ExceptionType>`, `timeout`, `missing_output`, `fit_rule`, `test_lock`, `scope_layer1`, `scope_layer2`, `gate_blocked`, `invalid_options`, `provider_error`, `budget_stop`, `privacy_refusal`, `abandoned`.
 

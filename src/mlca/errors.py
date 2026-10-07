@@ -1,5 +1,9 @@
 class MlcaUserError(Exception):
-    """A recoverable error suitable for display to the user."""
+    """A recoverable error with a category assigned where it originates."""
+
+    def __init__(self, message, *, category=None):
+        super().__init__(message)
+        self.category = category or "runtime_error:" + type(self).__name__
 
 
 class IntegrityError(MlcaUserError):
@@ -7,4 +11,7 @@ class IntegrityError(MlcaUserError):
 
 
 class BudgetError(MlcaUserError):
-    """A configured request budget would be exceeded."""
+    """A configured model request budget would be exceeded."""
+
+    def __init__(self, message):
+        super().__init__(message, category="budget_stop")

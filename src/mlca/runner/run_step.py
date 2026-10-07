@@ -45,7 +45,7 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
             paths[ref] = path
         elif ref == "test":
             if not action.reads_test or not state.test_unlocked:
-                raise MlcaUserError("Action cannot read the locked test partition")
+                raise MlcaUserError("Action cannot read the locked test partition", category="test_lock")
             # Mounted only inside the exposure context, after the user unlock event.
         elif ref == "prior_outputs":
             for step in state.steps:
@@ -127,6 +127,7 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
                 "step_id": step_id,
                 "attempts": len(list((step / "attempts").glob("*"))),
                 "last_error": session.redact(str(exc))[:2000],
+                "category": getattr(exc, "category", "runtime_error:" + type(exc).__name__),
             },
             step_id=step_id,
         )
@@ -282,7 +283,15 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
         ):
             violations.append("Fitting is not allowed in this workflow event")
     if violations:
-        session.emit("StaticCheckFailed", {"attempt": attempt, "violations": violations}, step_id=step_id)
+        session.emit(
+            "StaticCheckFailed",
+            {
+                "attempt": attempt,
+                "violations": violations,
+                "category": "fit_rule" if any("fit" in v.lower() for v in violations) else "static_check",
+            },
+            step_id=step_id,
+        )
         return None, "\n".join(violations)
     # Exposure lasts for execution only, never while a provider or external agent is thinking.
     context = exposed(session.root, state, step_id, session.emit) if action.reads_test else nullcontext(None)
@@ -313,6 +322,7 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
     try:
         collect(session.root, directory, action, state)
     except MlcaUserError as exc:
+        session.emit("AttemptFailed", {"attempt": attempt, "category": exc.category}, step_id=step_id)
         return None, str(exc)
     shutil.copyfile(script, step / "script.py")
     shutil.copytree(directory / "outputs", step / "outputs", dirs_exist_ok=True)
@@ -342,7 +352,11 @@ def _worker(session, action, params, step_id, step, state, inputs):
         observation, error = run_attempt(session, action, params, step_id, attempt, previous, request_id)
         if observation is not None:
             return observation
-    raise MlcaUserError("Worker exhausted its attempt budget: " + (error or "No valid script"))
+    failures = [r for r in session.store.read() if r.step_id == step_id and r.payload.get("category")]
+    category = failures[-1].payload["category"] if failures else "provider_error"
+    raise MlcaUserError(
+        "Worker exhausted its attempt budget: " + (error or "No valid script"), category=category
+    )
 
 
 def submit(session, step_id, code):
@@ -363,7 +377,21 @@ def submit(session, step_id, code):
         return finish(session, action, observation)
     if attempt >= session.config.budgets.worker_max_attempts:
         session.emit(
-            "StepFailed", {"step_id": step_id, "attempts": attempt, "last_error": error}, step_id=step_id
+            "StepFailed",
+            {
+                "step_id": step_id,
+                "attempts": attempt,
+                "last_error": error,
+                "category": next(
+                    (
+                        r.payload["category"]
+                        for r in reversed(session.store.read())
+                        if r.step_id == step_id and r.payload.get("category")
+                    ),
+                    "runtime_error:ProcessError",
+                ),
+            },
+            step_id=step_id,
         )
         freeze(session.root / ".mlca/steps" / step_id)
         return {"step_id": step_id, "status": "failed", "diagnostics": error}

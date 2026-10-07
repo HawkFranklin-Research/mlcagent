@@ -119,13 +119,17 @@ def index_sha256(index: Any) -> str:
     return hashlib.sha256(json.dumps(list(index), default=str, separators=(",", ":")).encode()).hexdigest()
 
 
+class FitRuleError(ValueError):
+    """Frozen-training instrumentation rejected a fit."""
+
+
 def fit_record(estimator_or_pipeline: Any, X: Any, partition: str, y: Any = None, **kwargs: Any) -> Any:
     if partition != "train":
-        raise ValueError("Fit is allowed only on training data")
+        raise FitRuleError("Fit is allowed only on training data")
     expected = os.environ.get("MLCA_TRAIN_INDEX_SHA256")
     digest = index_sha256(X.index)
     if not expected or digest != expected:
-        raise ValueError(
+        raise FitRuleError(
             f"Fit rows must match the frozen training index: expected {os.environ.get('MLCA_TRAIN_ROW_COUNT', 'unknown')} rows, received {len(X.index)} rows"
         )
     result = (

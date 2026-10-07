@@ -203,3 +203,7 @@ Lazy per-session RunSnapshot records capture hardware/software, role settings, t
 ## P10.2 — 7 October 2026
 
 Decision records now carry proposal/approval waits, instruction size and caller attribution; CLI/MCP active time stays unavailable. The TUI estimates activity from keyboard/mouse intervals and excludes complete gaps over 120 seconds. Script view edits record derived changed-line counts when a frozen reference exists. Timing/TUI tests: 6 passed; Ruff passes.
+
+## P10.3 — 7 October 2026
+
+A validated failure taxonomy is assigned at record/error boundaries for scope, gates, static/fit checks, runtime exception types, sandbox, timeout, missing outputs, providers, budgets, privacy and abandonment. AttemptFailed preserves failures repaired before terminal completion; typed FitRuleError identifies runtime fit refusals. Historical records remain uncategorized rather than retrospectively inferred. Taxonomy/engine/scientific/invariant subset: 25 passed; prior evaluation/store subset: 25 passed. Ruff passes.

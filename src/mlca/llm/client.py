@@ -168,7 +168,17 @@ class Client:
                     record["status"] = "ok"
                 except Exception as exc:
                     error = exc
-                    record.update(status="error", error_type=type(exc).__name__)
+                    record.update(status="error", error_type=type(exc).__name__, category="provider_error")
+                    if self.emit:
+                        self.emit(
+                            "ProviderFailed",
+                            {
+                                "request_id": request_id,
+                                "category": "provider_error",
+                                "error_type": type(exc).__name__,
+                            },
+                            step_id=context.step_id,
+                        )
                 finally:
                     record["latency_ms"] = (time.monotonic() - start) * 1000
                     record["reserved_cost_usd"] = self._bound(payload, selected, provider_config)
@@ -187,7 +197,7 @@ class Client:
                 if attempt < 3 and (status == 429 or (isinstance(status, int) and status >= 500)):
                     time.sleep(min(2 ** (attempt - 1), 4))
                     continue
-                raise MlcaUserError(redact(str(error), self.config)) from error
+                raise MlcaUserError(redact(str(error), self.config), category="provider_error") from error
             return LLMResult(
                 text=redact(result["text"], self.config),
                 request_id=request_id,

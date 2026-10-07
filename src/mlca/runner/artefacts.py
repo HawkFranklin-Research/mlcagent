@@ -19,7 +19,7 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
     declared = {o.name: o for o in action.outputs}
     for spec in action.outputs:
         if spec.required and not (step / "outputs" / spec.name).is_file():
-            raise MlcaUserError(f"Required output missing: {spec.name}")
+            raise MlcaUserError(f"Required output missing: {spec.name}", category="missing_output")
     for path in sorted((step / "outputs").rglob("*")):
         if path.is_symlink():
             raise IntegrityError("Output symlinks are not permitted")
@@ -50,13 +50,13 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
         if metric["split"] not in {"train", "val", "test"} or not math.isfinite(float(metric["value"])):
             raise MlcaUserError("Invalid metric in runtime manifest")
         if metric["split"] == "test" and not action.reads_test:
-            raise MlcaUserError("Test metric is not permitted for this action")
+            raise MlcaUserError("Test metric is not permitted for this action", category="test_lock")
     fits = manifest.get("fits", [])
     if action.event in {"preprocess", "features", "model"}:
         if not fits or any(
             f["partition"] != "train" or f["index_sha256"] != state.split["train_index_sha256"] for f in fits
         ):
-            raise MlcaUserError("Missing or invalid frozen-training fit evidence")
+            raise MlcaUserError("Missing or invalid frozen-training fit evidence", category="fit_rule")
     if any(o["kind"] == "model" for o in outputs) and action.event not in {"preprocess", "features", "model"}:
         raise MlcaUserError("Model artifacts may only be created in fitting stages")
     return {"outputs": outputs, "figures": figures, "metrics": metrics, "facts": manifest.get("facts", [])}

@@ -65,6 +65,9 @@ def record(root, session, tool, arguments, actor, response, started):
         "output_tokens": 0,
         "cached_tokens": 0,
         "status": "refused" if response.is_error else "ok",
+        "category": (response.structured_content or {}).get("data", {}).get("category")
+        if response.is_error
+        else None,
     }
     (root / ".mlca").mkdir(parents=True, exist_ok=True)
     persist(root, usage, entry)

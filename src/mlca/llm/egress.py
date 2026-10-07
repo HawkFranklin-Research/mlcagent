@@ -19,7 +19,7 @@ def classify(payload: dict, categories: list[str], allow_sample_rows: bool) -> d
     if not set(categories) <= CATEGORIES:
         raise MlcaUserError("Unknown model payload category")
     if "sample_rows" in categories and not allow_sample_rows:
-        raise MlcaUserError("Raw sample rows are disabled by privacy configuration")
+        raise MlcaUserError("Raw sample rows are disabled by privacy configuration", category="privacy_refusal")
     raw = canonical(payload).encode()
     return {
         "bytes_sent": len(raw),

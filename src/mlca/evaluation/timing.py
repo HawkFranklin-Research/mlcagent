@@ -29,7 +29,7 @@ def elapsed(ts, now=None):
     return max(0.0, ((now or datetime.now(timezone.utc)) - ts).total_seconds())
 
 
-def enrich(kind, payload, records, event, activity=None):
+def enrich(kind, payload, records, event, activity=None, expected_goals=()):
     payload = dict(payload)
     if kind in {"OptionChosen", "CustomInstructionSubmitted"}:
         proposal = None
@@ -61,7 +61,7 @@ def enrich(kind, payload, records, event, activity=None):
             elif r.type.value == "SubgoalChecked":
                 checks[r.payload["subgoal_id"]] = r.payload["passed"]
                 missing = [k for k, passed in checks.items() if not passed]
-                if missing == [payload["subgoal_id"]] and len(checks) > 1:
+                if missing == [payload["subgoal_id"]] and set(checks) == set(expected_goals):
                     since = since or r.ts
                 else:
                     since = None
