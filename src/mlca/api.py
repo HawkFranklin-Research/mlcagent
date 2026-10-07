@@ -65,6 +65,7 @@ class Session:
         self.session_id = str(ULID())
         self.turn_id = None
         self.output_callback = None
+        self.timing_context = None
         self.client = Client(self.root, self.config, self.emit)
         self.client.disabled = mode == "brain"
         self.client.principal = principal
@@ -101,6 +102,17 @@ class Session:
     ) -> Any:
         self._start_session()
         event_id = event_id if event_id is not None else self.state.current_event
+        from mlca.evaluation.timing import enrich
+
+        payload = enrich(
+            kind,
+            payload,
+            self.branches.records(self.branch_name),
+            event_id,
+            self.timing_context if self.client_name == "tui" else None,
+        )
+        if kind in {"OptionChosen", "CustomInstructionSubmitted", "ApprovalResolved", "UserConfirmed"}:
+            payload["principal"] = self.principal
         payload = redact_value(payload, self.config)
         record = self.store.append(
             kind,

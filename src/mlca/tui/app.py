@@ -13,6 +13,7 @@ from textual.widgets import Static
 
 from mlca.api import Session
 from mlca.config import Config, ProviderConfig, RoleConfig, load, save
+from mlca.evaluation.timing import Activity
 from mlca.ui_text import text
 
 from .screens.brief import FormScreen
@@ -40,6 +41,7 @@ class MlcaApp(App):
         self.configure_first = configure
         self.session = None
         self.busy = False
+        self.activity = Activity()
 
     def on_mount(self) -> Any:
         self.push_screen(WelcomeScreen())
@@ -54,6 +56,7 @@ class MlcaApp(App):
                 self.session.close()
             self.project = Path(path).expanduser().resolve()
             self.session = Session.open(self.project, client="tui")
+            self.session.timing_context = self.activity.value
             self.session.output_callback = lambda channel, chunk: self.call_from_thread(
                 self.write_log, channel + ": " + chunk[-2000:]
             )
@@ -79,9 +82,24 @@ class MlcaApp(App):
         self.screen.query_one(Facts).render_state(status)
         self.screen.query_one(StatusBar).render_state(status)
         if options is not None:
+            records = self.session.branches.records()
+            anchor = next((r.id for r in reversed(records) if r.type.value == "OptionsProposed"), None)
+            self.activity.begin(anchor)
             self.screen.query_one(Options).render_options(options)
         else:
             self.run_session_action("options", refresh_only=True)
+
+    def on_key(self, event):
+        if not self.busy:
+            self.activity.touch()
+
+    def on_mouse_move(self, event):
+        if not self.busy:
+            self.activity.touch()
+
+    def on_mouse_down(self, event):
+        if not self.busy:
+            self.activity.touch()
 
     def write_log(self, value: Any) -> Any:
         if isinstance(self.screen, MainScreen):

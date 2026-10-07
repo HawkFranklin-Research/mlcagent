@@ -207,3 +207,7 @@ client registrations, remote operations or publication were performed.
 ## P10.1 — 7 October 2026
 
 Lazy per-session RunSnapshot records capture hardware/software, role settings, template/environment hashes and sandbox capability without credentials. Provider-returned model IDs and actual request settings are in usage records. Unknown hardware remains null with unavailable source; sandbox capability is not execution verification. Snapshot/provider canary test: 1 passed; Ruff passes.
+
+## P10.2 — 7 October 2026
+
+Decision records now carry proposal/approval waits, instruction size and caller attribution; CLI/MCP active time stays unavailable. The TUI estimates activity from keyboard/mouse intervals and excludes complete gaps over 120 seconds. Script view edits record derived changed-line counts when a frozen reference exists. Timing/TUI tests: 6 passed; Ruff passes.

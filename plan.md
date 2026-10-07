@@ -961,6 +961,8 @@ Most raw signals already exist in the event log, `usage.jsonl` and `egress.jsonl
 - **Test:** the snapshot exists after the first mutation; it contains no secret (credential-canary scan); `model_reported` is filled from a fake response.
 
 #### P10.2 Decision timing and human effort (R1-4, R1-3, R2-2)
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 - Write timing into the existing decision records:
   - **`OptionChosen` and `CustomInstructionSubmitted`:** `decision_wait_s` (seconds since the matching `OptionsProposed`), and `principal` (already present).
   - **`CustomInstructionSubmitted`:** `chars` and `words` of the instruction.

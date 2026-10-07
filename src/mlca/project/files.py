@@ -15,9 +15,34 @@ def materialise(root: Path, state: Any, emit: Any = None) -> list[dict]:
     for relative, expected in previous.items():
         path = root / relative
         if path.exists() and sha256(path) != expected:
-            change = {"step_id": relative, "old_sha256": expected, "new_sha256": sha256(path)}
+            change = {
+                "step_id": relative,
+                "old_sha256": expected,
+                "new_sha256": sha256(path),
+                "lines_changed": None,
+                "lines_source": "unavailable",
+            }
+            if relative.startswith("scripts/"):
+                reference = next(
+                    (
+                        root / ".mlca/steps" / step["step_id"] / "script.py"
+                        for step in state.steps
+                        if relative
+                        == f"scripts/{step['number']:02d}_{step['event_id']}_{step['action_id']}.py"
+                    ),
+                    None,
+                )
+                if reference and reference.is_file():
+                    from mlca.evaluation.timing import lines_changed
+
+                    change.update(
+                        lines_changed=lines_changed(
+                            reference.read_text(encoding="utf-8"), path.read_text(encoding="utf-8")
+                        ),
+                        lines_source="derived",
+                    )
             if emit:
-                emit("ScriptEditedByUser", change)
+                emit("ScriptEditedByUser", change, actor="user")
             changes.append(change)
     if changes:
         return changes  # Never silently overwrite user changes.
