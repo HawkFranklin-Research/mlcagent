@@ -41,3 +41,23 @@ def test_exhausted_parameterless_and_parameterized():
     ]
     repeats = fallback(state, workflow)
     assert repeats and all(o["why_now"] == "Repeat with different parameters" for o in repeats)
+
+
+def test_supporting_actions_before_and_after_completion():
+    workflow = get("tabular_classification")
+    state = ProjectState(current_event="data", generations={"data": 1})
+    assert [o["action_id"] for o in fallback(state, workflow)] == ["audit_schema", "count_target"]
+    state.event_statuses["data"] = "done"
+    assert [o["action_id"] for o in fallback(state, workflow)] == ["count_target"]
+    state.steps = [
+        {
+            "status": "completed",
+            "action_id": "count_target",
+            "params": {},
+            "event_id": "data",
+            "generation": 1,
+        }
+    ]
+    assert fallback(state, workflow) == []
+    state.generations["data"] = 2
+    assert [o["action_id"] for o in fallback(state, workflow)] == ["count_target"]

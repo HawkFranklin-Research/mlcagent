@@ -90,6 +90,12 @@ class Session:
     def redact(self, text: Any) -> Any:
         return redact(text, self.config)
 
+    @property
+    def row_guard(self):
+        from mlca.privacy.rows import guard
+
+        return guard(self.root, self.state)
+
     def emit(
         self, kind: Any, payload: Any, *, step_id: Any = None, actor: Any = "engine", event_id: Any = None
     ) -> Any:
@@ -166,7 +172,7 @@ class Session:
             if state.pending_options is None:
                 source, request_id = "fallback", None
                 if state.event_statuses.get(state.current_event) == "done":
-                    options = []
+                    options = fallback(state, self.workflow)
                 elif self.mode != "brain" and "navigator" in self.config.roles:
                     from mlca.roles.navigator import Navigator
 
@@ -185,12 +191,27 @@ class Session:
                 )
             options = list(self.state.pending_options or [])
             state = self.state
+            if state.event_statuses.get(state.current_event) == "done":
+                # Older cached menus may predate completion or contain only an empty next menu.
+                from mlca.engine.options import already_run
+
+                remaining = fallback(state, self.workflow)
+                if any(
+                    self.workflow.actions[o["action_id"]].role != "supporting"
+                    or already_run(o["action_id"], state)
+                    for o in options
+                ) or (not options and remaining):
+                    options = remaining
+                    self.emit(
+                        "OptionsProposed",
+                        {"options": options, "source": "fallback", "navigator_request_id": None},
+                    )
             ids = self.workflow.spec.events
             index = ids.index(state.current_event)
             if state.event_statuses.get(state.current_event) == "done" and index + 1 < len(ids):
                 target = ids[index + 1]
                 if gates.check(target, state, self.workflow, self.root)[0]:
-                    options.append({"id": "next", "title": f"Continue to {target}"})
+                    options.insert(0, {"id": "next", "title": f"Continue to {target}"})
             if state.current_event == "validate" and not self._ever_unlocked():
                 for transition in self.workflow.spec.transitions.get("loops", []):
                     if transition["from"] == "validate":
@@ -217,8 +238,6 @@ class Session:
                                 len(action.prompt.encode()),
                                 worker.max_output_tokens,
                             )
-            if state.event_statuses.get(state.current_event) == "done":
-                return options
             custom = {"id": "custom", "title": "Custom instruction (current event scope)"}
             if not options and state.event_statuses.get(state.current_event) != "done":
                 custom["note"] = (
@@ -266,8 +285,6 @@ class Session:
     def _custom(self, text):
         with self.mutation():
             self._ensure_idle()
-            if self.state.event_statuses.get(self.state.current_event) == "done":
-                raise MlcaUserError("Completed events offer next, not custom actions")
             state = self.state
             event = self.workflow.events[state.current_event]
             self.emit("CustomInstructionSubmitted", {"text": text}, actor="user")
@@ -478,8 +495,6 @@ class Session:
             raise MlcaUserError("submit_options is available in brain mode only")
         with self.mutation():
             self._ensure_idle()
-            if self.state.event_statuses.get(self.state.current_event) == "done":
-                raise MlcaUserError("Completed events offer next, not new action options")
             result = validate([Option.model_validate(o) for o in options], self.state, self.workflow)
             self.emit("OptionsProposed", {"options": result, "source": self.principal}, actor=self.principal)
             return result

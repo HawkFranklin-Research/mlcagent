@@ -13,6 +13,14 @@ The six missing engine-rule regressions, Worker repair, budget stop, rate-limit 
 credential canary tests are now permanent offline tests. Brain/driver synthetic MCP runs,
 submitted-code bypass checks, approvals, concurrency, attribution, privacy and registration
 helpers are covered. Final validation totals are in [implementation status](docs/IMPLEMENTATION_STATUS.md).
+Review fixes R-MCP1/R-MCP2 are implemented: salted row guards, copied-row artifact flags,
+full-row fact refusals, client permission previews/backup/merge, and explicit unknown external
+file access in reports. Tests cover copied versus aggregate tables, projection/rounding, legacy
+views and private-store access. The author approved supporting actions and scoped custom
+instructions after completion on 2026-10-07; implemented with `next` first, preserving completed
+checks and generations. Details: `plan_mcp.md` section 12/Status.
+Final review validation: **96 passed, 1 skipped in 396.58 s**; Ruff lint/format, skill and
+wheel checks pass. Installed-wheel stdio exposes all 14 tools; no real clients registered.
 M7 is explicitly an author-run client/provider checklist, pending. Original anemia data,
 live providers, full survival scientific validation and native macOS/Windows remain pending.
 
@@ -43,6 +51,17 @@ Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_dist
 - **The §11 golden run on the real anemia data is not done;** the synthetic fixtures in `tests/fixtures/` stand in for it.
 - **Template content v0.2.0** (D2): short goals, sub-goals and Do/Save/Record action prompts were written for both templates, plus an output contract in the Worker prompt (`docs/templates.md` → *Writing content*). The author should review the concrete defaults (split fractions, model families, primary metrics).
 - **Native macOS/Windows not validated**; only level-B unit tests and CI definitions exist.
+- **Supporting actions reachability fixed** (found and author-approved 2026-10-07):
+  - `engine/options.py: fallback` offers only default and primary actions;
+  - a completed event offers only `next`, and `api.py: custom` refuses custom instructions there.
+
+  Those findings describe the prior behavior. The author approved and the code now implements:
+  - append not-yet-run supporting actions after the primaries in `fallback`;
+  - in a completed event, offer `next` first, then the supporting actions not yet run, plus `custom`, until the user moves on;
+  - adding these steps does not reopen the event's sub-goals;
+  - **tests:** `tests/unit/test_options.py`, `tests/mcp/test_supporting.py`: `count_target`
+    reachable before/after `audit_schema`, scoped custom execution preserves completed checks,
+    primary proposals remain refused, and out-of-scope custom instructions still fail.
 - **P9 remainder:** general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT-account login, opencode free models.
 
 ### Redesigns and additions relative to the original spec (R-list)
@@ -60,7 +79,7 @@ Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_dist
 | R9 | Sandbox level | B used automatically when bwrap is missing | B only with `sandbox.allow_level_b: true`, otherwise refuse; per-OS explanations (`sandbox/level.py: detect`, `explanation`); portable paths (`runner/process.py`) | honest isolation on macOS and Windows |
 | R10 | Fit rules | `fit_record` + check | fit stages must fit only via `fit_record` and contain at least one; other events may not fit at all; `fit_record` requires the exact frozen training index and reports row counts on mismatch (`runner/static_checks.py`, `runner/run_step.py: _worker`, `mlca_runtime/__init__.py: fit_record`). The author keeps this strict | leakage control (I11) |
 | R11 | Worker repair | truncated traceback | with `allow_sample_rows: false`, only the exception type and script line are sent (`runner/run_step.py: _worker`) | tracebacks can contain data values |
-| R12 | Options | engine adds `next` when done | the fallback also offers the event's other primary actions; a completed event offers only `next` (**author decision**, prompt 01 conflict); a note when everything is exhausted (`engine/options.py: fallback`, `api.py: options`) | branch recovery (F4) |
+| R12 | Options | engine adds `next` when done | fallback offers primaries then unrun supporting actions; completed menus offer `next` first, unrun supporting actions and scoped custom; primary alternatives require a branch before completion (`engine/options.py`, `api.py`) | F4 and author-approved supporting-action reachability (2026-10-07), superseding the earlier next-only rule |
 | R13 | Project integrity | — | template snapshot `.mlca/template` (sha-checked on open); runtime snapshot `.mlca/runtime/mlca_runtime` and env-lock hash checked before each step (`api.py: Session.__init__`, `runner/run_step.py: run_step`) | a study cannot silently change underneath |
 | R14 | CLI | §7.8 list | plus `-p/--project`, `mlca templates list\|validate`, `mlca package`, `mlca web` (`cli/main.py`) | usability; browser view of the TUI |
 | R15 | TUI | Textual app | compact logo banner and brand bar (`tui/banner.py`, `assets/logo.txt`, `assets/logo.png`, `scripts/make_logo.py`); key bindings moved per screen (`tui/screens/welcome.py`, `main.py`); helpers renamed to `_can_act`, `run_session_action` so they don't override Textual's own methods | author's logo (D5); startup crashes |
@@ -457,7 +476,7 @@ Built-in check types (`mlca/engine/checks.py`): `event_done`, `fact_present` (ke
 
 ### 6.4 Option (Navigator output, validated)
 
-> **Status:** ✅ `engine/options.py: Option, validate, fallback`. 🔁 Completed events offer only `next` (R12).
+> **Status:** ✅ `engine/options.py: Option, validate, fallback`. 🔁 Completed events offer next, unrun supporting actions and scoped custom (R12, author-approved 2026-10-07).
 
 ```python
 class Option(BaseModel):

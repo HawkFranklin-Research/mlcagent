@@ -67,3 +67,10 @@ ExternalSource and WorkerSource share run_attempt, static checks, test exposure 
 collection. Background threads retain the project action lock and publish pollable status.
 Only a human Session can resolve approval requests. Tool/resource results pass through compact
 serialization and one usage/egress envelope. See [MCP docking](mcp.md).
+
+Private row fingerprints (`privacy/rows.py`) are an engine-side derived store indexed from
+hash-verified registered inputs and splits. Salted cells plus source-row identities support
+matching shared-column projections without storing plaintext values. Collection annotates tables;
+MCP rechecks reads and blocks full-row facts before returning study state. The store is never
+mounted into analysis steps. Client permission recommendations (`mcp/permissions.py`) are separate
+from engine authorization; all generated reports describe external file access as unknown.

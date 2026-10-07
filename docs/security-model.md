@@ -69,11 +69,31 @@ or test rows. Instrumentation and audit hooks cannot prove the semantics of arbi
 
 ## MCP boundary
 
+Private row fingerprints live in `.mlca/private/row_fingerprints` (directory 0700, file 0600),
+not in script mounts. Salted row and cell hashes support same-row matches projected onto shared
+columns, with numeric normalization to six significant digits. Source registration and each split
+index all rows, including the sealed partition; checks do not decrypt test data during thinking.
+Collection records `contains_data_rows`; MCP refuses copied tables and full-row facts when sample
+rows are disabled. Before Navigator fact extraction, matching runtime fact candidates are discarded
+with a metadata-only rejection. Report reads omit embedded stdout/stderr.
+
+Existing projects build the index on first guarded use from registered files with unchanged hashes.
+Missing or changed source files during migration, inconsistent metadata and corrupt stores cause
+refusal. The private index is a local derived cache, not a proof against owner tampering. It stores
+no plaintext cells, but the salt and low-entropy hashes remain sensitive to the owner.
+Projection matching can conservatively reject aggregates; renamed/encoded rows and inferred values
+are outside its guarantee. Figures and tiny summaries may still disclose observations. Use standalone
+driver mode with local models and no remote recipient when study data must remain local.
+
 The MCP transport is local stdio. Every connected client is an agent principal; confirmations,
 test unlocks and package approvals refuse agents inside Session, not just in the tool schema.
 Human resolutions validate request branch, event generation and split. This is API authorization,
 not OS authentication: clientInfo is self-reported, and an unrestricted same-user agent can
-invoke the human CLI outside MCP. Keep approval commands under human control in that client.
+read original data, splits, copied evidence and vault keys or invoke the human CLI outside MCP.
+Reports state agent file access as unknown (outside MLCA). The Claude helper recommends project
+denies for those paths and native shells; other clients receive guidance. Settings must actually
+be loaded and respected, and do not control other filesystem tools. See [Trust boundary](mcp.md#trust-boundary).
+An MCP-only client or separate OS identity/container is needed for an enforceable external boundary.
 
 Brain mode disables model requests at Client. Deterministic scope checks always apply; semantic
 Navigator scope classification is explicitly skipped. Both script sources share execution guards.

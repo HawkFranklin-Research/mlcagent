@@ -3,7 +3,7 @@ from typing import Any
 from mlca.paths import contained, sha256
 
 
-def validate(candidate: Any, root: Any, state: Any) -> Any:
+def validate(candidate: Any, root: Any, state: Any, row_guard=None, allow_sample_rows=False) -> Any:
     source = candidate.get("source", "")
     output = state.artefacts.get(source)
     if output is None:
@@ -19,4 +19,6 @@ def validate(candidate: Any, root: Any, state: Any) -> Any:
         return False, "Fact step does not own its artifact"
     if not candidate.get("key") or "value" not in candidate:
         return False, "Fact key/value missing"
+    if not allow_sample_rows and row_guard and row_guard.contains_full_row(candidate["value"]):
+        return False, "Fact value contains a registered data row"
     return True, "Citation validated; semantic correctness still requires inspection"

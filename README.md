@@ -93,6 +93,32 @@ mlca -p ./study next
 
 After the test set is unlocked, fitting, validation loops and package changes are closed for the project.
 
+Supporting inspections follow the main actions in fallback menus. Once an event is complete,
+the menu offers `next` first, then unrun supporting actions and scoped custom instructions.
+Those steps preserve completed checks. To try a primary alternative, branch before its step.
+
+## Trust boundary
+
+MLCA enforces decisions and data access only through its own API and sandboxed steps.
+A connected agent's native file or shell tools can bypass MCP: they may read the original data,
+`.mlca/data/splits/`, the test key under the MLCA user-data directory, or invoke human approval
+commands. Generated `tables/`, `figures/`, `reports/` and `scripts/` are also local copies of evidence.
+Reports therefore describe `agent_file_access` as **unknown (outside MLCA)**.
+
+`mlca -p ./study mcp install --client claude --scope project` previews recommended permissions;
+`--yes` backs up and merges them into `./study/.claude/settings.json`. The block denies native
+shell execution and reads/edits of registered data, private state, keys and evidence copies.
+Other clients receive equivalent guidance. These are client restrictions, not OS authentication:
+disable other filesystem tools and bypass modes, or use a separate OS identity/container.
+See [MCP trust boundary](docs/mcp.md#trust-boundary) before connecting a client.
+
+With `allow_sample_rows: false`, private salted fingerprints block copied table rows and full-row
+facts, including tables with reordered/shared columns and numbers rounded to six significant digits.
+Matching outputs are flagged in reports. This detects verbatim matches, not encoded data or
+inference from figures and small-group summaries. Brain mode lets the external agent write code
+that produces those outputs. For data that must remain on the machine, use standalone driver mode
+with local models and no external agent receiving the study's outputs.
+
 ## Scientific guard rails
 
 | Rule | Where it is enforced |
@@ -128,7 +154,7 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 
 ## Status
 
-- **Core (plan.md):** P0–P8 built; distribution prepared but not published. **81 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
+- **Core (plan.md):** P0–P8 built; distribution prepared but not published. **96 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
   - runs with real providers;
   - the study on real data;

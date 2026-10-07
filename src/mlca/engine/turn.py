@@ -25,6 +25,21 @@ def execute(session: Any, action: Any, params: Any) -> Any:
 
 
 def finish(session, action, observation):
+    row_guard = session.row_guard if not session.config.privacy.allow_sample_rows else None
+    safe_facts = []
+    for candidate in observation.get("facts", []):
+        if row_guard and row_guard.contains_full_row(candidate.get("value")):
+            session.emit(
+                "FactRejected",
+                {
+                    "candidate": {k: candidate.get(k) for k in ("key", "source")},
+                    "reason": "Fact value contains a registered data row",
+                },
+                step_id=observation["step_id"],
+            )
+        else:
+            safe_facts.append(candidate)
+    observation = {**observation, "facts": safe_facts}
     candidates = []
     if session.mode != "brain" and "navigator" in session.config.roles:
         try:
@@ -46,7 +61,9 @@ def finish(session, action, observation):
         else:
             candidates.append({**candidate, "step_id": observation["step_id"]})
     for candidate in candidates:
-        valid, reason = facts.validate(candidate, session.root, session.state)
+        valid, reason = facts.validate(
+            candidate, session.root, session.state, row_guard, session.config.privacy.allow_sample_rows
+        )
         if candidate.get("key") not in action.fact_candidates:
             valid, reason = False, "Fact key not declared by action"
         session.emit(

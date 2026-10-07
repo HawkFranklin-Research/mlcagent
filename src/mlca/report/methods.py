@@ -6,6 +6,7 @@ def build(state: Any, workflow: Any) -> Any:
         "# Methods draft",
         "",
         "Draft generated from the event log. Author review is required.",
+        "Agent file access: unknown (outside MLCA).",
         "",
         f"Workflow: {workflow.spec.id} {workflow.spec.version}",
         f"Environment lock: {state.lock_sha256}",

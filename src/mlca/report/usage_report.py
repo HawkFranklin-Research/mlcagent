@@ -24,6 +24,7 @@ def build(state: Any, requests: Any, records: Any) -> Any:
         if not script.get("builtin")
     )
     return {
+        "agent_file_access": "unknown (outside MLCA)",
         "decisions_by_principal": dict(principals),
         "script_attempts_by_source": dict(script_sources),
         **summary(requests),

@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from mlca.cli.main import app
 from mlca.errors import MlcaUserError
 from mlca.mcp.install import client_status, install, registration
+from mlca.mcp.permissions import absolute_pattern, claude_block
 
 
 @pytest.fixture
@@ -37,7 +38,7 @@ def test_registration_previews_never_execute(client_home, tmp_path, monkeypatch)
         assert result.exit_code == 0, result.output
         assert "mlca" in result.output and "brain" in result.output
         if client in {"json", "cursor"}:
-            assert json.loads(result.output)["mcpServers"]["mlca"]["args"] == ["mcp", "--mode", "brain"]
+            assert json.loads(result.stdout)["mcpServers"]["mlca"]["args"] == ["mcp", "--mode", "brain"]
     assert calls == [] and list(client_home.iterdir()) == []
     command = registration("claude", "project", "driver", tmp_path)["command"]
     assert command[:6] == ["claude", "mcp", "add", "--scope", "project", "mlca"]
@@ -119,3 +120,39 @@ def test_yes_uses_argv_without_shell(client_home, tmp_path, monkeypatch):
     install("claude", scope="project", mode="driver", project=tmp_path, yes=True)
     assert calls[0][0][0] == registration("claude", "project", "driver", tmp_path)["command"]
     assert "shell" not in calls[0][1] and calls[0][1]["cwd"] == tmp_path
+
+
+def test_claude_policy_preview_and_backed_up_merge(client_home, project_factory, monkeypatch):
+    root = project_factory()
+    policy = root / ".claude/settings.json"
+    monkeypatch.setattr("mlca.mcp.install.shutil.which", lambda name: name)
+    calls = []
+    monkeypatch.setattr("mlca.mcp.install.subprocess.run", lambda *a, **k: calls.append(a))
+    preview = install("claude", project=root)
+    assert '"permissions"' in preview and "Read(./.mlca/**)" in preview
+    assert "Bash(mlca approvals:*)" in preview and '"Bash"' in preview
+    assert not policy.exists() and calls == []
+    data = root.parent / "synthetic.csv"
+    block = claude_block(root)["permissions"]
+    assert f"Read({absolute_pattern(data)})" in block["deny"]
+    assert f"Read({absolute_pattern(root / 'tables')}/**)" in block["deny"]
+    policy.parent.mkdir()
+    original = {"unrelated": 1, "permissions": {"deny": ["Read(./old)"], "allow": ["mcp__mlca__*"]}}
+    policy.write_text(json.dumps(original))
+    install("claude", project=root, yes=True)
+    saved = json.loads(policy.read_text())
+    assert saved["unrelated"] == 1 and saved["permissions"]["allow"] == ["mcp__mlca__*"]
+    assert "Read(./old)" in saved["permissions"]["deny"]
+    assert block["deny"] == [rule for rule in saved["permissions"]["deny"] if rule != "Read(./old)"]
+    backups = list(policy.parent.glob("settings.json.mlca-backup-*"))
+    assert len(backups) == 1 and json.loads(backups[0].read_text()) == original
+    assert not backups[0].stat().st_mode & 0o077
+    install("claude", project=root, yes=True)
+    deny = json.loads(policy.read_text())["permissions"]["deny"]
+    assert len(deny) == len(set(deny))
+
+
+def test_guidance_to_stderr_keeps_json_valid(client_home):
+    result = CliRunner().invoke(app, ["mcp", "install", "--client", "json"])
+    assert result.exit_code == 0 and "mcpServers" in json.loads(result.stdout)
+    assert "unknown (outside MLCA)" in result.stderr and "not reads" in result.stderr

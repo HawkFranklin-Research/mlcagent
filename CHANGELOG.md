@@ -1,5 +1,20 @@
 # Changelog
 
+## MCP review fixes R-MCP1/R-MCP2 — 7 October 2026
+
+- Index private salted row fingerprints at registration and splitting; refuse copied table rows
+  and full-row facts with sample rows disabled. Collection flags survive replay and reports;
+  legacy reads are rechecked. MCP report reads omit run stdout/stderr.
+- Claude setup previews recommend project denies for data, private state, keys, evidence copies
+  and native shells; --yes backs up and merges settings. Other clients receive guidance.
+- Reports describe external agent file access as unknown. Docs and bundled agent guide explain
+  native-tool bypasses and derived-output disclosure limits.
+- Author-approved supporting actions are now available before/after completion; next comes first
+  when done, with unrun supporting actions and scoped custom. Primary alternatives still require
+  a branch before their step. Supplementary steps preserve completed checks and generations.
+- Checked: full offline suite 96 passed, 1 skipped (PowerShell unavailable), Ruff, skill validation,
+  wheel resources and installed-wheel stdio discovery of all 14 tools. No actual client registration.
+
 ## Template content v0.2.0, output contract, MCP plan — 6 October 2026
 - Both workflow templates now have short, specific content: one-sentence goals, state-phrased sub-goals,
   one-sentence custom scopes, and three-line Do/Save/Record action prompts with concrete defaults.

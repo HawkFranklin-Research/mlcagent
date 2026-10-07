@@ -55,7 +55,7 @@ The bundled [agent guide](../skills/mlca/SKILL.md) can be copied manually to oth
 
 | Client | Helper operation | Scope and validation |
 |---|---|---|
-| Claude Code | `claude mcp add --scope user mlca -- mlca mcp --mode brain` | user/project; installed 2.1.291 CLI help checked |
+| Claude Code | `claude mcp add --scope user mlca -- mlca mcp --mode brain` | user/project; installed 2.1.292 CLI help checked |
 | Codex | `codex mcp add mlca -- mlca mcp --mode brain` | user only; installed 0.160.1 CLI help checked |
 | Hermes | `hermes mcp add mlca --command mlca --args mcp --mode brain` | user only; v0.21.5+8071 CLI help checked |
 | OpenClaw | `openclaw mcp set mlca '<server JSON>'` | user only; official registry documentation checked, client absent here |
@@ -117,7 +117,8 @@ Read resources: `mlca://view/status`, `mlca://view/facts`, and
    brief, Worker contract, fit requirements, attempt limit and privacy rules.
 6. Submit one script. A failed attempt returns reduced diagnostics and a repair work order;
    exhausted attempts are terminal. Work orders and actual steps survive server reconnection.
-7. Read evidence and request human decisions as required. Completed events offer next.
+7. Read evidence and request human decisions as required. Completed events offer next first,
+   then unrun supporting actions and scoped custom instructions; these do not reopen checks.
 
 Project action locks prevent simultaneous CLI/TUI and MCP execution. A server shutdown waits
 for its active worker thread. A hard process/host crash can leave a running step; investigate
@@ -157,11 +158,46 @@ as untrusted. Views omit raw inventory/sample rows and stdout/stderr. Reads requ
 hash-checked artifacts: summary tables at most 50×12 and 8 MiB, PNG figures at most 8 MiB, completed script
 and bounded report text. Credential text is scrubbed before serialization, hashing and logging.
 
-These controls cannot prove a generated table/figure never encodes an individual observation.
-Client identity is attribution from MCP clientInfo, not authentication. Human-only guards protect
-Session/MCP calls; an agent with the owner's unrestricted shell/filesystem can invoke the human
-CLI or modify files outside this interface. Configure the supervising client's permissions to keep
-approval actions human-controlled. Level B remains weaker trusted execution, not an OS sandbox.
+With `allow_sample_rows: false`, registration and engine splitting index source rows using private
+salted fingerprints. Collection marks matching table artifacts `contains_data_rows: true`, and
+MCP refuses them. Reads also recheck legacy artifacts without the flag. Matching uses shared
+column names in sorted order, missing-value normalization and six-significant-digit numeric values.
+Facts equal to full source rows are rejected before model fact extraction; legacy copied-row facts
+refuse MCP views. The private store is not mounted into steps or exposed as an MCP resource.
+
+Genuine aggregate tables such as `describe()` remain readable unless they coincide with a source
+projection. Small column projections can produce conservative refusals. Renaming every column,
+transforming/encoding values, captions, figures with individual points or small-group summaries
+can still reveal data. This is a verbatim-row guard, not an anonymity or inference guarantee.
+Brain mode allows the external agent to write such code. Confidential data requires standalone
+driver mode with local models and no external agent receiving outputs; docking a remote agent
+still sends returned content to that agent's provider even if MLCA's own models are local.
+
+## Trust boundary
+
+Client identity is attribution from MCP clientInfo, not authentication. MLCA controls only calls
+through Session/MCP and its step sandbox. An agent's native tools may read original registered
+data, `.mlca/data/splits/*.parquet`, keys under `~/.local/share/mlca/keys/` (or the configured
+user-data directory), and copied evidence in `tables/`, `figures/`, `reports/` and `scripts/`.
+It may also invoke `mlca approvals approve`, `unlock-test`, `confirm` or `package` as the owner.
+Reports always state `agent_file_access: "unknown (outside MLCA)"`; permission settings do not
+change that assessment. Level B remains trusted execution, not an OS sandbox.
+
+The Claude install preview includes a recommended project `permissions.deny` block. With `--yes`,
+the helper backs up and merges `.claude/settings.json` in the project selected by `-p PATH`,
+preserving unrelated settings and existing deny rules. This project policy is written even for
+a user-scoped server registration, and only affects clients loading that project's settings.
+It covers private state, registered data paths, keys, copied evidence and human commands.
+Bare `Bash` and `PowerShell` denies also block command wrappers that evade prefix rules;
+bypass mode is disabled in the recommendation. Re-run after initializing/registering data so
+the block includes its paths. The preview writes nothing and does not execute a client command.
+
+Syntax was checked against Claude Code 2.1.292 and its [official permission documentation](https://code.claude.com/docs/en/permissions).
+Other clients receive prose guidance on stderr, keeping JSON registration snippets valid.
+Disable native file/shell/execution and other filesystem MCP tools. Codex's read-only sandbox
+limits writes, not reads. Client settings can be changed or bypassed outside MLCA; they are not
+an enforced OS boundary. Use an MCP-only client or separate OS identity/container when that
+boundary is required. No actual client was registered or restricted during implementation.
 
 No HTTP listener, A2A, ACP or MCP tasks extension is implemented; polling works across clients.
 

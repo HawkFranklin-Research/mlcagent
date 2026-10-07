@@ -44,4 +44,15 @@ def generate(root: Path, state: Any, workflow: Any, records: Any, kind: Any = "a
         [r.model_dump(mode="json") for r in all_records if r.type.value == "TestUnlocked"],
     )
     outputs["project_test_exposure"] = "reports/generated/project_test_exposure.json"
+    atomic_json(
+        directory / "trust_boundary.json",
+        {
+            "agent_file_access": "unknown (outside MLCA)",
+            "contains_data_rows": [
+                output["path"] for output in state.artefacts.values() if output.get("contains_data_rows")
+            ],
+            "row_fingerprint_limit": "Verbatim matches only; derived summaries and figures can reveal data",
+        },
+    )
+    outputs["trust_boundary"] = "reports/generated/trust_boundary.json"
     return outputs

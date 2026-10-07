@@ -18,7 +18,8 @@ description: Drive an MLCA machine-learning study through its MCP tools, using g
    Do not hide failed runs or retry a terminal failed step.
 8. Read completed evidence with `mlca_read`: facts, log, scripts, bounded tables,
    figures or generated reports. Cite outputs for important numbers.
-9. Once event checks pass, use `mlca_move` to advance. Completed events offer next.
+9. Once event checks pass, use `mlca_move` to advance, or run an unrun supporting
+   action/scoped custom instruction. Completed menus show next first.
 10. Use `mlca_report` for provenance and usage at study completion.
 
 ## Human decisions and boundaries
@@ -33,6 +34,12 @@ description: Drive an MLCA machine-learning study through its MCP tools, using g
 - Keep outputs short: required files plus at most one figure, summary tables no
   larger than 50 rows by 12 columns, and at most five printed lines. No raw rows.
 - Use the supplied work order rather than reading source data outside MLCA.
+- Sample-row restrictions block copied table rows and full-row facts. Do not evade
+  them by renaming columns, encoding values, figures or tiny-group summaries.
+- Native file/shell tools bypass MLCA. Keep data, private state, keys and copied
+  evidence outside those tools; have the human review client permissions.
+- Agent file access is unknown outside MLCA. Confidential work requires local
+  driver models with no remote agent receiving outputs.
 - Record metrics and file-cited facts through runtime helpers.
 - Brain mode makes no MLCA model calls; your client's inference cost is separate.
 - To try another model, branch from a record before its model step, not after it.

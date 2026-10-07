@@ -13,6 +13,8 @@ from ulid import ULID
 from mlca.errors import MlcaUserError
 from mlca.paths import atomic_json, resource
 
+from .permissions import claude_block, guidance, merged_settings
+
 CLIENTS = {"claude", "codex", "hermes", "openclaw", "cursor", "json"}
 
 
@@ -107,6 +109,8 @@ def install(client, scope="user", mode="brain", project=None, yes=False, with_sk
         preview = json.dumps({"mcpServers": {"mlca": plan["entry"]}}, indent=2)
     if target:
         preview += f"\nSkill: {target}"
+    if client == "claude":
+        preview += "\n\n" + guidance(client, project)
     if not yes or client == "json":
         return preview
     if plan["command"] and not shutil.which(client):
@@ -114,6 +118,13 @@ def install(client, scope="user", mode="brain", project=None, yes=False, with_sk
     if target and (target.is_symlink() or any(p.is_symlink() for p in target.parents)):
         raise MlcaUserError("Refusing a symlinked skill destination")
     config = plan["config"]
+    permission_file = project / ".claude/settings.json" if client == "claude" else None
+    permission_value = None
+    if permission_file:
+        if permission_file.is_symlink() or permission_file.parent.is_symlink():
+            raise MlcaUserError("Refusing a symlinked Claude permission destination")
+        permission_value = merged_settings(permission_file, claude_block(project))
+        backup(permission_file)
     backup(config)
     if plan["command"]:
         try:
@@ -130,6 +141,9 @@ def install(client, scope="user", mode="brain", project=None, yes=False, with_sk
             raise MlcaUserError("Client JSON configuration is invalid; no replacement written") from None
         atomic_json(config, saved)
         config.chmod(0o600)
+    if permission_file:
+        atomic_json(permission_file, permission_value)
+        permission_file.chmod(0o600)
     if target:
         target.parent.mkdir(parents=True, exist_ok=True)
         backup(target)

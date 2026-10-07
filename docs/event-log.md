@@ -32,3 +32,9 @@ identifies its Worker/agent source. A pending external step can resume after reo
 Abandoning a step records StepFailed and freezes its evidence. Branches cannot erase exposure.
 MCP usage envelopes count external tools separately from model requests and omit unavailable
 external inference costs; read-only MCP calls write request evidence, not SessionStarted log noise.
+
+Table output metadata includes `contains_data_rows` and `row_privacy_checked`; these flags are
+persisted with immutable step evidence and retained in replay/report projections. The private
+salted row index is a derived local store, rebuilt for legacy projects only from registered sources
+whose hashes still match. It is not an MCP resource or a generated public view. Full-row runtime
+fact refusals log only key/source metadata, not the rejected value.

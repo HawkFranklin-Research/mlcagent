@@ -86,8 +86,12 @@ def mcp_install(
     with_skill: bool = typer.Option(False, "--with-skill"),
 ):
     from mlca.mcp.install import install
+    from mlca.mcp.permissions import guidance
 
     print(install(client, scope, mode, _path(ctx), yes, with_skill))
+    if client != "claude":
+        # Preserve valid generic JSON on stdout; setup advice is separate.
+        typer.echo(guidance(client, _path(ctx)), err=True)
 
 
 @app.command()

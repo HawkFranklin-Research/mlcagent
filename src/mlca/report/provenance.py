@@ -17,6 +17,7 @@ def build(root: Path, state: Any, requests: Any) -> Any:
         ]
         calls.extend(r for r in requests if r.get("step_id") == step["step_id"] and r not in calls)
         chain = {
+            "agent_file_access": "unknown (outside MLCA)",
             "step_id": step["step_id"],
             "event_id": step["event_id"],
             "action_id": step["action_id"],

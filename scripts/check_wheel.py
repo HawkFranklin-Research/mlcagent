@@ -16,6 +16,8 @@ def check(wheel: Path, verbose: bool = True) -> list[str]:
         "mlca/cli/main.py",
         "mlca/mcp/server.py",
         "mlca/mcp/install.py",
+        "mlca/mcp/permissions.py",
+        "mlca/privacy/rows.py",
         "mlca/resources/skills/mlca/SKILL.md",
         "mlca_runtime/__init__.py",
         "mlca/resources/packaging/NAME",

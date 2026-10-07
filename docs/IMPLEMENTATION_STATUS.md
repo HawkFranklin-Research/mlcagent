@@ -2,10 +2,37 @@
 
 ## Current result
 
-MCP M0–M6 is complete: **81 passed, 1 skipped** in 360.22 s, plus final focused
-registration/init/guard checks (7 passed), Ruff lint/format and installed-wheel tool discovery.
+MCP M0–M6 and review fixes R-MCP1/R-MCP2 are implemented. The author approved the supporting
+action/custom-after-completion change, which is also implemented. Final validation of these
+changes is recorded in the review section below. The historical M6 result was 81 passed,
+1 skipped in 360.22 s, plus Ruff and installed-wheel discovery.
 M7 is the manual author checklist in [MCP docking](mcp.md). No live models or original data
 have been used. Earlier validation entries below are historical phase results.
+
+## 2026-10-07 — R-MCP1/R-MCP2 and supporting actions
+
+- Private salted row fingerprints at registration/split; collection flags, CSV/Parquet read-time
+  checks, full-row fact refusals and private-store execution probes. Tests distinguish copied
+  head rows from readable describe summaries, reordered/shared-column projections, numerical
+  rounding, same-row identity, corrupt/missing stores and legacy fact/artifact metadata.
+- Report reads omit stdout/stderr; reports always state external agent file access as unknown.
+  Claude permission previews and --yes backup/merge are tested without actual registrations;
+  JSON snippets stay valid while other clients receive guidance on stderr. Trust boundary and
+  derived-output disclosure limits are documented in README, MCP docs and the bundled guide.
+- Author-approved menu changes offer primaries then unrun supporting actions. Completed events
+  offer next first, unrun supporting actions and scoped custom. Primary proposals after
+  completion remain refused, and supplementary steps preserve checks/generations. MCP tests
+  cover count_target before/after audit_schema, accepted scoped custom, refused out-of-scope
+  custom and next; a plain-driver fallback regression and historical branch tests remain.
+- Initial focused privacy/helper/alternative suite: 21 passed in 57.27 s. Supporting-option
+  unit/MCP tests: 5 passed in 13.31 s; plain-driver/branch/row-privacy regressions: 8 passed
+  in 47.71 s. Intermediate full run: 92 passed, 1 skipped in 429.94 s.
+- **Final full suite:** `uv run pytest -q` — **96 passed, 1 skipped in 396.58 s**.
+  The skip is PowerShell analysis because pwsh/PSScriptAnalyzer are unavailable. Ruff lint and
+  format check pass (147 files); Git whitespace check and bundled skill validation pass.
+  Wheel/sdist build and resource checks pass (178 wheel entries). The installed-wheel stdio
+  doctor negotiates 2026-07-28 and discovers all 14 tools with client-free PATH and isolated
+  config/data directories. No actual clients were registered and no real model calls were made.
 
 ## Prompt 01 validation
 

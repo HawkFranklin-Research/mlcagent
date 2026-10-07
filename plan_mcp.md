@@ -298,8 +298,75 @@ Commit locally per phase (`MCP M<n>: …`). Update `CHANGELOG.md`, `docs/IMPLEME
 7. Registration commands were checked against the installed client CLIs; nothing was registered without `--yes`.
 8. The CLI and TUI behave as before; the full suite is green.
 
+## 12. Review findings (2026-10-07, commit `4b6c2fb`) — to fix before M7
+
+Reviewer check: full suite **81 passed, 1 skipped**, reproduced. A live stdio session (SDK client, brain mode) worked:
+- 14 tools discovered;
+- an agent approval request was approved through the human CLI;
+- attribution `agent:<client>/<version>` recorded;
+- the work order matches the Worker prompt.
+
+Two privacy and trust gaps were found.
+
+### R-MCP1. Raw data rows can reach the agent despite `allow_sample_rows: false` (confirmed)
+**Reproduced:** in `eda`, a submitted script saved `df.head(8)` as the required `distributions.csv`. The step completed, and `mlca_read(kind="table")` returned the 8 raw rows verbatim. The 50×12 limit does not stop verbatim rows.
+
+**Fix:**
+1. When `allow_sample_rows` is false, give every table and fact value returned over MCP a **row-fingerprint guard**:
+   - at registration and at split, store salted hashes of every data row (values rounded to 6 significant digits, column order normalised) in `.mlca/private/row_fingerprints`; the store is never readable by steps;
+   - refuse a table read if any returned row, restricted to columns shared with the data, matches a fingerprint;
+   - refuse fact values that equal a full data row.
+2. At `collect` time, mark such outputs `contains_data_rows: true`, so they are never readable over MCP and are flagged in reports.
+3. **Test:** the reproduction above is refused; a genuine `describe()` summary is still readable.
+4. **Docs** (`docs/mcp.md`, README): say plainly that in brain mode the agent writes the code, so derived outputs (figures with individual points, small-group summaries) can still reveal data to the agent's model provider. The guard blocks verbatim rows only. For data that must not leave the machine, use driver mode with a local model.
+
+### R-MCP2. The agent's own file and shell access bypasses MLCA's interface (documentation and setup)
+**Problem:** Claude Code and Codex normally also have their own file and shell tools. Outside MCP they can:
+- read `data.csv`, `.mlca/data/splits/*.parquet` and the test-set key in `~/.local/share/mlca/keys/`;
+- run `mlca approvals approve`, `mlca unlock-test` or `mlca confirm` themselves.
+
+MLCA's guarantees cover only what passes through MLCA. `docs/mcp.md` mentions the CLI and file modification, but not reading the data or the key.
+
+**Fix:**
+1. Add a "Trust boundary" section to `docs/mcp.md` and the README, stating exactly the above.
+2. `mlca mcp install` prints a recommended client permission block, and writes it only with `--yes`, backing up the file first. For Claude Code, project `.claude/settings.json` `permissions.deny`:
+   - `Read(./.mlca/**)` and `Edit(./.mlca/**)`;
+   - reads of the registered data paths;
+   - `Read(~/.local/share/mlca/**)`;
+   - `Bash(mlca approvals:*)`, `Bash(mlca unlock-test:*)`, `Bash(mlca confirm:*)`, `Bash(mlca package:*)`.
+
+   For Codex and others, print the equivalent guidance in prose, or the client's sandbox setting if it has one. Check the exact permission syntax against the installed client versions and record them.
+3. Reports state the agent's file access as `unknown (outside MLCA)`, never as restricted.
+4. **Test:** the install helper preview contains the deny block; nothing is written without `--yes`.
+
+### Core gap found in the same run (fix tracked in `plan.md` → Status)
+Supporting actions are effectively unreachable without a Navigator:
+- the fallback offers only default and primary actions;
+- once an event is done, only `next` is offered and `custom` is refused.
+
+So `count_target`, `plot_missingness`, `plot_results` and the `audit_*` actions never appear in plain driver use or in an agent's option list.
+
 ## Status
 
+- **2026-10-07 R-MCP1/R-MCP2:** implemented. Private salted row/cell fingerprints cover
+  registration and splits; copied tables are flagged at collection and refused at MCP read,
+  including legacy artifacts. Full-row facts are refused, and report reads remove run diagnostics.
+  Claude install previews recommend denies; `--yes` backs up and merges project permissions.
+  Other clients receive prose guidance. Reports mark external file access unknown. Code:
+  `privacy/rows.py`, `runner/artefacts.py`, `engine/turn.py`, `mcp/server.py`,
+  `mcp/permissions.py`, `mcp/install.py` and `report/`. Regressions:
+  `tests/unit/test_row_fingerprints.py`, `tests/mcp/test_row_privacy.py`, `tests/mcp/test_install.py`.
+  Final validation is recorded in `docs/IMPLEMENTATION_STATUS.md`.
+- **Final review validation:** full offline suite **96 passed, 1 skipped (396.58 s)**;
+  Ruff, skill and wheel checks pass. Installed-wheel stdio discovers all 14 tools. The skip
+  is unavailable PowerShell analysis. No live providers or actual client registrations.
+- **Supporting actions:** author approved on 2026-10-07, implemented in `engine/options.py` and
+  `api.py`: unrun supporting actions follow primaries; completed events offer `next` first,
+  unrun supporting actions and scoped custom. Primary proposals after completion are refused;
+  supplementary steps preserve checks/generation. Tests: `tests/unit/test_options.py` and
+  `tests/mcp/test_supporting.py` and `tests/integration/test_driver_supporting.py`.
+  This supersedes the earlier next-only decision below.
+- **2026-10-07 review:** M0–M6 verified (81 passed, 1 skipped; live stdio session OK). Fix R-MCP1 and R-MCP2 (section 12) before M7.
 - **2026-10-07:** M0–M6 implemented and tested; M7 is pending manual author runs, recorded in `docs/mcp.md`.
 - **2026-10-06 baseline:** plan written; implementation had not started.
 

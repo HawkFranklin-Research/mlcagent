@@ -36,6 +36,12 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
             "kind": kind,
             "caption": info.get("caption", ""),
         }
+        if kind == "table":
+            from mlca.privacy.rows import guard
+
+            matched = guard(root, state).file_contains_rows(path)
+            entry["contains_data_rows"] = matched
+            entry["row_privacy_checked"] = matched is not None
         outputs.append(entry)
         if kind == "figure":
             figures.append(entry)

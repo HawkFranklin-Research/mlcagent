@@ -82,6 +82,9 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
         raise IntegrityError("Registered input changed")
     frame = read_table(path).reset_index(drop=True)
     assignments = partitions(frame, params, column_for(state))
+    from mlca.privacy.rows import guard
+
+    guard(root, state).register_split(step_id, frame, assignments)
     directory = root / ".mlca/data/splits" / step_id
     directory.mkdir(parents=True, exist_ok=False)
     manifest = directory / "split_manifest.csv"

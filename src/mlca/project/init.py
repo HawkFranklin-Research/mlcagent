@@ -103,6 +103,9 @@ def initialise(
         "config": config or {},
     }
     (root / ".mlca/project.yaml").write_text(yaml.safe_dump(settings, sort_keys=False), encoding="utf-8")
+    from mlca.privacy.rows import RowFingerprints
+
+    RowFingerprints(root).ensure(registered)
     store = Store(root)
     store.append(
         "ProjectCreated",

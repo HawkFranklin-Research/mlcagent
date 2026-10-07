@@ -1,5 +1,34 @@
 # Implementation decisions
 
+## 2026-10-07 — Review fixes R-MCP1/R-MCP2
+
+- Full-row hashes alone cannot match a table with omitted columns. The private SQLite index stores
+  salted cell hashes and row identities as well as normalized full-row hashes; intersections must
+  resolve to the same source row. Column names are metadata; plaintext cells are not stored.
+  Numbers use six significant digits. Source registration and split partitions are indexed.
+- Table collection records copied-row flags; MCP reads recheck legacy artifacts without flags.
+  Runtime full-row facts are rejected before Navigator extraction. Legacy full-row facts refuse
+  guarded MCP use. Migration requires unchanged source files; corrupt stores fail closed.
+- Report JSON reads remove embedded stdout/stderr, leaving full diagnostics local. Reports always
+  state external agent file access as unknown (outside MLCA), including a trust-boundary report.
+- Claude project permission previews cover registered source paths, private state, actual/default
+  user-data folders and generated evidence copies. Bare Bash/PowerShell denies supplement human
+  command prefixes, which alone miss absolute executables, -p arguments and wrapper commands.
+  Claude Code 2.1.292 syntax follows its official permission documentation. Only --yes merges
+  project settings, preserving existing denies and unrelated values after a mode-0600 backup.
+  Other clients receive prose on stderr; their JSON registration output stays parseable.
+- These settings are recommendations, not authentication or proof of client file access. Native
+  tools/other filesystem MCPs can bypass MLCA; a separate OS boundary or MCP-only client is needed.
+  Copied-row detection cannot prove anonymity: transformed data, labels, figures and small-group
+  summaries can disclose observations. Confidential work uses local standalone driver mode with
+  no external agent receiving study outputs.
+- The author approved supporting actions and custom after completion on 2026-10-07, superseding
+  the historical next-only decision. Fallback appends unrun supporting actions after primaries;
+  completed events offer next first, supporting actions and scoped custom. Primary proposals after
+  completion are refused, so alternatives still branch before the primary step. Supplementary
+  steps preserve checks and generations; fit, scope and test-exposure controls still apply.
+  No live models, original-data runs or real client registration.
+
 ## 2026-10-06 — Author instructions and scope
 
 - P0–P8 implementation is authorized. Tests and smoke/full-cycle/live runs are deferred by the author;
