@@ -112,12 +112,18 @@ Other clients receive equivalent guidance. These are client restrictions, not OS
 disable other filesystem tools and bypass modes, or use a separate OS identity/container.
 See [MCP trust boundary](docs/mcp.md#trust-boundary) before connecting a client.
 
-With `allow_sample_rows: false`, private salted fingerprints block copied table rows and full-row
-facts, including tables with reordered/shared columns and numbers rounded to six significant digits.
-Matching outputs are flagged in reports. This detects verbatim matches, not encoded data or
-inference from figures and small-group summaries. Brain mode lets the external agent write code
-that produces those outputs. For data that must remain on the machine, use standalone driver mode
-with local models and no external agent receiving the study's outputs.
+With `allow_sample_rows: false`, private salted fingerprints check values across all columns,
+regardless of their names, at six and four significant digits. The additional table heuristic flags
+at least `min(3, n_columns)` distinct cell matches to one source row; exact shared-column checks
+also remain. Full-row facts are checked without requiring matching column names. Matching outputs
+are flagged in reports; genuine summaries normally remain readable, but coincidental matches may
+be refused. Existing indexes upgrade from unchanged registered data without decrypting the test set.
+
+This guard catches accidental and simple copies, not a deliberate agent. In brain mode the agent
+writes the code and can encode data in strings, noise, figures or other derived outputs. Those
+results are sent to the agent's provider by design. For confidential data, use standalone driver
+mode with every model local and no external agent receiving outputs; the heuristic cannot guarantee
+confidentiality for brain mode.
 
 ## Scientific guard rails
 
@@ -154,7 +160,7 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 
 ## Status
 
-- **Core (plan.md):** P0–P8 built; distribution prepared but not published. **96 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
+- **Core (plan.md):** P0–P8 built; distribution prepared but not published. **101 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
   - runs with real providers;
   - the study on real data;

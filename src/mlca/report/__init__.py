@@ -51,7 +51,7 @@ def generate(root: Path, state: Any, workflow: Any, records: Any, kind: Any = "a
             "contains_data_rows": [
                 output["path"] for output in state.artefacts.values() if output.get("contains_data_rows")
             ],
-            "row_fingerprint_limit": "Verbatim matches only; derived summaries and figures can reveal data",
+            "row_fingerprint_limit": "Heuristic for accidental and simple copies, not deliberate encoding; brain-mode outputs can disclose data",
         },
     )
     outputs["trust_boundary"] = "reports/generated/trust_boundary.json"

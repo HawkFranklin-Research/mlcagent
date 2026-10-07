@@ -1,5 +1,31 @@
 # Implementation decisions
 
+## 2026-10-07 — R-MCP1b
+
+- Reviewer repros at 6103b55 renamed all columns or rounded to four decimals. The row guard now
+  indexes numeric cells at six and four significant digits and matches values across all column
+  names. A table heuristic requires min(3, returned column count) distinct returned cells to
+  match distinct source cells in one source row. Bipartite matching prevents counting one common
+  source value repeatedly. The original exact shared-column check is retained as an additional
+  detection path; full-row facts keep the full-row requirement but ignore names and order.
+- Index schema version 2 adds cell precision and an index for cross-column lookups. Version 1
+  migrates atomically from unchanged registered sources, leaving the old file intact on failure.
+  Registered rows already cover all historical split subsets, so old partition-specific profiles
+  need not be reconstructed/decrypted during migration. Future splits store both precisions.
+- Four significant digits is not equivalent to four decimal places for every value. The reported
+  round(4) reproduction is tested; other scales, encoding and inference are outside the guarantee.
+  Tables can be conservatively refused by coincidental matches in small/categorical datasets.
+- Documentation and generated trust reports describe an accidental/simple-copy heuristic, not
+  protection from a deliberate agent. Brain-mode code can encode data in arbitrary outputs; its
+  results go to the external provider by design. Confidentiality requires standalone driver mode
+  with all models local and no remote recipients. MCP docs include wording for the manuscript
+  author; this task does not edit the paper or register real clients.
+- Permanent tests cover renamed, rounded and combined CSV/Parquet copies, fresh read-time checks
+  without artifact flags, readable describe/class/metric summaries, distinct-cell thresholds,
+  same-row identity, renamed/coarse full-row facts (including scalars) and safe migration.
+  Focused run: 14 passed. Final full suite: 101 passed, 1 skipped in 421.09 s; Ruff,
+  wheel/resource checks and installed-wheel stdio discovery pass. M7 remains pending.
+
 ## 2026-10-07 — Review fixes R-MCP1/R-MCP2
 
 - Full-row hashes alone cannot match a table with omitted columns. The private SQLite index stores

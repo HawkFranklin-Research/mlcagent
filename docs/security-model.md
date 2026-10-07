@@ -70,20 +70,25 @@ or test rows. Instrumentation and audit hooks cannot prove the semantics of arbi
 ## MCP boundary
 
 Private row fingerprints live in `.mlca/private/row_fingerprints` (directory 0700, file 0600),
-not in script mounts. Salted row and cell hashes support same-row matches projected onto shared
-columns, with numeric normalization to six significant digits. Source registration and each split
+not in script mounts. Salted row and cell hashes retain exact shared-column checks and add
+column-name-independent matches at six and four significant digits. The table heuristic requires
+`min(3, n_columns)` distinct cell matches to distinct cells in one source row. Source registration and each split
 index all rows, including the sealed partition; checks do not decrypt test data during thinking.
 Collection records `contains_data_rows`; MCP refuses copied tables and full-row facts when sample
 rows are disabled. Before Navigator fact extraction, matching runtime fact candidates are discarded
 with a metadata-only rejection. Report reads omit embedded stdout/stderr.
 
-Existing projects build the index on first guarded use from registered files with unchanged hashes.
+Existing projects build or upgrade the index on guarded use from registered files with unchanged hashes.
+Version-1 hashes cannot derive lower-precision hashes; migration replaces the index atomically.
+Registered rows cover all historical split subsets, avoiding test decryption during migration.
 Missing or changed source files during migration, inconsistent metadata and corrupt stores cause
 refusal. The private index is a local derived cache, not a proof against owner tampering. It stores
 no plaintext cells, but the salt and low-entropy hashes remain sensitive to the owner.
-Projection matching can conservatively reject aggregates; renamed/encoded rows and inferred values
-are outside its guarantee. Figures and tiny summaries may still disclose observations. Use standalone
-driver mode with local models and no remote recipient when study data must remain local.
+Matching can conservatively reject aggregates. The guard catches accidental and simple copies,
+including tested renaming and rounding; a deliberate agent can encode data in strings, noise,
+figures or other derived outputs. Brain mode sends results to its external provider by design.
+This heuristic cannot guarantee confidentiality. Use standalone driver mode with every model local
+and no remote recipient when study data must remain local.
 
 The MCP transport is local stdio. Every connected client is an agent principal; confirmations,
 test unlocks and package approvals refuse agents inside Session, not just in the tool schema.

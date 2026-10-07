@@ -8,7 +8,7 @@ from mcp import Client
 from mlca.api import Session
 from mlca.mcp.server import create_server
 from tests.helpers import advance_to
-from tests.mcp.helpers import choose, data
+from tests.mcp.helpers import choose, data, poll
 from tests.mcp.test_brain import submit
 
 
@@ -121,5 +121,54 @@ def test_private_fingerprints_unreadable_by_step(project_factory, sandbox_level)
             assert server.controller.session.state.steps[-1]["runs"][-1]["exit_status"] != 0
             with Session.open(root) as human:
                 human.abandon_step(pending["step_id"], "privacy probe finished")
+
+    asyncio.run(check())
+
+
+@pytest.mark.parametrize("transform", ["rename", "round", "rename_round"])
+def test_simple_evasions_refused_and_summaries_readable(project_factory, monkeypatch, transform):
+    root = project_factory()
+    with Session.open(root) as human:
+        advance_to(human, "eda")
+    monkeypatch.setattr("mlca.llm.client.Client.complete", lambda *a, **k: pytest.fail("Model called"))
+    server = create_server(root, "brain")
+
+    async def check():
+        async with Client(server) as client:
+            if transform == "rename":
+                pending = await choose(client, "describe_distributions")
+            else:
+                pending = data(await client.call_tool("mlca_custom", {"text": "Summarize column values"}))
+                if pending["status"] != "awaiting_script":
+                    pending = await poll(client, pending["step_id"])
+            table = {
+                "rename": "df.head(8).rename(columns=str.upper)",
+                "round": "df.head(8).round(4)",
+                "rename_round": "df.head(8).round(4).rename(columns=str.upper)",
+            }[transform]
+            source = f"""import pandas as pd, mlca_runtime as m
+df = pd.read_csv(list(m.inputs().values())[0])
+m.save_table({table}, "distributions.csv")
+m.save_table(df.describe().reset_index(), "describe.csv")
+counts = df.y.value_counts().rename_axis("class").reset_index(name="n")
+counts["share"] = counts.n / len(df)
+m.save_table(counts, "classes.csv")
+m.save_table(pd.DataFrame({{"model": ["baseline"], "metric": ["roc_auc"], "value": [0.8137]}}), "metrics.csv")
+m.record_fact_candidate("n_numeric", df.iloc[0].rename(str.upper).to_dict(), source="distributions.csv")
+"""
+            assert (await submit(client, pending["step_id"], source))["status"] == "completed"
+            session = server.controller.session
+            assert "n_numeric" not in session.state.facts
+            for name in ("distributions", "describe", "classes", "metrics"):
+                for suffix in ("csv", "parquet"):
+                    ref = next(p for p in session.state.artefacts if p.endswith(f"{name}.{suffix}"))
+                    assert session.state.artefacts[ref]["contains_data_rows"] is (name == "distributions")
+                    result = await client.call_tool("mlca_read", {"kind": "table", "ref": ref})
+                    assert bool(result.is_error) is (name == "distributions"), result
+                    if name == "distributions":
+                        session.state.artefacts[ref].pop("contains_data_rows")
+                        assert (await client.call_tool("mlca_read", {"kind": "table", "ref": ref})).is_error
+                    else:
+                        assert data(result)["table_data"]
 
     asyncio.run(check())

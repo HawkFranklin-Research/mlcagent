@@ -19,8 +19,14 @@ file access in reports. Tests cover copied versus aggregate tables, projection/r
 views and private-store access. The author approved supporting actions and scoped custom
 instructions after completion on 2026-10-07; implemented with `next` first, preserving completed
 checks and generations. Details: `plan_mcp.md` section 12/Status.
-Final review validation: **96 passed, 1 skipped in 396.58 s**; Ruff lint/format, skill and
-wheel checks pass. Installed-wheel stdio exposes all 14 tools; no real clients registered.
+R-MCP1b now extends simple-copy detection across column names at six/four significant digits,
+using distinct-cell matches in the same row and atomic legacy-index upgrades. Renamed/rounded
+copy and summary regressions pass (14 focused tests). Full current validation is in
+`docs/IMPLEMENTATION_STATUS.md`; the prior review baseline was 96 passed, 1 skipped.
+Docs explicitly distinguish the heuristic from confidentiality: brain-mode code can encode data
+in outputs; confidential work needs local standalone driver models without remote recipients.
+Final R-MCP1b validation: **101 passed, 1 skipped in 421.09 s**; Ruff, wheel/resource checks
+and installed-wheel discovery of all 14 tools pass. No actual clients were registered.
 M7 is explicitly an author-run client/provider checklist, pending. Original anemia data,
 live providers, full survival scientific validation and native macOS/Windows remain pending.
 

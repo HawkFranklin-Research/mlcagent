@@ -160,18 +160,33 @@ and bounded report text. Credential text is scrubbed before serialization, hashi
 
 With `allow_sample_rows: false`, registration and engine splitting index source rows using private
 salted fingerprints. Collection marks matching table artifacts `contains_data_rows: true`, and
-MCP refuses them. Reads also recheck legacy artifacts without the flag. Matching uses shared
-column names in sorted order, missing-value normalization and six-significant-digit numeric values.
-Facts equal to full source rows are rejected before model fact extraction; legacy copied-row facts
-refuse MCP views. The private store is not mounted into steps or exposed as an MCP resource.
+MCP refuses them. Reads also recheck legacy artifacts without the flag. Numeric fingerprints are
+stored at six and four significant digits, with missing-value normalization. In addition to the
+original exact shared-column check, matching ignores column names and order and flags a table row
+when at least `min(3, n_columns)` of its cells match distinct cells in the same source row.
+Cells from different source rows or repeated copies of one source cell do not add up to a match.
+Full-row fact values are checked across column names/order at both precisions before model fact
+extraction; legacy copied-row facts refuse MCP views. The private store is not mounted into steps
+or exposed as an MCP resource.
 
-Genuine aggregate tables such as `describe()` remain readable unless they coincide with a source
-projection. Small column projections can produce conservative refusals. Renaming every column,
-transforming/encoding values, captions, figures with individual points or small-group summaries
-can still reveal data. This is a verbatim-row guard, not an anonymity or inference guarantee.
-Brain mode allows the external agent to write such code. Confidential data requires standalone
-driver mode with local models and no external agent receiving outputs; docking a remote agent
-still sends returned content to that agent's provider even if MLCA's own models are local.
+Tests verify that `describe()`, class counts and metrics remain readable. Coincidental matches,
+especially in small or categorical datasets, can still produce conservative refusals. Four
+significant digits is a specific normalization, not a guarantee for every decimal-rounding scale.
+The guard catches accidental and simple copies, not a deliberate agent: the agent writes the code
+and can always encode data into strings, noise or figures. Brain mode sends derived results to
+the agent's provider by design. For confidential data, use standalone driver mode with every model
+local and no external agent receiving outputs; docking a remote agent still sends it returned
+content even if MLCA's own models are local. The fingerprint heuristic is not a confidentiality
+guarantee, anonymization method or protection against inference.
+
+Version-1 indexes upgrade atomically from hash-verified registered sources. Those rows already
+cover historical split partitions, so migration needs no test decryption; future splits also record
+dual-precision profiles. Missing/changed sources refuse migration and leave the old index intact.
+
+If the manuscript describes brain mode, it should state the same limitation: the external agent
+authors executable code and receives derived results; row fingerprints detect simple copying but
+cannot prevent deliberate encoding. Confidential studies must use local driver models without
+remote output recipients. This implementation task does not change the manuscript.
 
 ## Trust boundary
 

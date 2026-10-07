@@ -346,8 +346,36 @@ Supporting actions are effectively unreachable without a Navigator:
 
 So `count_target`, `plot_missingness`, `plot_results` and the `audit_*` actions never appear in plain driver use or in an agent's option list.
 
+### Follow-up review (2026-10-07, commit `6103b55`)
+Reviewer reproduction: suite 96 passed, 1 skipped; live stdio, brain mode.
+- **Supporting-action menu:** fixed. `data` offers `audit_schema, count_target, custom` before and `next, count_target, custom` after.
+- **R-MCP2:** fixed. `mlca mcp install --client claude --scope project` previews a deny block covering:
+  - `.mlca/**`, the key directory and the registered data file;
+  - the `tables/`, `figures/`, `reports/` and `scripts/` views;
+  - the four human commands, plus the shell entirely (`Bash`), with bypass mode disabled.
+
+  Nothing is written without `--yes`. Flags match Claude Code 2.1.292.
+- **R-MCP1:** partly fixed. A verbatim copy (`df.head(8)` under the original column names) is now flagged and refused. Two simple evasions still pass, and `mlca_read` returned the raw rows:
+  - **renamed columns:** `df.head(8).rename(columns=str.upper)`;
+  - **rounded values:** `df.head(8).round(4)`, in a custom step.
+
+**R-MCP1b (implemented; final validation in Status):**
+1. **Column-name-independent matching:** look up each cell's digest across all columns of a dataset (the `cells` table already supports this), not only same-named columns.
+2. **Precision tolerance:** store cell digests at 6 and at 4 significant digits.
+3. **Row rule:** flag a row when at least `min(3, n_columns)` of its cells match the same data row.
+4. **Tests:** the reproductions above (renamed, rounded) are refused; a `describe()` summary, a class-count table and a metrics table still read normally.
+5. **Docs** (README, `docs/mcp.md`): the guard catches accidental and simple copies, not a deliberate agent. The agent writes the code, so it can always encode data in outputs (noise, strings, figures). For confidential data, use driver mode with a local model; brain mode sends derived results to the agent's provider by design.
+
 ## Status
 
+- **2026-10-07 R-MCP1b:** implemented in `privacy/rows.py`: column-name-independent
+  distinct-cell matching at six/four significant digits, plus safe version-1 migration.
+  Full-row facts also ignore column names/order. CSV/Parquet collection and read-time guards
+  reuse it. Tests: `tests/unit/test_row_fingerprints.py`, `tests/mcp/test_row_privacy.py`;
+  focused run **14 passed in 25.35 s**, including both reproductions and readable summaries.
+  README/MCP/security docs and generated trust reports describe simple-copy detection and its
+  deliberate-encoding limits. **Full suite: 101 passed, 1 skipped in 421.09 s**; Ruff,
+  wheel/resource checks and installed-wheel 14-tool discovery pass. M7 remains author-run.
 - **2026-10-07 R-MCP1/R-MCP2:** implemented. Private salted row/cell fingerprints cover
   registration and splits; copied tables are flagged at collection and refused at MCP read,
   including legacy artifacts. Full-row facts are refused, and report reads remove run diagnostics.
@@ -357,7 +385,7 @@ So `count_target`, `plot_missingness`, `plot_results` and the `audit_*` actions 
   `mcp/permissions.py`, `mcp/install.py` and `report/`. Regressions:
   `tests/unit/test_row_fingerprints.py`, `tests/mcp/test_row_privacy.py`, `tests/mcp/test_install.py`.
   Final validation is recorded in `docs/IMPLEMENTATION_STATUS.md`.
-- **Final review validation:** full offline suite **96 passed, 1 skipped (396.58 s)**;
+- **Prior review validation:** full offline suite **96 passed, 1 skipped (396.58 s)**;
   Ruff, skill and wheel checks pass. Installed-wheel stdio discovers all 14 tools. The skip
   is unavailable PowerShell analysis. No live providers or actual client registrations.
 - **Supporting actions:** author approved on 2026-10-07, implemented in `engine/options.py` and
@@ -366,6 +394,8 @@ So `count_target`, `plot_missingness`, `plot_results` and the `audit_*` actions 
   supplementary steps preserve checks/generation. Tests: `tests/unit/test_options.py` and
   `tests/mcp/test_supporting.py` and `tests/integration/test_driver_supporting.py`.
   This supersedes the earlier next-only decision below.
+- **2026-10-07 follow-up baseline:** menu fix and R-MCP2 verified; R-MCP1 was partial,
+  leading to R-MCP1b above. Reviewer baseline: 96 passed, 1 skipped.
 - **2026-10-07 review:** M0–M6 verified (81 passed, 1 skipped; live stdio session OK). Fix R-MCP1 and R-MCP2 (section 12) before M7.
 - **2026-10-07:** M0–M6 implemented and tested; M7 is pending manual author runs, recorded in `docs/mcp.md`.
 - **2026-10-06 baseline:** plan written; implementation had not started.

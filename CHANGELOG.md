@@ -1,5 +1,15 @@
 # Changelog
 
+## R-MCP1b: simple-copy detection — 7 October 2026
+
+- Match table values regardless of column names at six and four significant digits; require
+  min(3, column count) distinct cell matches in one source row alongside existing exact checks.
+  Full-row fact checks also ignore names/order. Version-1 indexes upgrade atomically from
+  unchanged registered sources without test decryption.
+- Add regressions for renamed/rounded copies, readable describe/class/metric summaries,
+  distinct-cell matching and migration. Clarify heuristic privacy limits and local driver use.
+- Checked: 101 passed, 1 skipped; Ruff, wheel resources and installed-wheel 14-tool discovery pass.
+
 ## MCP review fixes R-MCP1/R-MCP2 — 7 October 2026
 
 - Index private salted row fingerprints at registration and splitting; refuse copied table rows

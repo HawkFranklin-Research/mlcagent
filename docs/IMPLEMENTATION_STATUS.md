@@ -2,12 +2,32 @@
 
 ## Current result
 
-MCP M0–M6 and review fixes R-MCP1/R-MCP2 are implemented. The author approved the supporting
+MCP M0–M6 and review fixes R-MCP1/R-MCP2/R-MCP1b are implemented. The author approved the supporting
 action/custom-after-completion change, which is also implemented. Final validation of these
 changes is recorded in the review section below. The historical M6 result was 81 passed,
 1 skipped in 360.22 s, plus Ruff and installed-wheel discovery.
 M7 is the manual author checklist in [MCP docking](mcp.md). No live models or original data
 have been used. Earlier validation entries below are historical phase results.
+
+## 2026-10-07 — R-MCP1b
+
+- Index and match numeric cells at six/four significant digits, independent of column names.
+  Table heuristics count min(3, returned column count) distinct matches in one source row;
+  existing exact shared-column checks remain. Full-row facts ignore names/order as well.
+- Version-1 indexes upgrade atomically using unchanged registered sources; sealed test data is
+  never decrypted for migration. Failed upgrades preserve the previous index.
+- Focused offline tests: **14 passed in 25.35 s** after the final scalar precision correction.
+  They cover renamed/rounded/combined copies
+  in CSV and Parquet, reads without flags, readable describe/class/metric summaries, thresholds,
+  distinct source cells, coarse full-row facts and migration failures.
+- **Final full suite:** `uv run pytest -q` — **101 passed, 1 skipped in 421.09 s**.
+  The skip remains unavailable PowerShell analysis. Ruff lint/format (147 files), Git whitespace,
+  wheel/sdist builds and resource checks (178 wheel entries) pass. Installed-wheel stdio doctor
+  negotiates 2026-07-28 and discovers all 14 tools with isolated config/data and client-free PATH.
+- README/MCP/security documentation and trust reports describe accidental/simple-copy detection,
+  not resistance to a deliberate agent. Brain mode can encode data in outputs; confidential
+  studies use local standalone driver models without remote output recipients. No paper edits,
+  live model calls or client registrations were performed.
 
 ## 2026-10-07 — R-MCP1/R-MCP2 and supporting actions
 
