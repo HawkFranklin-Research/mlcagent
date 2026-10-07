@@ -166,15 +166,15 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 
 ## Status
 
-- **PyPI beta:** upload rejected with HTTP 400 (project-name similarity); nothing published. Release source: `ac4bcc8`. A replacement name or registry resolution is required.
+- **PyPI beta:** [`mlcagent` 0.2.0b1](https://pypi.org/project/mlcagent/0.2.0b1/) is published; the command remains `mlca`. Release source: `16bcc72`. The old `mlca` name was rejected before any files were accepted.
 
-- **Core (plan.md):** P0–P8 built; beta version `0.2.0b1`. **106 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
+- **Core (plan.md):** P0–P8 plus P10.1–P10.7 built; beta version `0.2.0b1`. **137 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
   - runs with real providers;
   - the study on real data;
   - native macOS and Windows checks.
 - **MCP docking ([plan_mcp.md](plan_mcp.md)):** M0–M6 implemented: 14 stdio tools, brain/driver modes, human approvals, filtered evidence and usage records. Manual runs in real clients (M7) remain pending.
-- **Licence:** [CC BY-NC-ND 4.0](LICENSE) (`CC-BY-NC-ND-4.0`), chosen by the author. The approved package name is `mlca`.
+- **Licence:** [CC BY-NC-ND 4.0](LICENSE) (`CC-BY-NC-ND-4.0`), chosen by the author. The approved distribution name is `mlcagent`; the executable and imports remain `mlca`.
 
 ## Documentation
 

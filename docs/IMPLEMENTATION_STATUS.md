@@ -2,7 +2,10 @@
 
 ## Current result
 
-**Latest work:** P10.1–P10.7 implemented with sourced metrics, usage imports and independent task-card benchmarks. The author-approved distribution is `mlcagent` 0.2.0b1; command/import remain `mlca`. Release validation has passed (137 tests passed, 1 skipped); the authorized PyPI upload follows. Older upload results below describe the rejected `mlca` name, not this release.
+**Published beta:** [`mlcagent` 0.2.0b1](https://pypi.org/project/mlcagent/0.2.0b1/). Both files were accepted by PyPI with the author-provided token; public SHA256 hashes match the tested artifacts. Local release source: `16bcc72`.
+
+
+**Latest work:** P10.1–P10.7 implemented with sourced metrics, usage imports and independent task-card benchmarks. The author-approved distribution is `mlcagent` 0.2.0b1; command/import remain `mlca`. Release validation passed (137 tests passed, 1 skipped). Both artifacts are published at [https://pypi.org/project/mlcagent/0.2.0b1/](https://pypi.org/project/mlcagent/0.2.0b1/); fresh-index installation and 14-tool verification passed. Older upload results below describe the rejected `mlca` name, not this release.
 
 
 MCP M0–M6 and review fixes R-MCP1/R-MCP2/R-MCP1b are implemented. The author approved the supporting
@@ -246,3 +249,7 @@ The first complete P10/replacement-name suite ran 135 passed, 2 failed, 1 skippe
 ## 2026-10-07 — P10 and mlcagent beta release gates
 
 P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped in 603.43 s** (PowerShell unavailable); supporting-action/failure targeted subset: 20 passed. Ruff lint/format, approved-name/version guard, wrapper synchronization, build/Twine and 186-entry wheel resource checks pass. The final isolated HOME/XDG wheel walkthrough passes install/version/doctor, synthetic init, Claude project/skill permission preview without writes, bubblewrap namespace probe and stdio discovery of all 14 tools. No live models, original anemia data or native client/OS validation were performed. The authorized PyPI upload as `mlcagent` 0.2.0b1 follows; npm/GitHub operations remain unauthorized.
+
+## 2026-10-07 — Published-beta verification
+
+[PyPI release](https://pypi.org/project/mlcagent/0.2.0b1/). Fresh PyPI verification used an empty temporary HOME/XDG and uv cache: `uv tool install mlcagent==0.2.0b1`, `mlca --version` (0.2.0b1), `mlca doctor --json` (level A capability; execution must confirm isolation), and `mlca mcp doctor` (14 tools) all passed. Published wheel/sdist SHA256 hashes match the scanned release artifacts. Local tag `v0.2.0b1` points to release source `16bcc72`; no push. P10 is complete, while M7, real providers/data, and native macOS/Windows remain pending. The beta description contains an overlooked historical README Status paragraph; it is corrected in source for the next release, with no second upload. Token rotation to a project-scoped token and removal of the account-wide file remain an author account step; the file was read only by the publish command.
