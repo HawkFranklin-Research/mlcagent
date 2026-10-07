@@ -23,6 +23,8 @@ templates_app = typer.Typer()
 approvals_app = typer.Typer(invoke_without_command=True)
 app.add_typer(approvals_app, name="approvals")
 app.add_typer(templates_app, name="templates")
+usage_app = typer.Typer(invoke_without_command=True)
+app.add_typer(usage_app, name="usage")
 
 
 def output(value: Any, json_output: Any = False) -> Any:
@@ -283,10 +285,27 @@ def metrics(
             output(generate(session, branch, out), json_output)
 
 
-@app.command()
+@usage_app.callback()
 def usage(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")) -> Any:
+    if ctx.invoked_subcommand is not None:
+        return
     with Session.open(_path(ctx)) as session:
         output(session.status()["usage"], json_output)
+
+
+@usage_app.command("import")
+def usage_import(
+    ctx: typer.Context,
+    client: str = typer.Option(...),
+    session_file: str = typer.Option(..., "--session"),
+    since: str | None = typer.Option(None, "--from"),
+    until: str | None = typer.Option(None, "--to"),
+):
+    from mlca.evaluation.import_usage import import_usage
+
+    with Session.open(_path(ctx)) as session:
+        with session.mutation():
+            output(import_usage(session, client, session_file, since, until), True)
 
 
 @app.command()

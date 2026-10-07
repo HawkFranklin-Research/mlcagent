@@ -1002,6 +1002,8 @@ Every refusal or failure record gets a `category` from a fixed list, set where i
 - **Test:** golden synthetic run (driver mode, fake provider) → a metrics file with the expected counts. Brain-mode MCP run → `models.external_agent` is `unavailable`, not zero.
 
 #### P10.5 Import client-reported usage for brain mode (R1-4, minimal tracking)
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 `mlca usage import --client claude|codex --session PATH_OR_ID [--from TS --to TS]` reads the agent client's own local transcript after a run. It takes only the usage numbers (model, input, output and cache tokens, timestamps) for messages within the project's run window, and writes them to `usage.jsonl` with `role: external_agent`, `cost_source: client_reported`.
 - **Claude Code:** session JSONL under `~/.claude/projects/<cwd-slug>/`. Each assistant message has `message.model` and `message.usage` (checked on this machine, Claude Code 2.1.292).
 - **Codex:** session files under `~/.codex/sessions/`. Check the format against the installed version, and record it in `docs/metrics.md`.

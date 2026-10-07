@@ -219,3 +219,7 @@ A validated failure taxonomy is assigned at record/error boundaries for scope, g
 ## P10.4 — 7 October 2026
 
 Offline mlca metrics writes sourced run, steps/recovery, failures, principal-separated interventions, time, model usage, egress, provenance, primary results, safeguards and decision sequences. Brain-mode external inference remains unavailable until import. Missing provider usage/cost now remains null; cost estimates are labelled derived. Root failures are counted separately from terminal wrappers. Driver golden/brain/repair/unknown-provider and invariant tests: 10 passed. Overhead retains approximate negative residuals when waits overlap.
+
+## P10.5 — 7 October 2026
+
+mlca usage import supports Claude assistant-message usage and Codex token_count deltas, project-window intersection, idempotent envelopes and growing Claude messages. Only whitelisted identifiers/model/timestamps/numeric fields persist; message content and transcript paths are excluded. Codex 0.160.1 field names were checked locally without displaying message content. Window/idempotence/content-canary/Codex-delta/CLI compatibility tests: 4 passed. Missing usage/cost remains unavailable.
