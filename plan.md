@@ -78,6 +78,7 @@ Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_dist
   - **tests:** `tests/unit/test_options.py`, `tests/mcp/test_supporting.py`: `count_target`
     reachable before/after `audit_schema`, scoped custom execution preserves completed checks,
     primary proposals remain refused, and out-of-scope custom instructions still fail.
+- **P10 evaluation instrumentation** (planned 2026-10-07; run snapshot, decision timing, failure categories, `mlca metrics`, client-usage import, `mlca bench`): do before the author's VM test (section 8, P10).
 - **P9 remainder:** general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT-account login, opencode free models.
 
 ### Redesigns and additions relative to the original spec (R-list)
@@ -926,6 +927,118 @@ Each phase ends with: tests green (`uv run pytest`), `ruff check` clean, `CHANGE
 - Illustrator role (image generation via OpenRouter image models), only for diagrams and graphical abstracts, with outputs in `reports/illustrations/`, never as analysis artefacts.
 - ChatGPT-account login and free models (7.6.6), only after the terms check.
 - Web client hosted on Firebase (static), only as a front end to a locally running core.
+
+### P10: evaluation instrumentation (metrics for the paper; do before the author's first VM test)
+
+> **Status:** ⬜ planned 2026-10-07. Authorised by the author: do it now, before M7.
+
+**Purpose.** MLCA itself should record, with minimal extra tracking, the agent-level evidence the reviewers ask for. The comment IDs refer to `ES/submission2/review1/review1_es_working.md` in the paper repository:
+- completion, failures and recovery: R1-2a, R2-2;
+- interventions and human effort: R1-3, R1-4, R2-2;
+- time, calls, tokens and cost: R1-4;
+- environment and model identity: R1-2b, R1-4;
+- what was sent to the provider: R1-6b;
+- traceability: R1-7f.
+
+Most raw signals already exist in the event log, `usage.jsonl` and `egress.jsonl`. P10 adds the missing ones, plus one command that turns a project into a metrics file. Baselines (AutoML, plain LLM) and the planted-flaw task set are paper experiments: they live in `ES/submission2/experiments/` and only *use* these commands.
+
+**Hard rules.**
+- Computing metrics never calls a model.
+- Every number states its source: `exact` (from records), `derived` (computed from timestamps or counts), `client-reported` (imported from an agent's transcript), or `unavailable`.
+- Unknown is never written as zero.
+
+#### P10.1 Run snapshot (R1-2b, R1-4)
+- New record type `RunSnapshot`, written once per session with the first mutating record (next to `SessionStarted`), and at the start of every bench run. It contains:
+  - MLCA version, and the git commit when run from a checkout;
+  - Python, OS and kernel, CPU model and core count, RAM, and GPU (`nvidia-smi` if present, otherwise `none`);
+  - uv and bubblewrap versions; sandbox level;
+  - template id, version and sha256; analysis-environment lock sha256;
+  - mode (`brain` or `driver`) and client principal;
+  - for every configured role: provider kind, model, temperature, max output tokens and base URL host (never keys).
+- In `usage.jsonl`, add `model_reported`: the model id the provider returned in its response (it can differ from the configured alias), and `request_settings`: temperature and max tokens actually sent.
+- **Test:** the snapshot exists after the first mutation; it contains no secret (credential-canary scan); `model_reported` is filled from a fake response.
+
+#### P10.2 Decision timing and human effort (R1-4, R1-3, R2-2)
+- Write timing into the existing decision records:
+  - **`OptionChosen` and `CustomInstructionSubmitted`:** `decision_wait_s` (seconds since the matching `OptionsProposed`), and `principal` (already present).
+  - **`CustomInstructionSubmitted`:** `chars` and `words` of the instruction.
+  - **`ApprovalResolved`:** `wait_s` (since `ApprovalRequested`). For `UserConfirmed` without a request, `wait_s` runs from when the sub-goal first became the only open one.
+  - **TUI only:** `active_s`, the time with keyboard or mouse activity while that decision was pending. A gap longer than 120 s counts as idle and is excluded; the cutoff is recorded with the value. CLI and MCP decisions have no `active_s` (`unavailable`); their `decision_wait_s` is an upper bound.
+- `ScriptEditedByUser` gains `lines_changed`.
+- **Test:** timings are present and non-negative; idle gaps are excluded in a Textual pilot test with simulated keystrokes and a fake clock.
+
+#### P10.3 Failure categories (R2-2, R1-2a)
+Every refusal or failure record gets a `category` from a fixed list, set where it is written (not guessed later):
+`static_check`, `sandbox_denied`, `runtime_error:<ExceptionType>`, `timeout`, `missing_output`, `fit_rule`, `test_lock`, `scope_layer1`, `scope_layer2`, `gate_blocked`, `invalid_options`, `provider_error`, `budget_stop`, `privacy_refusal`, `abandoned`.
+
+- **Test:** one case per category.
+
+#### P10.4 `mlca metrics` (single project, any mode)
+`mlca metrics [--branch B] [--json] [--out FILE]` writes `reports/generated/metrics.json`. All values are computed from the log and ledgers only. Sections:
+
+| Section | Fields |
+|---|---|
+| `run` | snapshot reference, mode, principal(s), start/end time, wall time, branch, events reached, `completed` (reached `report` with all sub-goals passed) |
+| `steps` | count; per step: action, attempts, `first_try_success`, `recovered` (succeeded after at least one failed attempt), final status, compute time |
+| `recovery` | steps with failures; recovered automatically (no human action between failure and success); recovered after human action; unrecovered |
+| `failures` | counts by P10.3 category |
+| `interventions` | by principal: option choices, custom instructions (count, total words), confirmations, approvals requested/granted/declined, test unlocks, package approvals, user script edits (lines) |
+| `time` | `llm_s` (sum of request latencies), `compute_s` (sum of run durations), `human_wait_s`, `human_active_s` (when available), `agent_decision_s` (agent principals), `engine_overhead_s` (wall − others, may be approximate) |
+| `models` | per role: calls, input/output/cached tokens, cost with `cost_source`; `model_reported` values; for brain mode, `external_agent` tokens from P10.5 when imported, otherwise `unavailable` |
+| `egress` | requests and tool results sent out: count, bytes, and counts by content category; `sample_rows_sent` |
+| `provenance` | metrics/figures/tables in the report; share with a complete artefact → step → script → run chain (`coverage`) |
+| `results` | primary metric on validation and test (name, value, CI if recorded), selected model |
+| `safeguards` | count of each engine refusal (scope, static, fit, test lock, gate, privacy), with step IDs |
+| `decisions` | ordered list of `(event, action_id, params-hash, principal)`, used for consistency across runs |
+
+- **Test:** golden synthetic run (driver mode, fake provider) → a metrics file with the expected counts. Brain-mode MCP run → `models.external_agent` is `unavailable`, not zero.
+
+#### P10.5 Import client-reported usage for brain mode (R1-4, minimal tracking)
+`mlca usage import --client claude|codex --session PATH_OR_ID [--from TS --to TS]` reads the agent client's own local transcript after a run. It takes only the usage numbers (model, input, output and cache tokens, timestamps) for messages within the project's run window, and writes them to `usage.jsonl` with `role: external_agent`, `cost_source: client_reported`.
+- **Claude Code:** session JSONL under `~/.claude/projects/<cwd-slug>/`. Each assistant message has `message.model` and `message.usage` (checked on this machine, Claude Code 2.1.292).
+- **Codex:** session files under `~/.codex/sessions/`. Check the format against the installed version, and record it in `docs/metrics.md`.
+
+Never copy message text, only the numbers. The import is idempotent (keyed by message or request id).
+
+- **Test:** small fixture transcripts for both formats, plus a run-window filter test.
+
+#### P10.6 `mlca bench` (independent end-to-end reruns, R1-2a)
+- `mlca bench run TASK_CARD --runs N --out DIR [--mode driver] [--budget-usd X] [--seed S]`. It creates N fresh projects from the same data and brief and drives each one headless to `report` or failure.
+- Each run is a **fresh end-to-end agent run with new model calls**. This is distinct from `mlca replay --verify`, which reruns frozen code; the metrics label which is which.
+- **Task card** (`docs/task-cards/*.yaml`; this is also the reviewers' R1-3 material). It holds:
+  - the data path and the brief answers;
+  - the template;
+  - the option policy: `navigator_first` (take the Navigator's first option), `default_first`, or `seeded_random`;
+  - optional per-event custom instructions (verbatim text);
+  - the approval policy: confirm sub-goals with a fixed note, unlock the test set once in `test`, package list allowed or denied;
+  - per-run and total budget.
+
+  The task card's sha256 goes into every run.
+- Policy decisions are recorded with principal **`user:policy/<task-card-sha12>`**. They are never counted as human decisions; reports list them separately.
+- Runs are sequential by default (`--parallel K` optional). A run stopped by budget or failure is still reported; failed runs are **kept**, never dropped.
+- `mlca bench summarize DIR` writes `bench_summary.json` and `bench_summary.md`:
+  - completion rate;
+  - failures by category;
+  - steps per run; first-try success rate; automatic recovery rate;
+  - interventions (policy versus human);
+  - time breakdown (mean ± SD);
+  - tokens and cost (mean ± SD, with `cost_source`);
+  - final validation/test metric (mean ± SD, min, max);
+  - **decision consistency**: the share of runs with identical action sequences per event, and pairwise agreement of the `decisions` lists.
+- Brain-mode bench (an external agent driving N runs) is out of scope. Brain-mode runs are measured one by one with `mlca metrics` plus P10.5.
+- **Test:** `mlca bench run` on the synthetic task with the fake provider and N=3 → three completed runs and a summary with the expected values; a forced failure in one run → completion rate 2/3, and the failed run is still listed.
+
+#### P10.7 Documentation
+- `docs/metrics.md`: every field, its source and its limits. Covers what `human_active_s` means; why brain-mode tokens are client-reported; `replay --verify` versus `bench`; and that the policy principal is not a human.
+- One paragraph in the README.
+- Link from `docs/m7-vm-brain-mode.md`: after the VM run, also run `mlca metrics` and `mlca usage import --client claude`.
+
+**Done when:**
+- every P10 test passes, and the full suite stays green;
+- `mlca metrics` on the reviewer's synthetic MCP brain run and on a driver-mode run shows plausible, sourced values;
+- `mlca bench run` with the fake provider and N=3, then `summarize`, works end to end;
+- `docs/metrics.md` is written;
+- local commits per sub-phase (`P10.<n>: …`); nothing published.
 
 ---
 
