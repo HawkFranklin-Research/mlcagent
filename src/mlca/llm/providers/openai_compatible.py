@@ -25,9 +25,9 @@ class CompatibleProvider:
         usage = data.get("usage") or {}
         return {
             "text": message.get("content") or "",
-            "input_tokens": usage.get("prompt_tokens", 0),
-            "output_tokens": usage.get("completion_tokens", 0),
-            "cached_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0),
+            "input_tokens": usage.get("prompt_tokens"),
+            "output_tokens": usage.get("completion_tokens"),
+            "cached_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
             "cost_usd": usage.get("cost"),
             "provider_request_id": data.get("id"),
             "model_reported": data.get("model"),

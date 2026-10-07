@@ -350,3 +350,7 @@ Decision records now carry proposal/approval waits, instruction size and caller 
 ## P10.3 — 7 October 2026
 
 A validated failure taxonomy is assigned at record/error boundaries for scope, gates, static/fit checks, runtime exception types, sandbox, timeout, missing outputs, providers, budgets, privacy and abandonment. AttemptFailed preserves failures repaired before terminal completion; typed FitRuleError identifies runtime fit refusals. Historical records remain uncategorized rather than retrospectively inferred. Taxonomy/engine/scientific/invariant subset: 25 passed; prior evaluation/store subset: 25 passed. Ruff passes.
+
+## P10.4 — 7 October 2026
+
+Offline mlca metrics writes sourced run, steps/recovery, failures, principal-separated interventions, time, model usage, egress, provenance, primary results, safeguards and decision sequences. Brain-mode external inference remains unavailable until import. Missing provider usage/cost now remains null; cost estimates are labelled derived. Root failures are counted separately from terminal wrappers. Driver golden/brain/repair/unknown-provider and invariant tests: 10 passed. Overhead retains approximate negative residuals when waits overlap.

@@ -270,6 +270,20 @@ def report(
 
 
 @app.command()
+def metrics(
+    ctx: typer.Context,
+    branch: str | None = typer.Option(None),
+    json_output: bool = typer.Option(False, "--json"),
+    out: Path | None = typer.Option(None),
+):
+    from mlca.evaluation.metrics import generate
+
+    with Session.open(_path(ctx)) as session:
+        with session.mutation():
+            output(generate(session, branch, out), json_output)
+
+
+@app.command()
 def usage(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")) -> Any:
     with Session.open(_path(ctx)) as session:
         output(session.status()["usage"], json_output)

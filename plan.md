@@ -980,6 +980,8 @@ Every refusal or failure record gets a `category` from a fixed list, set where i
 - **Test:** one case per category.
 
 #### P10.4 `mlca metrics` (single project, any mode)
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 `mlca metrics [--branch B] [--json] [--out FILE]` writes `reports/generated/metrics.json`. All values are computed from the log and ledgers only. Sections:
 
 | Section | Fields |

@@ -33,9 +33,9 @@ class LLMResult(BaseModel):
     text: str
     parsed: Any = None
     request_id: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cached_tokens: int = 0
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached_tokens: int | None = None
     cost_usd: float | None = None
     latency_ms: float = 0
 
@@ -131,9 +131,9 @@ class Client:
                     "temperature": payload.get("temperature"),
                     "max_output_tokens": payload.get("max_tokens", payload.get("max_completion_tokens")),
                 },
-                "input_tokens": 0,
-                "output_tokens": 0,
-                "cached_tokens": 0,
+                "input_tokens": None,
+                "output_tokens": None,
+                "cached_tokens": None,
                 "cost_usd": None,
                 "cost_source": "unknown",
                 "latency_ms": 0,
@@ -153,11 +153,13 @@ class Client:
                     else:
                         result = provider.complete(payload)
                     record.update({k: result[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]})
-                    record["model_reported"] = result.get("model_reported")
+                    record["model_reported"] = redact_value(result.get("model_reported"), self.config)
                     cost = result.get("cost_usd")
                     if cost is not None:
                         record.update(cost_usd=float(cost), cost_source="provider")
-                    else:
+                    elif all(
+                        record[k] is not None for k in ("input_tokens", "output_tokens", "cached_tokens")
+                    ):
                         cost = pricing.estimate(
                             selected.provider,
                             selected.model,
