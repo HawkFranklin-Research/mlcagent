@@ -1,6 +1,7 @@
 # Installation channels
 
-**Prepared locally, not published.** The commands below use the provisional name `mlca`. Replace
+The author-approved Python package name is `mlca`; the beta is `0.2.0b1`. npm, shell download
+and Homebrew channels remain unpublished. Replace
 `<release-base-url>` and `<tap>` only after the author chooses the public repository and publishes.
 All channels delegate to the same versioned Python wheel/source distribution; they need uv and
 Python >=3.11. uv can provision a compatible Python interpreter.
@@ -15,14 +16,14 @@ Python >=3.11. uv can provision a compatible Python interpreter.
 ## Python / PyPI
 
 ```sh
-uv tool install mlca
+uv tool install mlca==0.2.0b1
 # or
-pipx install mlca
+pipx install mlca==0.2.0b1
 ```
 
 `pipx` users also need uv available on PATH for MLCA's separate analysis environments. To try this
-unpublished checkout, run `uv build`, then `uv tool install dist/mlca-*.whl` (select one wheel).
-For the browser view: `uv tool install 'mlca[web]' --reinstall`, then `mlca web`.
+local checkout, run `uv build`, then `uv tool install dist/mlca-*.whl` (select one wheel).
+For the browser view: `uv tool install 'mlca[web]==0.2.0b1' --reinstall`, then `mlca web`.
 
 ## Shell installer: Linux, macOS, WSL
 
@@ -31,8 +32,8 @@ curl -LsSf <release-base-url>/install.sh | sh
 ```
 
 The installer asks before bootstrapping uv from Astral. When downloaded to a file, use
-`sh install.sh --yes --version 0.2.0 --no-modify-path` for a pinned non-interactive installation without
-shell profile changes. If uv is already present it installs or upgrades the tool. On Linux it prints
+`sh install.sh --yes --version 0.2.0b1 --no-modify-path` for a pinned non-interactive installation without
+shell profile changes. Beta installer files default to their explicit beta pin; stable installer files install or upgrade the latest stable release. On Linux it prints
 the appropriate bubblewrap package command; it never runs sudo. On macOS it explains level B.
 
 ## PowerShell: native Windows
@@ -41,7 +42,7 @@ the appropriate bubblewrap package command; it never runs sudo. On macOS it expl
 irm <release-base-url>/install.ps1 | iex
 ```
 
-For flags, download the script, then run `./install.ps1 -Yes -Version 0.2.0 -NoModifyPath`.
+For flags, download the script, then run `./install.ps1 -Yes -Version 0.2.0b1 -NoModifyPath`.
 It recommends WSL2, asks before Astral bootstrap, installs the Python artifact and runs doctor.
 
 ## npm
@@ -53,7 +54,7 @@ npm install -g mlca
 ```
 
 Install uv first. Node >=18 is required. The package has no install hooks; its launcher never downloads
-uv and pins the Python version to the npm version. Arguments and exit codes/signals are forwarded.
+uv and pins the Python version via `mlca.pythonVersion`; npm prereleases use their own SemVer spelling. Arguments and exit codes/signals are forwarded.
 `MLCA_LAUNCHER_DEBUG=1` prints the selected command. It does not add a second agent runtime.
 
 ## Homebrew

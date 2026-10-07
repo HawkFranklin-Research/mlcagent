@@ -22,7 +22,7 @@ mlca --version                     # 0.2.0b1
 mlca doctor                        # banner, Python, uv, bubblewrap, sandbox level
 ```
 
-`mlca doctor` must report sandbox **level A**. If bubblewrap cannot create namespaces on this VM, stop and record the message; do not switch to level B for this test.
+`mlca doctor` must detect bubblewrap and report **A (unverified until execution)**. That checks availability, not namespace creation. The first sandboxed submitted-script run must succeed at level A. If bubblewrap cannot create namespaces, stop and record the message; do not switch to level B for this test.
 
 ## 3. Install the agent
 
@@ -37,18 +37,20 @@ mkdir -p ~/data ~/studies
 # your table, e.g. the anemia CSV copied to ~/data/anemia.csv
 # or a synthetic one:
 uv run --with numpy --with pandas python - <<'EOF'
+from pathlib import Path
 import numpy as np, pandas as pd
 rng = np.random.default_rng(0); X = rng.normal(size=(400, 4))
 y = (X[:, 0] + 0.5 * X[:, 1] + rng.normal(size=400) > 0).astype(int)
 df = pd.DataFrame(X, columns=["x1", "x2", "x3", "x4"]); df["y"] = y
-df.to_csv("/home/" + __import__("getpass").getuser() + "/data/synth.csv", index=False)
+df.to_csv(Path.home() / "data/synth.csv", index=False)
 EOF
 ```
 
 Create the study yourself, so that the brief is in your words. This step asks for the aim, the target column and what one row is:
 
 ```sh
-mlca init ~/studies/s1 --data ~/data/anemia.csv --template tabular_classification
+mlca init ~/studies/s1 --data ~/data/synth.csv --template tabular_classification
+# For your supplied data, replace synth.csv with anemia.csv and name its actual target column.
 ```
 
 ## 5. Connect Claude Code to MLCA (project scope)
@@ -64,7 +66,7 @@ The permission block stops Claude Code, inside this folder, from:
 - running the human commands;
 - using a shell.
 
-Claude can then reach the study only through MLCA's tools.
+With these settings loaded and no other filesystem/shell MCP tools enabled, Claude should reach the study through MLCA's tools. Check the refusals below: these are client permissions, not an OS security boundary. Do not use permission-bypass mode.
 
 Start Claude Code in the study folder and check the connection:
 
@@ -110,7 +112,7 @@ mlca -p . usage
 tar czf ~/m7-claude-$(date +%F).tgz PROJECT_LOG.md reports .mlca/log .mlca/usage.jsonl .mlca/egress.jsonl
 ```
 
-The archive holds the log, the reports and the request ledgers, but no data or partitions. Fill in the M7 row in [mcp.md](mcp.md):
+The archive excludes source files, partitions and keys. Logs and reports can still contain sensitive brief text or data-derived outputs: inspect the archive before sharing it. Fill in the M7 row in [mcp.md](mcp.md):
 - client and version, date;
 - whether all 14 tools were discovered;
 - the number of approvals requested and granted;
@@ -127,7 +129,7 @@ These clients register at user scope; the agent then opens the study with `mlca_
 mlca mcp install --client codex --yes          # or: --client hermes --with-skill --yes
 ```
 
-Their file and shell tools are **not** restricted by MLCA's helper. Configure each client's own sandbox or permission settings, or run them in a separate VM user that cannot read `~/data`, `~/studies/*/.mlca` and `~/.local/share/mlca`. Use a new study (`~/studies/s2`) for each client.
+Their file and shell tools are **not** restricted by MLCA's helper. Configure each client's own sandbox or permission settings, or isolate the agent from those paths at the OS level. A separate user alone is not enough: the MCP server still needs authorized access to the project and keys, through a separately configured transport/account. Use a new study (`~/studies/s2`) for each client.
 
 ## 10. Remove
 

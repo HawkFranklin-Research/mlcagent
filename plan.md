@@ -210,7 +210,7 @@ mlca-revized/
   README.md                       user-facing: install, first run, commands
   AGENTS.md                       rules for coding agents working on this repo (copy section 0 + build/test commands)
   CHANGELOG.md
-  LICENSE                         author to choose (section 12, D1); placeholder until then
+  LICENSE                         author-chosen CC-BY-NC-ND-4.0 legal code (D1 resolved)
   THIRD_PARTY_NOTICES.md          attribution for every copied file (section 9)
   pyproject.toml                  package "mlca", Python >=3.11, build backend hatchling, managed with uv
   uv.lock
@@ -977,9 +977,9 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 
 | ID | Decision | Default until decided | Status (2026-10-07) |
 |---|---|---|---|
-| D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | placeholder file, no licence granted | ⬜ open; **blocks publishing** (`scripts/verify_release.py` refuses the placeholder) |
+| D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | CC-BY-NC-ND-4.0 | ✅ resolved by the author for 0.2.0b1; official legal code in `LICENSE`, SPDX Python/npm metadata |
 | D2 | Content of the `tabular_classification` template: event goals, sub-goals, actions, prompts, scope text | agent writes short DRAFT content | 🟡 v0.2.0 content written with the author's direction (2026-10-06); defaults await author review |
-| D3 | PyPI/npm package name | `mlca` locally, not published | ⬜ open; **blocks publishing**. `mlca` and `mlca-agent` were free on PyPI and npm on 2026-10-06; `ml-copilot-agent` on PyPI is the author's v1. One place to change it: `packaging/NAME` + `pyproject.toml` |
+| D3 | PyPI/npm package name | `mlca` | ✅ author-approved name; one PyPI beta upload authorized, npm publishing remains unauthorized |
 | D4 | Default models per role | none; onboarding asks | ⬜ open |
 | D5 | Reuse v1 logo (black-and-white) or design a new one | original text banner only | ✅ resolved: the author's logo → `assets/logo_source.png`, `assets/logo.txt`, `assets/logo.png` |
 | D6 | GitHub: new repository or v2 branch of `VatsalPatel18/ml-copilot-agent` (tag v1 `v0.1.9-legacy`) | local repository only, no remote | ⬜ open; no remote (needed before CI and releases run) |

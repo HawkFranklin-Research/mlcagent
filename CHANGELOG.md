@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0b1 (beta) — 7 October 2026
+
+- Author-approved package name `mlca` and CC-BY-NC-ND-4.0 licence; official legal code, SPDX metadata and npm licence mirror.
+- First PyPI beta preparation: prerelease-aware release guards, pinned beta installers, and npm SemVer mapped to the exact Python prerelease pin. npm remains unpublished.
+- Add the M7 VM brain-mode walkthrough and correct its portable data path and sandbox/trust-boundary guidance.
+- Core and MCP functionality includes the R-MCP1b simple-copy guard; native-client, original-data and live-model validation remain pending.
+
 ## R-MCP1b: simple-copy detection — 7 October 2026
 
 - Match table values regardless of column names at six and four significant digits; require

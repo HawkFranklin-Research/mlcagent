@@ -2,8 +2,9 @@
 
 import argparse
 import json
+import tomllib
 
-from release_metadata import ROOT, metadata
+from release_metadata import ROOT, metadata, npm_version
 
 
 def sync(check: bool = False):
@@ -13,20 +14,23 @@ def sync(check: bool = False):
     chosen = name if not check else (ROOT / "packaging/NAME").read_text(encoding="utf-8").strip()
     package = {
         "name": chosen,
-        "version": version,
+        "version": npm_version(version),
         "description": "Launcher for the MLCA Python workflow harness",
         "bin": {"mlca": "bin/mlca.js"},
         "engines": {"node": ">=18"},
         "files": ["bin/mlca.js", "README.md", "LICENSE"],
-        "license": "SEE LICENSE IN LICENSE",
-        "mlca": {"pythonName": chosen},
+        "license": tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["license"],
+        "mlca": {"pythonName": chosen, "pythonVersion": version},
         "publishConfig": {"access": "public"},
     }
     updates[ROOT / "packaging/npm/package.json"] = json.dumps(package, indent=2) + "\n"
     updates[ROOT / "packaging/npm/LICENSE"] = (ROOT / "LICENSE").read_text(encoding="utf-8")
     for kind in ("sh", "ps1"):
         updates[ROOT / f"installers/install.{kind}"] = (
-            (ROOT / f"installers/install.{kind}.tmpl").read_text(encoding="utf-8").replace("@NAME@", chosen)
+            (ROOT / f"installers/install.{kind}.tmpl")
+            .read_text(encoding="utf-8")
+            .replace("@NAME@", chosen)
+            .replace("@DEFAULT_VERSION@", version if npm_version(version) != version else "")
         )
     mismatches = [
         str(path.relative_to(ROOT))

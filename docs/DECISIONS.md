@@ -322,3 +322,13 @@ Validation: complete MCP suite 10 passed (122.70 s); focused ledger/privacy test
   semantics are not proved by table/image bounds.
 - M7 belongs to the author and requires actual client/provider runs. It is not substituted
   with SDK tests; no live provider or original-data run was attempted.
+
+## 2026-10-07 — D1/D3 resolved; authorized PyPI beta
+
+- The author chose CC-BY-NC-ND-4.0 and the package name `mlca`, and authorized one upload of 0.2.0b1 to PyPI. The official legal code is retrieved from https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.txt.
+- GitHub pushes, new remotes and npm publication remain unauthorized. The VM guide was committed separately first (`45344a5`).
+- Release tooling formerly refused prereleases. It now supports stable/a/b/rc versions; npm uses SemVer `0.2.0-beta.1` with a separate Python pin `0.2.0b1`. Beta installers default to the explicit beta; stable installers retain latest-stable behavior.
+- The Homebrew formula is rendered after building, using the actual sdist SHA256; it is excluded from the sdist to avoid a circular hash. No Homebrew channel is published.
+- Beta gates: 106 passed, 1 skipped (PowerShell unavailable), 446.34 s; focused distribution tests 13 passed/1 skipped; Ruff lint/format pass. Twine and the 179-entry wheel resource check pass.
+- Isolated wheel walkthrough: install/version/doctor, synthetic generation and interactive init, Claude project-scope/skill preview without writes, official stdio discovery of 14 tools, and a working bubblewrap namespace probe. No native client was registered and no model was called.
+- Credential-pattern scanning covers all repository files, including local git/venv files, and unpacked distributions; no PyPI-token-shaped content was found. The credential file is only read by the authorized publish command.

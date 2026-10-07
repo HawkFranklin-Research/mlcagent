@@ -6,6 +6,17 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+VERSION_PATTERN = r"(\d+\.\d+\.\d+)(?:(a|b|rc)(0|[1-9]\d*))?"
+
+
+def npm_version(version: str) -> str:
+    """Map supported PEP 440 releases to npm SemVer without changing Python pins."""
+    match = re.fullmatch(VERSION_PATTERN, version)
+    if not match:
+        raise ValueError("Expected a three-part release, optionally followed by a, b or rc and a number")
+    base, phase, number = match.groups()
+    label = {"a": "alpha", "b": "beta", "rc": "rc"}.get(phase)
+    return f"{base}-{label}.{number}" if phase else base
 
 
 def metadata(root: Path = ROOT) -> tuple[str, str]:
@@ -20,6 +31,5 @@ def metadata(root: Path = ROOT) -> tuple[str, str]:
         if isinstance(node, ast.Assign)
         and any(isinstance(target, ast.Name) and target.id == "__version__" for target in node.targets)
     )
-    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
-        raise ValueError("Release wrappers currently require a stable three-part version")
+    npm_version(version)
     return name, version

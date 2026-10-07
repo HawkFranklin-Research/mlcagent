@@ -7,10 +7,11 @@ name = "mlca"
 dynamic = ["version"]
 description = "Guided, event-based machine learning workflows with recorded provenance"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "CC-BY-NC-ND-4.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [{name = "MLCA contributors"}]
 keywords = ["machine-learning", "agents", "provenance", "workflow", "reproducibility"]
-classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.13", "Operating System :: OS Independent", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
+classifiers = ["Development Status :: 4 - Beta", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.13", "Operating System :: OS Independent", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2",

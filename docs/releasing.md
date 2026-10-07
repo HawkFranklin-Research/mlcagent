@@ -1,13 +1,15 @@
 # Release preparation and author setup
 
-Nothing has been published, registered, tagged, pushed or configured remotely by this implementation.
-The local release pipeline is prepared, not activated. D1 (licence) and D3 (package name) remain open.
+D1 is resolved as CC-BY-NC-ND-4.0 and D3 as `mlca`. The author authorized one manual PyPI
+upload of 0.2.0b1. This does not authorize GitHub pushes, npm publication or a new remote.
+The GitHub release pipeline remains unconfigured; the steps below describe future setup.
+See [implementation status](IMPLEMENTATION_STATUS.md) for the actual publication result.
 
 ## One-time author steps
 
-1. Choose the v2 licence and replace the root `LICENSE` placeholder. Update Python licence metadata
-   if appropriate. The placeholder grants no licence and causes `verify_release.py` to refuse a release.
-2. Choose the shared unscoped Python/npm name in `pyproject.toml` (`project.name`). The version lives
+1. D1 is resolved: the official CC-BY-NC-ND-4.0 legal code is in `LICENSE`; Python metadata uses
+   the SPDX expression and `license-files`. Keep licence mirrors synchronized.
+2. D3 is resolved as `mlca`. Maintain the shared unscoped Python/npm name in `pyproject.toml` (`project.name`). The version lives
    only in `src/mlca/__init__.py`. Run `uv run python scripts/sync_versions.py` to refresh NAME, installers
    and npm identity/licence. `packaging/NAME` and package.json are generated mirrors, not edit points.
 3. Choose/create the v2 GitHub repository and update the public metadata URLs and contributor list.
@@ -17,7 +19,8 @@ The local release pipeline is prepared, not activated. D1 (licence) and D3 (pack
    for deployment and restrict releases to version tags. Configure the repository variable
    `PACKAGE_NAME_APPROVED` to the exact chosen distribution name. A tag must equal `v<__version__>`.
 5. In PyPI configure a trusted publisher with this GitHub owner/repository, workflow `release.yml`
-   and environment `release`. No PyPI API token is used. Set up the new project name as needed.
+   and environment `release`. That future workflow uses trusted publishing rather than an API
+   token; the separately authorized initial manual beta upload uses an environment-only token.
 6. Configure the npm account/name (and organisation if relevant). Add a publishing token as the
    protected release environment's `NPM_TOKEN`; the workflow exposes it only as NODE_AUTH_TOKEN to
    `npm publish --provenance`. Do not put it in source, docs, installer files or .npmrc.
@@ -37,7 +40,7 @@ changed those settings or stored secrets.
 - Run `uv sync --locked --group dev`, dependency-cache priming, `uv run pytest -q`, lint/format,
   `uv run python scripts/check_wheel.py`, Node launcher tests and `npm pack --dry-run`.
 - With D1/D3 resolved, run `uv run python scripts/verify_release.py --tag v<VERSION>
-  --approved-name <NAME>`. The current placeholder is expected to fail.
+  --approved-name <NAME>`. The author-approved beta tag is `v0.2.0b1`.
 - Confirm the six-job OS/Python CI matrix is green. Native Windows/macOS results cannot be inferred
   from Linux level-B tests. Linux CI uses bubblewrap; its ephemeral runner enables user namespaces
   if AppArmor restricts them, without changing developer machines.

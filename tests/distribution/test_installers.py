@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from mlca import __version__
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -52,11 +54,16 @@ def test_shell_installer_dry_run(tmp_path, installed, version, no_modify):
     result = subprocess.run(args, env=env, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     calls = record.read_text()
-    assert (
-        "tool upgrade mlca"
+    default_version = __version__ if any(c.isalpha() for c in __version__) else None
+    pin = version or default_version
+    expected = (
+        "tool install --reinstall mlca==" + pin
+        if pin
+        else "tool upgrade mlca"
         if installed
-        else "tool install " + ("--reinstall mlca==" + version if version else "mlca")
-    ) in calls
+        else "tool install mlca"
+    )
+    assert expected in calls
     assert ("tool update-shell" in calls) == (not no_modify)
     assert "mlca doctor" in calls
     assert "sudo " not in calls

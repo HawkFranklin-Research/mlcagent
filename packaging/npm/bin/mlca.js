@@ -31,7 +31,7 @@ function launch(args = process.argv.slice(2)) {
     process.exitCode = 1;
     return;
   }
-  const argv = ['tool', 'run', '--from', `${metadata.mlca.pythonName}==${metadata.version}`, 'mlca', ...args];
+  const argv = ['tool', 'run', '--from', `${metadata.mlca.pythonName}==${metadata.mlca.pythonVersion}`, 'mlca', ...args];
   if (process.env.MLCA_LAUNCHER_DEBUG === '1') console.error(JSON.stringify({ command: uv, args: argv }));
   const child = spawn(uv, argv, { stdio: 'inherit', shell: false });
   const handlers = new Map();

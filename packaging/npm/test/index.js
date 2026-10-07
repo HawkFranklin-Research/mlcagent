@@ -41,7 +41,7 @@ test('forwards arguments and pins the Python artifact', () => {
   try {
     const result=spawnSync(process.execPath,[launcher,'--project','a path with spaces','status','--json'],{env:{...f.env,MLCA_LAUNCHER_DEBUG:'1'},encoding:'utf8'});
     assert.equal(result.status,0,result.stderr);
-    assert.deepEqual(JSON.parse(fs.readFileSync(f.log)),['tool','run','--from',`${metadata.mlca.pythonName}==${metadata.version}`,'mlca','--project','a path with spaces','status','--json']);
+    assert.deepEqual(JSON.parse(fs.readFileSync(f.log)),['tool','run','--from',`${metadata.mlca.pythonName}==${metadata.mlca.pythonVersion}`,'mlca','--project','a path with spaces','status','--json']);
     assert.match(result.stderr,/command/);
   } finally {f.cleanup();}
 });

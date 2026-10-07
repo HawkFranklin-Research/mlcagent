@@ -55,13 +55,13 @@ is a Session/MCP boundary; MCP client identity is attribution, not OS authentica
 
 ## Install
 
-Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/) are required. The package is not published yet; the prepared channels are:
+Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/) are required. Install the beta with an explicit version:
 
 ```sh
-uv tool install mlca
-curl -LsSf <release-url>/install.sh | sh      # Linux, macOS, WSL
-npx mlca
+uv tool install mlca==0.2.0b1
 ```
+
+Plain `uv tool install mlca` does not select this prerelease. Shell download, npm and Homebrew channels remain unpublished.
 
 From this checkout: `uv sync --group dev`, then `uv run mlca`. See [installation](docs/install.md).
 
@@ -160,13 +160,13 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 
 ## Status
 
-- **Core (plan.md):** P0–P8 built; distribution prepared but not published. **101 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
+- **Core (plan.md):** P0–P8 built; beta version `0.2.0b1`. **106 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
   - runs with real providers;
   - the study on real data;
   - native macOS and Windows checks.
 - **MCP docking ([plan_mcp.md](plan_mcp.md)):** M0–M6 implemented: 14 stdio tools, brain/driver modes, human approvals, filtered evidence and usage records. Manual runs in real clients (M7) remain pending.
-- **Licence and package name:** author decisions, still open; the placeholder `LICENSE` grants no licence.
+- **Licence:** [CC BY-NC-ND 4.0](LICENSE) (`CC-BY-NC-ND-4.0`), chosen by the author. The approved package name is `mlca`.
 
 ## Documentation
 
