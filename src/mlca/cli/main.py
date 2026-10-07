@@ -25,6 +25,8 @@ app.add_typer(approvals_app, name="approvals")
 app.add_typer(templates_app, name="templates")
 usage_app = typer.Typer(invoke_without_command=True)
 app.add_typer(usage_app, name="usage")
+bench_app = typer.Typer()
+app.add_typer(bench_app, name="bench")
 
 
 def output(value: Any, json_output: Any = False) -> Any:
@@ -269,6 +271,27 @@ def report(
 ) -> Any:
     with Session.open(_path(ctx)) as session:
         output(session.report(kind), json_output)
+
+
+@bench_app.command("run")
+def bench_run(
+    task_card: Path,
+    runs: int = typer.Option(1),
+    out: Path = typer.Option(...),
+    mode: str = typer.Option("driver"),
+    budget_usd: float | None = typer.Option(None),
+    seed: int = typer.Option(42),
+):
+    from mlca.evaluation.bench import run
+
+    output(run(task_card, runs, out, mode, budget_usd, seed), True)
+
+
+@bench_app.command("summarize")
+def bench_summarize(directory: Path):
+    from mlca.evaluation.bench import summarize
+
+    output(summarize(directory), True)
 
 
 @app.command()

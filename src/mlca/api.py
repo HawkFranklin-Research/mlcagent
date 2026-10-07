@@ -37,8 +37,12 @@ class Session:
         principal: str = "user",
         mode: str = "driver",
         non_blocking: bool = False,
+        policy: bool = False,
     ) -> None:
-        if principal != "user" and not principal.startswith("agent:"):
+        import re
+
+        self.is_policy = policy and bool(re.fullmatch(r"user:policy/[0-9a-f]{12}", principal))
+        if principal != "user" and not principal.startswith("agent:") and not self.is_policy:
             raise MlcaUserError("Invalid caller principal")
         if mode not in {"brain", "driver"}:
             raise MlcaUserError("Mode must be brain or driver")
@@ -508,7 +512,7 @@ class Session:
             return {"approved": approve, "package": spec}
 
     def _require_human(self):
-        if self.principal != "user":
+        if self.principal != "user" and not self.is_policy:
             self.emit(
                 "Note",
                 {

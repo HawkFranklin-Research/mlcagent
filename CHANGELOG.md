@@ -215,3 +215,7 @@ Offline mlca metrics writes sourced run, steps/recovery, failures, principal-sep
 ## P10.5 — 7 October 2026
 
 mlca usage import supports Claude assistant-message usage and Codex token_count deltas, project-window intersection, idempotent envelopes and growing Claude messages. Only whitelisted identifiers/model/timestamps/numeric fields persist; message content and transcript paths are excluded. Codex 0.160.1 field names were checked locally without displaying message content. Window/idempotence/content-canary/Codex-delta/CLI compatibility tests: 4 passed. Missing usage/cost remains unavailable.
+
+## P10.6 — 7 October 2026
+
+Headless task-card driver benchmarks create independent projects, invoke fresh providers, preserve failed runs, enforce per-run/total conservative request budgets and log user:policy/<card hash> approvals/choices. All split seeds stay fixed; seeded option policies vary by run. Summaries cover completion, failures, recovery, interventions, time, tokens/cost, final metrics and action/parameter agreement with unavailable sample counts. Three-run success and forced-failure (2/3 completion) tests: 2 passed in 129.65 s. Brain benches are refused; no live calls or original data were used.

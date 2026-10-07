@@ -159,7 +159,7 @@ class Record(StrictModel):
             "worker",
             "inspector",
             "illustrator",
-        } and not self.actor.startswith("agent:"):
+        } and not self.actor.startswith(("agent:", "user:policy/")):
             raise ValueError("Unknown actor principal")
         PAYLOAD_MODELS[self.type.value].model_validate(self.payload)
         return self

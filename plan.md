@@ -1013,6 +1013,8 @@ Never copy message text, only the numbers. The import is idempotent (keyed by me
 - **Test:** small fixture transcripts for both formats, plus a run-window filter test.
 
 #### P10.6 `mlca bench` (independent end-to-end reruns, R1-2a)
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 - `mlca bench run TASK_CARD --runs N --out DIR [--mode driver] [--budget-usd X] [--seed S]`. It creates N fresh projects from the same data and brief and drives each one headless to `report` or failure.
 - Each run is a **fresh end-to-end agent run with new model calls**. This is distinct from `mlca replay --verify`, which reruns frozen code; the metrics label which is which.
 - **Task card** (`docs/task-cards/*.yaml`; this is also the reviewers' R1-3 material). It holds:
