@@ -338,3 +338,7 @@ Validation: complete MCP suite 10 passed (122.70 s); focused ledger/privacy test
 The authorized upload was attempted once after all gates passed. PyPI returned HTTP 400 on the first wheel: the name `mlca` is too similar to an existing project. Nothing was accepted. No invalid-token error was returned, but this response alone is not a separate credential-validation test. The token was neither displayed nor persisted and was read only by the authorized command.
 
 D3 is author-approved but blocked by registry validation; a replacement name or resolution with PyPI is required. No retry under an unapproved name, new version, tag, npm publication or remote operation was performed. Post-upload installation is deferred. The account-wide credential has not been deleted or replaced: no project was created, and it was not inspected again.
+
+## P10.1 — 7 October 2026
+
+Lazy per-session RunSnapshot records capture hardware/software, role settings, template/environment hashes and sandbox capability without credentials. Provider-returned model IDs and actual request settings are in usage records. Unknown hardware remains null with unavailable source; sandbox capability is not execution verification. Snapshot/provider canary test: 1 passed; Ruff passes.

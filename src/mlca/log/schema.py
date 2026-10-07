@@ -16,6 +16,7 @@ PAYLOAD_FIELDS = {
     "DataRegistered": ["name", "original_path", "sha256", "size", "read_only"],
     "InventoryRecorded": ["files", "sha256"],
     "BriefRecorded": ["answers"],
+    "RunSnapshot": ["mlca_version", "mode", "principal", "roles"],
     "SessionStarted": ["client", "mlca_version", "config_hash"],
     "SessionEnded": ["client"],
     "EventEntered": ["event_id", "via"],

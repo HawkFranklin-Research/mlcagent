@@ -126,6 +126,11 @@ class Client:
                 "provider": selected.provider,
                 "model": selected.model,
                 "attempt": attempt,
+                "model_reported": None,
+                "request_settings": {
+                    "temperature": payload.get("temperature"),
+                    "max_output_tokens": payload.get("max_tokens", payload.get("max_completion_tokens")),
+                },
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "cached_tokens": 0,
@@ -148,6 +153,7 @@ class Client:
                     else:
                         result = provider.complete(payload)
                     record.update({k: result[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]})
+                    record["model_reported"] = result.get("model_reported")
                     cost = result.get("cost_usd")
                     if cost is not None:
                         record.update(cost_usd=float(cost), cost_source="provider")

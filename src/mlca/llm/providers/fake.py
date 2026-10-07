@@ -34,5 +34,6 @@ class FakeProvider:
                 "output_tokens": response.get("output_tokens", 0),
                 "cached_tokens": 0,
                 "cost_usd": 0.0,
+                "model_reported": response.get("model_reported", payload["model"]),
             }
         raise MlcaUserError(f"No fake response for {context.role}/{context.purpose}/{index}")

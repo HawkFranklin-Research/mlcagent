@@ -132,6 +132,16 @@ class Session:
         )
         self.started = True
         self._state_key = None
+        from mlca.evaluation.snapshot import capture
+
+        self.store.append(
+            "RunSnapshot",
+            redact_value(capture(self), self.config),
+            branch=self.branch_name,
+            session_id=self.session_id,
+            actor=self.principal,
+        )
+        self._state_key = None
 
     @contextmanager
     def mutation(self) -> Any:

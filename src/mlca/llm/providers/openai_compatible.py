@@ -30,6 +30,7 @@ class CompatibleProvider:
             "cached_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0),
             "cost_usd": usage.get("cost"),
             "provider_request_id": data.get("id"),
+            "model_reported": data.get("model"),
         }
 
     def models(self) -> list[str]:

@@ -195,3 +195,7 @@ helper/init/guard subset was rerun after the final Claude config-target correcti
 Ruff check and format check pass (140 files); Git whitespace check passes. Both templates
 remain the author's incoming concise v0.2.0 content. No model calls, original-data runs,
 client registrations, remote operations or publication were performed.
+
+## P10.1 — 7 October 2026
+
+Lazy per-session RunSnapshot records capture hardware/software, role settings, template/environment hashes and sandbox capability without credentials. Provider-returned model IDs and actual request settings are in usage records. Unknown hardware remains null with unavailable source; sandbox capability is not execution verification. Snapshot/provider canary test: 1 passed; Ruff passes.

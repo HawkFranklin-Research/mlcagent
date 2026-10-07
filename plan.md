@@ -948,6 +948,8 @@ Most raw signals already exist in the event log, `usage.jsonl` and `egress.jsonl
 - Unknown is never written as zero.
 
 #### P10.1 Run snapshot (R1-2b, R1-4)
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 - New record type `RunSnapshot`, written once per session with the first mutating record (next to `SessionStarted`), and at the start of every bench run. It contains:
   - MLCA version, and the git commit when run from a checkout;
   - Python, OS and kernel, CPU model and core count, RAM, and GPU (`nvidia-smi` if present, otherwise `none`);
