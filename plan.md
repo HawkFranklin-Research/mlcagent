@@ -1041,6 +1041,8 @@ Never copy message text, only the numbers. The import is idempotent (keyed by me
 - **Test:** `mlca bench run` on the synthetic task with the fake provider and N=3 → three completed runs and a summary with the expected values; a forced failure in one run → completion rate 2/3, and the failed run is still listed.
 
 #### P10.7 Documentation
+
+> **Status:** ✅ implemented; details and validation in `docs/IMPLEMENTATION_STATUS.md`.
 - `docs/metrics.md`: every field, its source and its limits. Covers what `human_active_s` means; why brain-mode tokens are client-reported; `replay --verify` versus `bench`; and that the policy principal is not a human.
 - One paragraph in the README.
 - Link from `docs/m7-vm-brain-mode.md`: after the VM run, also run `mlca metrics` and `mlca usage import --client claude`.

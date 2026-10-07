@@ -32,3 +32,42 @@ def test_refusal_at_engine_and_execution_boundary(project_factory):
         ({"stderr": "ValueError: bad"}, "runtime_error:ValueError"),
     ]:
         assert execution_category(payload) == expected
+
+
+def test_known_refusal_origins(tmp_path):
+    from types import SimpleNamespace
+
+    from mlca.errors import BudgetError
+    from mlca.llm.egress import classify
+    from mlca.runner.artefacts import collect
+    from mlca_runtime import FitRuleError, fit_record
+
+    with pytest.raises(MlcaUserError) as error:
+        classify({}, ["sample_rows"], False)
+    assert error.value.category == "privacy_refusal"
+    assert BudgetError("budget").category == "budget_stop"
+    with pytest.raises(FitRuleError):
+        fit_record(None, None, "test")
+    assert execution_category({"stderr": "mlca_runtime.FitRuleError: denied"}) == "fit_rule"
+    step = tmp_path / "step"
+    step.mkdir()
+    (step / "outputs").mkdir()
+    action = SimpleNamespace(outputs=[SimpleNamespace(name="missing.csv", required=True)], event="data")
+    with pytest.raises(MlcaUserError) as error:
+        collect(tmp_path, step, action, SimpleNamespace())
+    assert error.value.category == "missing_output"
+    action = SimpleNamespace(outputs=[], event="model")
+    with pytest.raises(MlcaUserError) as error:
+        collect(tmp_path, step, action, SimpleNamespace(split={"train_index_sha256": "test"}))
+    assert error.value.category == "fit_rule"
+
+
+def test_submitted_options_and_abandonment(project_factory):
+    with Session.open(project_factory(), mode="brain") as session:
+        with pytest.raises(MlcaUserError):
+            session.submit_options([{"bad": "value"}])
+        assert session.store.read()[-1].payload["category"] == "invalid_options"
+        session.custom("Review the input data")
+        session.abandon_step(session.active_step()["step_id"], "cannot proceed")
+        assert session.store.read()[-1].payload["category"] == "abandoned"
+    assert enrich("ScopeDecision", {"layer": 2, "decision": "reject"})["category"] == "scope_layer2"

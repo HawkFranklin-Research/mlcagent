@@ -227,7 +227,15 @@ class Session:
                         source = "navigator"
                     except BudgetError:
                         raise
-                    except (MlcaUserError, ValueError, TypeError):
+                    except (MlcaUserError, ValueError, TypeError) as exc:
+                        self.emit(
+                            "Refusal",
+                            {
+                                "category": getattr(exc, "category", "invalid_options"),
+                                "operation": "navigator_options",
+                                "error_type": type(exc).__name__,
+                            },
+                        )
                         options = fallback(state, self.workflow)
                 else:
                     options = fallback(state, self.workflow)
@@ -545,7 +553,10 @@ class Session:
             raise MlcaUserError("submit_options is available in brain mode only")
         with self.mutation():
             self._ensure_idle()
-            result = validate([Option.model_validate(o) for o in options], self.state, self.workflow)
+            try:
+                result = validate([Option.model_validate(o) for o in options], self.state, self.workflow)
+            except (ValueError, TypeError, MlcaUserError) as exc:
+                raise MlcaUserError("Invalid submitted options", category="invalid_options") from exc
             self.emit("OptionsProposed", {"options": result, "source": self.principal}, actor=self.principal)
             return result
 

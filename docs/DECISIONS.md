@@ -362,3 +362,7 @@ mlca usage import supports Claude assistant-message usage and Codex token_count 
 ## P10.6 — 7 October 2026
 
 Headless task-card driver benchmarks create independent projects, invoke fresh providers, preserve failed runs, enforce per-run/total conservative request budgets and log user:policy/<card hash> approvals/choices. All split seeds stay fixed; seeded option policies vary by run. Summaries cover completion, failures, recovery, interventions, time, tokens/cost, final metrics and action/parameter agreement with unavailable sample counts. Three-run success and forced-failure (2/3 completion) tests: 2 passed in 129.65 s. Brain benches are refused; no live calls or original data were used.
+
+## P10.7 — 7 October 2026
+
+Documented sourced measurements, client-usage import, task cards and measurement limits in docs/metrics.md; added a task-card example and VM evidence commands. Strengthened failure-origin tests, metadata redaction and completed brain-mode metrics coverage. Targeted validation: 28 tests passed, plus the complete stdio brain-mode study test passed; Ruff passes. Full release-suite validation follows with the approved distribution name.

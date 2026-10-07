@@ -6,6 +6,7 @@ import math
 from datetime import datetime
 from pathlib import Path
 
+from mlca.config import redact_value
 from mlca.errors import MlcaUserError
 from mlca.llm.usage import persist
 from mlca.paths import canonical
@@ -180,7 +181,11 @@ def import_usage(session, client, reference, since=None, until=None):
             **row,
         }
         # Do not copy file path, source line, arguments or message content into either ledger.
-        persist(session.root, usage, {"request_id": usage["request_id"], "imported": True})
+        persist(
+            session.root,
+            redact_value(usage, session.config),
+            {"request_id": usage["request_id"], "imported": True},
+        )
         count += 1
     return {
         "records_processed": count,

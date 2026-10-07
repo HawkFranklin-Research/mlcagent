@@ -96,6 +96,14 @@ def test_brain_full_path_zero_models(project_factory, monkeypatch):
             assert image.content[1].type == "image"
             assert s.store.verify()["ok"]
             assert s.verify_scripts()["ok"]
+            from mlca.evaluation.metrics import generate
+
+            metrics = generate(s)
+            assert metrics["run"]["completed"]["value"] is True
+            assert metrics["models"]["external_agent"]["value"] is None
+            assert metrics["models"]["external_agent"]["source"] == "unavailable"
+            assert metrics["egress"]["requests"]["value"] > 0
+            assert metrics["provenance"]["coverage"]["value"] == 1.0
 
     asyncio.run(check())
 

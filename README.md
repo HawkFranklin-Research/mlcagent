@@ -141,6 +141,10 @@ confidentiality for brain mode.
 
 **Limits:** level B (macOS, Windows) is an audit hook, not an operating-system boundary. Code checks cannot prove the meaning of every computation. Domain review of targets, units, preprocessing and interpretation remains yours. See [security model](docs/security-model.md).
 
+## Evaluation
+
+`mlca metrics` writes sourced completion, recovery, intervention, time, usage and provenance measurements without model calls. After a brain-mode run, `mlca usage import` imports only client-reported usage fields; unknown costs stay unavailable. `mlca bench run` creates independent driver runs from a task card and keeps failures; scripted policy decisions are labelled separately from humans. See [metrics](docs/metrics.md).
+
 ## Evidence and reproducibility
 
 Everything lives in the project's `.mlca/` folder:

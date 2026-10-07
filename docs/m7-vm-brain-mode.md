@@ -111,6 +111,9 @@ mlca -p . log --verify
 mlca -p . replay --verify
 mlca -p . report all
 mlca -p . usage
+# Disconnect Claude first, then select its session JSONL file:
+mlca -p . usage import --client claude --session /path/to/session.jsonl
+mlca -p . metrics --json
 tar czf ~/m7-claude-$(date +%F).tgz PROJECT_LOG.md reports .mlca/log .mlca/usage.jsonl .mlca/egress.jsonl
 ```
 
@@ -122,6 +125,8 @@ The archive excludes source files, partitions and keys. Logs and reports can sti
 - whether figures appeared in Claude;
 - the results of the six checks in section 7;
 - any error or workaround.
+
+See [evaluation metrics](metrics.md) for field sources, limitations, usage imports and independent benchmark task cards.
 
 ## 9. Codex and Hermes
 

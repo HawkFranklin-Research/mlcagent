@@ -1,0 +1,19 @@
+# Edit paths and brief before use. Configure worker/navigator models via MLCA's normal config.
+data:
+  - /path/to/author-supplied-data.csv
+brief:
+  aim: Predict the prespecified binary outcome for the stated study population.
+  target: outcome
+  unit: One independent subject per row; verify repeated subjects before splitting.
+template: tabular_classification
+option_policy: default_first
+custom_instructions: {}
+approval_policy:
+  confirm_subgoals: true
+  unlock_test: true
+  note: Fixed benchmark protocol reviewed before all runs.
+  packages: []
+per_run_budget_usd: 10
+total_budget_usd: 30
+max_turns: 100
+config: {}
