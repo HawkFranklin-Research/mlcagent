@@ -15,6 +15,10 @@ Python >=3.11. uv can provision a compatible Python interpreter.
 
 ## Python / PyPI
 
+The initial upload was refused for project-name similarity; nothing is published under `mlca`.
+The pinned commands below are prepared instructions pending an accepted name. For now, install
+the built local wheel.
+
 ```sh
 uv tool install mlca==0.2.0b1
 # or

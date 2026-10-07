@@ -368,6 +368,16 @@ Reviewer reproduction: suite 96 passed, 1 skipped; live stdio, brain mode.
 
 ## Status
 
+### Beta publication attempt — 2026-10-07
+
+- D1 is resolved as CC-BY-NC-ND-4.0; D3 was author-approved as `mlca`. Release source is local commit `ac4bcc8`; incoming VM docs were committed separately as `45344a5`.
+- Release gates pass: **106 passed, 1 skipped** (PowerShell unavailable), Ruff lint/format, approved-name/version guard, synchronized wrappers, wheel/sdist build, Twine checks and all 179 wheel resources.
+- The built wheel passed the isolated HOME/XDG walkthrough: version, doctor, synthetic study init, Claude project/skill preview with no configuration writes, working bubblewrap namespaces and official stdio discovery of all 14 tools.
+- **Publication blocked:** the single authorized `uv publish` attempt received HTTP 400 on the first artifact: PyPI rejected `mlca` as too similar to an existing project. No file was accepted; the public project JSON endpoint still returned 404 afterwards. This was a name-validation response, not an invalid-token response.
+- There is **no published PyPI URL**. Registry acceptance requires a replacement author-chosen name or resolution with PyPI. A JSON 404 does not establish that a name can be registered. `mlca-agent` also returned 404, but its acceptance is unverified.
+- Fresh installation from PyPI and the release tag are deferred until publication succeeds. No GitHub push, npm publication or remote creation occurred. No real client/model/original-data run was performed; M7 remains pending.
+
+
 - **2026-10-07 R-MCP1b:** implemented in `privacy/rows.py`: column-name-independent
   distinct-cell matching at six/four significant digits, plus safe version-1 migration.
   Full-row facts also ignore column names/order. CSV/Parquet collection and read-time guards

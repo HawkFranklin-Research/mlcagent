@@ -8,6 +8,16 @@ Written 2026-10-06. When the code is done, it will be reviewed against section 1
 
 ## Current status — 2026-10-07
 
+### Beta publication attempt — 2026-10-07
+
+- D1 is resolved as CC-BY-NC-ND-4.0; D3 was author-approved as `mlca`. Release source is local commit `ac4bcc8`; incoming VM docs were committed separately as `45344a5`.
+- Release gates pass: **106 passed, 1 skipped** (PowerShell unavailable), Ruff lint/format, approved-name/version guard, synchronized wrappers, wheel/sdist build, Twine checks and all 179 wheel resources.
+- The built wheel passed the isolated HOME/XDG walkthrough: version, doctor, synthetic study init, Claude project/skill preview with no configuration writes, working bubblewrap namespaces and official stdio discovery of all 14 tools.
+- **Publication blocked:** the single authorized `uv publish` attempt received HTTP 400 on the first artifact: PyPI rejected `mlca` as too similar to an existing project. No file was accepted; the public project JSON endpoint still returned 404 afterwards. This was a name-validation response, not an invalid-token response.
+- There is **no published PyPI URL**. Registry acceptance requires a replacement author-chosen name or resolution with PyPI. A JSON 404 does not establish that a name can be registered. `mlca-agent` also returned 404, but its acceptance is unverified.
+- Fresh installation from PyPI and the release tag are deferred until publication succeeds. No GitHub push, npm publication or remote creation occurred. No real client/model/original-data run was performed; M7 remains pending.
+
+
 MCP M0–M6 is implemented; see [plan_mcp.md](plan_mcp.md) and [docs/mcp.md](docs/mcp.md).
 The six missing engine-rule regressions, Worker repair, budget stop, rate-limit retry and
 credential canary tests are now permanent offline tests. Brain/driver synthetic MCP runs,
@@ -979,7 +989,7 @@ For every **copy**, add a row to `THIRD_PARTY_NOTICES.md` (source repo, commit, 
 |---|---|---|---|
 | D1 | Licence of MLCA v2 (v1 was CC-BY-NC-ND-4.0, unusual for code; MIT/Apache-2.0 are common for tools) | CC-BY-NC-ND-4.0 | ✅ resolved by the author for 0.2.0b1; official legal code in `LICENSE`, SPDX Python/npm metadata |
 | D2 | Content of the `tabular_classification` template: event goals, sub-goals, actions, prompts, scope text | agent writes short DRAFT content | 🟡 v0.2.0 content written with the author's direction (2026-10-06); defaults await author review |
-| D3 | PyPI/npm package name | `mlca` | ✅ author-approved name; one PyPI beta upload authorized, npm publishing remains unauthorized |
+| D3 | PyPI/npm package name | `mlca` | 🟡 author-approved `mlca`, but PyPI rejected it as too similar to another project; replacement name or registry resolution required. npm publishing remains unauthorized |
 | D4 | Default models per role | none; onboarding asks | ⬜ open |
 | D5 | Reuse v1 logo (black-and-white) or design a new one | original text banner only | ✅ resolved: the author's logo → `assets/logo_source.png`, `assets/logo.txt`, `assets/logo.png` |
 | D6 | GitHub: new repository or v2 branch of `VatsalPatel18/ml-copilot-agent` (tag v1 `v0.1.9-legacy`) | local repository only, no remote | ⬜ open; no remote (needed before CI and releases run) |

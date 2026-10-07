@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.0b1 (beta) — 7 October 2026
+## 0.2.0b1 (beta, prepared; publication blocked) — 7 October 2026
+
+- Release gates pass (106 tests, 1 skipped). PyPI refused the initial upload because `mlca` is too similar to another project; no release is published.
 
 - Author-approved package name `mlca` and CC-BY-NC-ND-4.0 licence; official legal code, SPDX metadata and npm licence mirror.
 - First PyPI beta preparation: prerelease-aware release guards, pinned beta installers, and npm SemVer mapped to the exact Python prerelease pin. npm remains unpublished.

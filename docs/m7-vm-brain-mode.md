@@ -16,6 +16,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh     # installs uv; open a new sh
 
 ## 2. Install the MLCA beta
 
+**Publication is currently blocked:** PyPI rejected `mlca` as too similar to another project. Do not run the index command until publication is confirmed. To test the prepared build, transfer `dist/mlca-0.2.0b1-py3-none-any.whl` to the VM and install that file with `uv tool install /path/to/mlca-0.2.0b1-py3-none-any.whl`.
+
 ```sh
 uv tool install mlca==0.2.0b1      # a pre-release must be named explicitly (or: --prerelease allow)
 mlca --version                     # 0.2.0b1

@@ -332,3 +332,9 @@ Validation: complete MCP suite 10 passed (122.70 s); focused ledger/privacy test
 - Beta gates: 106 passed, 1 skipped (PowerShell unavailable), 446.34 s; focused distribution tests 13 passed/1 skipped; Ruff lint/format pass. Twine and the 179-entry wheel resource check pass.
 - Isolated wheel walkthrough: install/version/doctor, synthetic generation and interactive init, Claude project-scope/skill preview without writes, official stdio discovery of 14 tools, and a working bubblewrap namespace probe. No native client was registered and no model was called.
 - Credential-pattern scanning covers all repository files, including local git/venv files, and unpacked distributions; no PyPI-token-shaped content was found. The credential file is only read by the authorized publish command.
+
+## 2026-10-07 — PyPI name rejection
+
+The authorized upload was attempted once after all gates passed. PyPI returned HTTP 400 on the first wheel: the name `mlca` is too similar to an existing project. Nothing was accepted. No invalid-token error was returned, but this response alone is not a separate credential-validation test. The token was neither displayed nor persisted and was read only by the authorized command.
+
+D3 is author-approved but blocked by registry validation; a replacement name or resolution with PyPI is required. No retry under an unapproved name, new version, tag, npm publication or remote operation was performed. Post-upload installation is deferred. The account-wide credential has not been deleted or replaced: no project was created, and it was not inspected again.

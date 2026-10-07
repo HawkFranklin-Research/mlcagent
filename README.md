@@ -55,6 +55,8 @@ is a Session/MCP boundary; MCP client identity is attribution, not OS authentica
 
 ## Install
 
+**Publication is blocked:** PyPI rejected the approved name `mlca` as too similar to another project. The beta is not available from PyPI. For local testing, use `uv tool install dist/mlca-0.2.0b1-py3-none-any.whl` after `uv build`. The index command below is awaiting an accepted project name.
+
 Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/) are required. Install the beta with an explicit version:
 
 ```sh
@@ -159,6 +161,8 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 ```
 
 ## Status
+
+- **PyPI beta:** upload rejected with HTTP 400 (project-name similarity); nothing published. Release source: `ac4bcc8`. A replacement name or registry resolution is required.
 
 - **Core (plan.md):** P0–P8 built; beta version `0.2.0b1`. **106 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
