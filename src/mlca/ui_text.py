@@ -1,12 +1,13 @@
 """Shared labels for command-line and terminal clients."""
 
 TEXT = {
+    "study": "Study details",
     "approvals": "Approvals",
     "title": "MLCA — Guided machine learning workflows",
     "tagline": "Machine Learning Copilot Agent",
     "subtitle": "guided, event-based ML workflows",
     "project": "Project folder",
-    "data": "Data file",
+    "data": "Data file or folder",
     "template": "Workflow template",
     "brief": "Study aim",
     "target": "Target or duration column",

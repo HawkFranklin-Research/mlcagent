@@ -12,7 +12,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Static
 
 from mlca.api import Session
-from mlca.config import Config, ProviderConfig, RoleConfig, load, save
+from mlca.config import Config, load, save
 from mlca.evaluation.timing import Activity
 from mlca.ui_text import text
 
@@ -151,9 +151,13 @@ class MlcaApp(App):
         try:
             path = initialise(
                 Path(result["path"]).expanduser(),
-                [Path(result["data"]).expanduser()],
+                [Path(p).expanduser() for p in result["data"]],
                 result["template"],
-                {k: result[k] for k in ["aim", "target", "unit", "event_column"]},
+                {
+                    k: result[k]
+                    for k in ["aim", "target", "duration", "unit", "event_column", "repeated_subjects"]
+                },
+                primary_data=result["primary_data"],
                 column_picker=self.pick_column,
             )
             self.call_from_thread(self.open_project, path)
@@ -181,24 +185,7 @@ class MlcaApp(App):
             if not result:
                 return
             try:
-                config = load()
-                kind = result["kind"]
-                provider = ProviderConfig(
-                    kind=kind,
-                    api_key_env=result["api_env"] or None,
-                    base_url=result["base_url"] or None,
-                    request_cost_bound_usd=float(result["request_bound"])
-                    if result["request_bound"]
-                    else None,
-                )
-                providers = {**config.providers, "configured": provider}
-                roles = {**config.roles}
-                for role in ["navigator", "worker"]:
-                    if result[role + "_model"]:
-                        roles[role] = RoleConfig(provider="configured", model=result[role + "_model"])
-                updated = config.model_copy(update={"providers": providers, "roles": roles})
-                updated.sandbox.allow_level_b = result["allow_b"].lower() == "yes"
-                save(Config.model_validate(updated.model_dump()))
+                save(Config.model_validate(result["config"]))
                 self.notify(text("saved"))
                 if self.session:
                     self.session.close()
@@ -266,10 +253,48 @@ class MlcaApp(App):
             selected,
         )
 
+    def action_study(self):
+        if self._can_act():
+            from .screens.study import StudyScreen
+
+            self.push_screen(
+                StudyScreen(self.session.state),
+                lambda result: (
+                    self.run_session_action("resolve_study", result["answers"], result["primary_data"])
+                    if result
+                    else None
+                ),
+            )
+
     def action_confirm(self) -> Any:
         if self._can_act():
+            from mlca.project.init import study_ready
+
+            if self.session.state.current_event == "onboard" and not study_ready(self.session.state)[0]:
+                self.notify("Resolve study details before confirming")
+                self.action_study()
+                return
             self.push_screen(
-                FormScreen(text("confirm"), [("goal", text("subgoal"), ""), ("note", text("note"), "")]),
+                FormScreen(
+                    text("confirm"),
+                    [
+                        (
+                            "goal",
+                            text("subgoal"),
+                            next(
+                                (
+                                    g.id
+                                    for g in self.session.workflow.events[
+                                        self.session.state.current_event
+                                    ].subgoals
+                                    if g.check.type == "user_confirm"
+                                ),
+                                "",
+                            ),
+                        ),
+                        ("note", text("note"), ""),
+                    ],
+                ),
                 lambda result: (
                     self.run_session_action("confirm", result["goal"], result["note"]) if result else None
                 ),
@@ -328,6 +353,9 @@ class MlcaApp(App):
             return
         if self.session:
             self.session.close()
+        from mlca.llm.credentials import forget
+
+        forget()
         self.exit()
 
     def show_reports(self, paths: dict) -> None:

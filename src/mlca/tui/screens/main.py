@@ -20,6 +20,7 @@ class MainScreen(Screen):
     BINDINGS = [
         (key, "app." + action, text(label))
         for key, action, label in [
+            ("d", "study", "study"),
             ("a", "approvals", "approvals"),
             ("1", "choose_1", "choose"),
             ("2", "choose_2", "choose"),
