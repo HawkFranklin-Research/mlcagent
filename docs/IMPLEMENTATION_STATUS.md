@@ -1,3 +1,9 @@
+## Beta 2 release validation — 2026-10-13
+
+Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailable). Ruff lint/format, release metadata and wrapper checks pass. Rebuilt wheel/sdist pass Twine and the 206-entry wheel check. Isolated HOME/XDG install, version/doctor, synthetic initialization and 14-tool MCP discovery pass; Claude registration/skill preview writes no configuration. No live models, real OAuth authorization or original-data study was run.
+
+PyPI 0.2.0b2 upload and subsequent beta 1 yank are authorized; publication verification follows.
+
 ## P11 guided TUI — 2026-10-13
 
 P11.1–P11.7 implemented on native-onboarding in local sub-phase commits. Numbered clickable cards
@@ -9,7 +15,7 @@ atomically; old incomplete setup can be archived with confirmation, never silent
 
 Focused pilot reaches data using cards only. Fake provider/auth/quota/clock, canary, model switch,
 replay and relocated-environment regressions pass. Synthetic screenshots: docs/screens; capture
-script: scripts/capture_tui.py. Full suite/release gates pending. No live model or OAuth exchange,
+script: scripts/capture_tui.py. Full suite: 193 passed, 1 skipped in 647.09 s. No live model or OAuth exchange,
 real datasets or native macOS/Windows validation performed. OpenAI registration remains an author
 step; its dynamic-registration option is not enabled by this implementation. Account-wide quota,
 unknown monetary plan cost and upstream router model identity are not invented.

@@ -208,9 +208,9 @@ Row and column counts were checked on the files (columns include the target). Wh
 ## Status
 
 - **Hands-on testing:** native onboarding is being tested by the author. Complete real-data driver/brain studies remain pending; the datasets above are staged for them.
-- **PyPI beta:** [`mlcagent` 0.2.0b1](https://pypi.org/project/mlcagent/0.2.0b1/) is published; the command remains `mlca`. Release source: `16bcc72`. The old `mlca` name was rejected before any files were accepted.
+- **Beta 2:** [`mlcagent` 0.2.0b2](https://pypi.org/project/mlcagent/0.2.0b2/) includes the guided native TUI and provider controls; the command remains `mlca`. Publication evidence is recorded in [validation](docs/IMPLEMENTATION_STATUS.md).
 
-- **Core (plan.md):** P0–P8, P10 and P11 built; beta version `0.2.0b2`. The beta 2 offline suite and release checks are recorded in [validation](docs/IMPLEMENTATION_STATUS.md).
+- **Core (plan.md):** P0–P8, P10 and P11 built; beta version `0.2.0b2`. **193 offline tests pass, 1 skipped** (PowerShell unavailable). Release checks are recorded in [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
   - runs with real providers;
   - the study on real data;

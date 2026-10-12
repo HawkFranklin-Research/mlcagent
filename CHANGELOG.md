@@ -277,3 +277,7 @@ Final focused native/auth/model/initialization coverage: 45 passed in 14.57 s; t
 Beta 2 validation caught and corrected a failed-init empty-folder residue. Cleanup removes only
 the new empty study root; existing/user-added content is preserved. Initial full run: 190 passed,
 2 failed, 1 skipped; corrected initialization and wording regressions: 6 passed. Final rerun pending.
+
+## 0.2.0b2 final validation — 13 October 2026
+
+Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailable). Ruff lint/format, release metadata and wrapper checks pass. Rebuilt wheel/sdist pass Twine and the 206-entry wheel check. Isolated HOME/XDG install, version/doctor, synthetic initialization and 14-tool MCP discovery pass; Claude registration/skill preview writes no configuration. No live models, real OAuth authorization or original-data study was run.

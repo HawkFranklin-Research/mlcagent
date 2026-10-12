@@ -6,7 +6,13 @@ Written 2026-10-06. When the code is done, it will be reviewed against section 1
 
 ---
 
-## Current status — 2026-10-07
+## Current status — 2026-10-13
+
+P11.1–P11.7 implemented on native-onboarding, master untouched. Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailable). Ruff lint/format, release metadata and wrapper checks pass. Rebuilt wheel/sdist pass Twine and the 206-entry wheel check. Isolated HOME/XDG install, version/doctor, synthetic initialization and 14-tool MCP discovery pass; Claude registration/skill preview writes no configuration. No live models, real OAuth authorization or original-data study was run.
+
+Beta 2 (mlcagent 0.2.0b2) publication and subsequent beta 1 yank are author-authorized. Final upload and public verification follow; no GitHub/npm publication.
+
+## Prior release status — 2026-10-07
 
 **Published beta:** [`mlcagent` 0.2.0b1](https://pypi.org/project/mlcagent/0.2.0b1/). Both files were accepted by PyPI with the author-provided token; public SHA256 hashes match the tested artifacts. Local release source: `16bcc72`.
 
@@ -1064,7 +1070,7 @@ Never copy message text, only the numbers. The import is idempotent (keyed by me
 
 ### P11: a TUI that guides, plus providers you can switch at any time
 
-> **Status:** ✅ P11.1–P11.7 implemented on native-onboarding; focused tests pass and full/release validation is in progress. OpenAI sign-in remains registration-gated; real-provider and native keyring checks are pending. Details: docs/IMPLEMENTATION_STATUS.md.
+> **Status:** ✅ P11.1–P11.7 implemented on native-onboarding; full suite passes (193 passed, 1 skipped), with final release validation recorded. OpenAI sign-in remains registration-gated; real-provider and native keyring checks are pending. Details: docs/IMPLEMENTATION_STATUS.md.
 > Engine guidance is opt-in for TUI presentation, preserving existing MCP/CLI action IDs; account quotas stay unknown unless explicitly reported. Cancellation during execution remains the engine timeout/budget boundary.
 
 **What went wrong in that run:**

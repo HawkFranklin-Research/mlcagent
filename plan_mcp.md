@@ -374,6 +374,8 @@ Reviewer reproduction: suite 96 passed, 1 skipped; live stdio, brain mode.
 
 ## Status
 
+**2026-10-13 beta 2:** Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailable). Ruff lint/format, release metadata and wrapper checks pass. Rebuilt wheel/sdist pass Twine and the 206-entry wheel check. Isolated HOME/XDG install, version/doctor, synthetic initialization and 14-tool MCP discovery pass; Claude registration/skill preview writes no configuration. No live models, real OAuth authorization or original-data study was run. Native P11 changes preserve all 14 MCP tools. Upload/public verification follows; b1 yank is authorized after b2 verification.
+
 ### Beta publication attempt — 2026-10-07
 
 - D1 is resolved as CC-BY-NC-ND-4.0; D3 was author-approved as `mlca`. Release source is local commit `ac4bcc8`; incoming VM docs were committed separately as `45344a5`.
