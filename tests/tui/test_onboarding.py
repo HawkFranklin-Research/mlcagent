@@ -21,6 +21,9 @@ def test_dynamic_project_form_and_directory(tmp_path):
             app.push_screen(screen)
             await pilot.pause()
             assert not screen.query_one("#event_column").display
+            screen.find_tables()
+            assert screen.files == []
+            assert "Choose a data file" in str(screen.query_one("#form-error", Static).content)
             screen.query_one("#data", Input).value = str(tmp_path)
             screen.find_tables()
             await pilot.pause()

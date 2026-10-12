@@ -278,3 +278,8 @@ P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped
 ## 2026-10-07 — Published-beta verification
 
 [PyPI release](https://pypi.org/project/mlcagent/0.2.0b1/). Fresh PyPI verification used an empty temporary HOME/XDG and uv cache: `uv tool install mlcagent==0.2.0b1`, `mlca --version` (0.2.0b1), `mlca doctor --json` (level A capability; execution must confirm isolation), and `mlca mcp doctor` (14 tools) all passed. Published wheel/sdist SHA256 hashes match the scanned release artifacts. Local tag `v0.2.0b1` points to release source `16bcc72`; no push. P10 is complete, while M7, real providers/data, and native macOS/Windows remain pending. The beta description contains an overlooked historical README Status paragraph; it is corrected in source for the next release, with no second upload. Token rotation to a project-scoped token and removal of the account-wide file remain an author account step; the file was read only by the publish command.
+
+Installed-source checks: local uv tool refresh succeeded; mlca --version, installed-template resources,
+headless new forms and mlca mcp doctor (14 tools) passed. A final UI-only blank-path guard prevents
+empty data input from registering the current directory implicitly; the post-guard focused suite
+passed 24 tests in 6.96 s. The full 152-pass/1-skip result above precedes that UI-only hardening.

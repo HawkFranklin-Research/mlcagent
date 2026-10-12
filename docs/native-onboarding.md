@@ -57,3 +57,8 @@ Final full offline suite: 152 passed, 1 skipped (PowerShell unavailable), 619.88
 format checks pass. Forms were exported and visually inspected; deferred Study details selection/save
 passed. No real model calls or original-data studies were run. New resolution records require updated
 native source; the old PyPI beta cannot interpret the new record type.
+
+Installed-source checks: local uv tool refresh succeeded; mlca --version, installed-template resources,
+headless new forms and mlca mcp doctor (14 tools) passed. A final UI-only blank-path guard prevents
+empty data input from registering the current directory implicitly; the post-guard focused suite
+passed 24 tests in 6.96 s. The full 152-pass/1-skip result above precedes that UI-only hardening.

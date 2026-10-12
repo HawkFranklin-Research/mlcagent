@@ -53,18 +53,19 @@ class ProjectScreen(ModalScreen[dict | None]):
                 yield Select(
                     [(get(k).spec.title, k) for k in available()],
                     value="tabular_classification",
+                    allow_blank=False,
                     id="template",
                 )
                 yield Label("What do you want to learn or predict?")
                 yield Input(id="aim")
                 yield Label("Which column do you want to predict?", id="target-label")
-                yield Select([("I'll decide later", "")], value="", id="target")
+                yield Select([("I'll decide later", "")], value="", allow_blank=False, id="target")
                 yield Label("Time until the event or last follow-up", id="duration-label")
-                yield Select([("I'll decide later", "")], value="", id="duration")
+                yield Select([("I'll decide later", "")], value="", allow_blank=False, id="duration")
                 yield Label(
                     "Did the outcome happen? Event column (1 = happened, 0 = censored)", id="event-label"
                 )
-                yield Select([("I'll decide later", "")], value="", id="event_column")
+                yield Select([("I'll decide later", "")], value="", allow_blank=False, id="event_column")
                 yield Label(
                     "What does one row represent? Patient, visit, specimen, sample… (optional for now)"
                 )
@@ -94,7 +95,10 @@ class ProjectScreen(ModalScreen[dict | None]):
 
     def find_tables(self):
         try:
-            self.files = discover([Path(self.query_one("#data", Input).value)])
+            value = self.query_one("#data", Input).value.strip()
+            if not value:
+                raise ValueError("Choose a data file or folder first")
+            self.files = discover([Path(value)])
             self.tables = dict(registrations(self.files))
             self.query_one("#primary", Select).set_options(
                 [(f"{name} — {path.name}", name) for name, path in self.tables.items()]
@@ -146,7 +150,10 @@ class ProjectScreen(ModalScreen[dict | None]):
         elif identifier == "find-tables":
             self.find_tables()
         elif identifier == "submit":
-            result = {"path": self.query_one("#path", Input).value}
+            result = {"path": self.query_one("#path", Input).value.strip()}
+            if not result["path"]:
+                self.query_one("#form-error", Static).update("Choose a project folder first")
+                return
             if self.initialise:
                 if not self.tables:
                     self.find_tables()
@@ -166,7 +173,9 @@ class ProjectScreen(ModalScreen[dict | None]):
                 result.update({k: self.query_one("#" + k, Input).value for k in ["aim", "unit"]})
                 result.update(
                     {
-                        k: self.query_one("#" + k, Select).value or ""
+                        k: self.query_one("#" + k, Select).value
+                        if isinstance(self.query_one("#" + k, Select).value, str)
+                        else ""
                         for k in ["target", "duration", "event_column", "repeated_subjects"]
                     }
                 )

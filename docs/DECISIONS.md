@@ -402,3 +402,8 @@ inspected from Textual exports; study-details selection/save passed. Main-table 
 resolution, original answers, attribution/intervention counts and session-key/cached-catalogue
 canaries are covered. Old projects load in the new implementation; new record types are not claimed
 to load in the old published binary. Master remains c6fabad; no publication or remote push.
+
+Installed-source checks: local uv tool refresh succeeded; mlca --version, installed-template resources,
+headless new forms and mlca mcp doctor (14 tools) passed. A final UI-only blank-path guard prevents
+empty data input from registering the current directory implicitly; the post-guard focused suite
+passed 24 tests in 6.96 s. The full 152-pass/1-skip result above precedes that UI-only hardening.

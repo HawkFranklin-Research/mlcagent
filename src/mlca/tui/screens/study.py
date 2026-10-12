@@ -75,7 +75,7 @@ class StudyScreen(ModalScreen[dict | None]):
             for select in self.query(Select):
                 field = select.id.removeprefix("study-")
                 if field != "primary":
-                    answers[field] = select.value or ""
+                    answers[field] = select.value if isinstance(select.value, str) else ""
             if self.state.template_id == "survival":
                 answers["target"] = answers["duration"]
             self.dismiss({"answers": answers, "primary_data": self.query_one("#study-primary", Select).value})
