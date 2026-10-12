@@ -57,3 +57,18 @@ def test_atomic_project_environment_runs_after_rename(project_factory):
     with Session.open(root) as session:
         session.choose("1")
         assert session.store.verify()["ok"]
+
+
+def test_failed_new_study_removes_only_its_empty_root(tmp_path, monkeypatch):
+    data = tmp_path / "input.csv"
+    data.write_text("x,y\n1,0\n2,1\n")
+    root = tmp_path / "new-study"
+
+    def failure(*args):
+        raise MlcaUserError("environment failed")
+
+    monkeypatch.setattr("mlca.project.init.create", failure)
+    with pytest.raises(MlcaUserError, match="environment failed"):
+        initialise(root, [data], "tabular_classification", {})
+    assert not root.exists()
+    assert data.exists()

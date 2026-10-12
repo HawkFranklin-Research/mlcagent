@@ -223,16 +223,29 @@ def initialise(
             raise MlcaUserError(
                 "This folder already contains an MLCA study or an earlier initialization attempt. Open it to continue, or choose a new project folder. Existing files will not be overwritten."
             )
-        root.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix=".mlca-init-", dir=root) as directory:
-            staged = Path(directory)
-            _build_initialisation(
-                staged, data, template_id, brief, config, column_picker, principal, primary_data
-            )
-            _rebase_environment(staged, root)
-            if (root / ".mlca").exists() or (root / ".mlca").is_symlink():
-                raise MlcaUserError(
-                    "Another study appeared during initialization; no existing files were replaced"
+        created_root = False
+        try:
+            root.mkdir(parents=True, exist_ok=False)
+            created_root = True
+        except FileExistsError:
+            pass
+        try:
+            with tempfile.TemporaryDirectory(prefix=".mlca-init-", dir=root) as directory:
+                staged = Path(directory)
+                _build_initialisation(
+                    staged, data, template_id, brief, config, column_picker, principal, primary_data
                 )
-            os.rename(staged / ".mlca", root / ".mlca")
+                _rebase_environment(staged, root)
+                if (root / ".mlca").exists() or (root / ".mlca").is_symlink():
+                    raise MlcaUserError(
+                        "Another study appeared during initialization; no existing files were replaced"
+                    )
+                os.rename(staged / ".mlca", root / ".mlca")
+        except BaseException:
+            if created_root:
+                try:
+                    root.rmdir()  # Only remove our new folder if it is still empty.
+                except OSError:
+                    pass  # Preserve any files another process or the user added.
+            raise
         return root

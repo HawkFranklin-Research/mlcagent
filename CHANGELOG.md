@@ -273,3 +273,7 @@ Published wheel and sdist for [mlcagent 0.2.0b1](https://pypi.org/project/mlcage
 ## P11.7 — Guided-user regression and release preparation
 
 Final focused native/auth/model/initialization coverage: 45 passed in 14.57 s; the later queued-switch/pilot/status subset passed 5 tests in 4.67 s. The beta-wrapper pin test also passes in isolation. The full offline suite is still pending at preparation time. No live model calls or OAuth authorization were made.
+
+Beta 2 validation caught and corrected a failed-init empty-folder residue. Cleanup removes only
+the new empty study root; existing/user-added content is preserved. Initial full run: 190 passed,
+2 failed, 1 skipped; corrected initialization and wording regressions: 6 passed. Final rerun pending.

@@ -511,3 +511,11 @@ The author authorized mlcagent 0.2.0b2 publication and beta 1 yanking after beta
 Only the PyPI publish command may read the existing token file. The PyPI upload token does not
 provide a signed-in browser management session; the yank remains conditional on that session.
 No GitHub/npm publication, original-data runs or live model tests are authorized by this release.
+
+## Beta 2 full-suite correction
+
+The first beta 2 suite finished 190 passed, 2 failed, 1 skipped in 688.76 s. One failure was the
+legacy wording assertion replaced by P11's guidance. The other caught a new empty root remaining
+after rejected MCP initialization. Atomic init now removes only an empty folder it created itself
+on failure, preserving pre-existing folders and concurrent files. Six focused initialization/MCP/
+wording tests pass in 4.15 s; a fresh full run follows.
