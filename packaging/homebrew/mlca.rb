@@ -3,7 +3,7 @@ class Mlca < Formula
   desc "Guided machine learning workflows with recorded provenance"
   homepage "https://pypi.org/project/mlcagent/"
   url "https://files.pythonhosted.org/packages/source/m/mlcagent/mlcagent-0.2.0b2.tar.gz"
-  sha256 "d74b43b1a1153c4df86177d24c17693041c9ea58eb2c3c875b308cf3885bf340"
+  sha256 "c75b733acd0a66a09634524160d7615ee5d5ca0bb0ad1fb3308e876e0ec2a87b"
   version "0.2.0b2"
 
   depends_on "uv"
