@@ -124,7 +124,9 @@ def fallback(state: Any, workflow: Any) -> Any:
         if action.role == "supporting" and already_run(identifier, state):
             continue
         values = {
-            name: next(iter(state.data)) if spec.type == "data_ref" and spec.default is None else spec.default
+            name: (state.primary_data or next(iter(state.data)))
+            if spec.type == "data_ref" and spec.default is None
+            else spec.default
             for name, spec in action.params.items()
         }
         try:

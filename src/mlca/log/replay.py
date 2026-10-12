@@ -14,9 +14,12 @@ def replay(records: list[Record]) -> ProjectState:
             state.data[p["name"]] = p
         elif kind == "InventoryRecorded":
             state.inventory = p["files"]
-        elif kind == "BriefRecorded":
+        elif kind in {"BriefRecorded", "StudyFieldsResolved"}:
+            if kind == "BriefRecorded":
+                state.original_brief = p["answers"]
             state.brief = p["answers"]
             state.columns = p.get("columns", {})
+            state.primary_data = p.get("primary_data")
         elif kind == "EventEntered":
             state.current_event = p["event_id"]
             for event in p.get("invalidate_events", []):

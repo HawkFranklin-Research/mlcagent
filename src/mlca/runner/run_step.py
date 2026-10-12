@@ -30,6 +30,8 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
             if state.split:
                 raise MlcaUserError("Original registered data are not readable after split freezing")
             chosen = state.data if ref == "registered_data" else {ref: state.data[ref]}
+            if ref == "registered_data" and state.primary_data in chosen:
+                chosen = {state.primary_data: chosen[state.primary_data], **chosen}
             for name, data in chosen.items():
                 path = Path(data["original_path"])
                 if sha256(path) != data["sha256"]:

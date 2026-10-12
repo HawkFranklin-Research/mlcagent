@@ -4,6 +4,10 @@ title: Onboard
 goal: 'Fix the question before touching the data: aim, target and unit of analysis.'
 gate: []
 subgoals:
+- id: study_fields
+  text: Main table, outcome columns and row meaning resolved
+  check:
+    type: study_fields_resolved
 - id: outputs_recorded
   text: Brief and data inventory recorded
   check:

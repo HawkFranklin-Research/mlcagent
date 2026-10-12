@@ -9,7 +9,7 @@ import pandas as pd
 
 from mlca.errors import IntegrityError, MlcaUserError
 from mlca.paths import sha256
-from mlca.project.init import column_for
+from mlca.project.init import column_for, primary_for
 from mlca.project.inventory import read_table
 from mlca.sandbox.vault import seal
 
@@ -74,9 +74,7 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
         raise MlcaUserError(
             "This branch already has a frozen split; branch before split to change the protocol"
         )
-    if len(state.data) != 1:
-        raise MlcaUserError("Split requires one registered study table; consolidate data explicitly first")
-    registered = next(iter(state.data.values()))
+    registered = state.data[primary_for(state)]
     path = Path(registered["original_path"])
     if sha256(path) != registered["sha256"]:
         raise IntegrityError("Registered input changed")
@@ -98,6 +96,7 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
     train_index = frame.loc[assignments == "train"].index.tolist()
     payload = {
         "split_id": step_id,
+        "primary_data": primary_for(state),
         "parameters": params,
         "sha256": sha256(manifest),
         "test_plain_sha256": hashlib.sha256(buffer.getvalue()).hexdigest(),

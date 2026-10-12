@@ -54,7 +54,7 @@ def render_order(session, action, params, inputs, state):
     if action.reads_test:
         names["test"] = {"name": "test.parquet", "format": ".parquet"}
     outputs = [o.model_dump() for o in action.outputs]
-    brief = {"answers": state.brief, "columns": state.columns}
+    brief = {"answers": state.brief, "columns": state.columns, "primary_data": state.primary_data}
     return {
         "event": action.event,
         "action": action.id,

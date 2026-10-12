@@ -9,7 +9,7 @@ from mlca.engine.split import partitions
 from mlca.errors import IntegrityError
 from mlca.paths import atomic_json, directory_sha256, sha256
 from mlca.project.env import create, python
-from mlca.project.init import column_for
+from mlca.project.init import column_for, primary_for
 from mlca.project.inventory import read_table
 from mlca.sandbox.level import detect
 from mlca.sandbox.vault import exposed
@@ -50,7 +50,7 @@ def verify(session: Any) -> Any:
                         for r in records
                         if r.type.value == "SplitFrozen" and r.payload["split_id"] == step["step_id"]
                     )
-                    data = next(iter(state.data.values()))
+                    data = state.data[split.get("primary_data") or primary_for(state)]
                     source = Path(data["original_path"])
                     if sha256(source) != data["sha256"]:
                         raise IntegrityError("Original input changed")

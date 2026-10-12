@@ -438,6 +438,39 @@ class Session:
                 raise MlcaUserError("Transition is not declared by the workflow template")
             return self._enter(event, "goto")
 
+    def resolve_study(self, answers: dict, primary_data: str | None = None) -> Any:
+        """Human study definition; suggestions are not automatic column decisions."""
+        self._require_human()
+        with self.mutation():
+            self._ensure_idle()
+            state = self.state
+            if state.split or state.current_event != "onboard":
+                raise MlcaUserError("Resolve study fields during Onboard; branch before split to change them")
+            allowed = {"aim", "target", "duration", "event_column", "unit", "repeated_subjects"}
+            if set(answers) - allowed:
+                raise MlcaUserError("Unknown study field")
+            name = primary_data or state.primary_data
+            if name is None and len(state.data) == 1:
+                name = next(iter(state.data))
+            if name not in state.data:
+                raise MlcaUserError("Choose a registered main table")
+            from mlca.project.init import resolve_columns
+
+            brief = {**state.brief, **answers}
+            columns = resolve_columns(
+                brief, [i for i in state.inventory if i["name"] == name], state.template_id
+            )
+            self.emit(
+                "StudyFieldsResolved",
+                {"answers": brief, "columns": columns, "primary_data": name},
+                actor="user",
+            )
+            self.emit(
+                "EventEntered", {"event_id": "onboard", "via": "study_fields_updated"}, event_id="onboard"
+            )
+            checks.run_all(self.state, self.workflow, self.root, self.emit)
+            return self.status()
+
     def confirm(self, subgoal: Any, note: Any) -> Any:
         self._require_human()
         with self.mutation():

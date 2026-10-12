@@ -111,6 +111,7 @@ def init_project(
     data: list[Path] = typer.Option([], "--data"),
     template: str = typer.Option("tabular_classification", "--template"),
     brief_file: Path | None = typer.Option(None, "--brief-file"),
+    primary_data: str | None = typer.Option(None, "--primary-data"),
 ) -> Any:
     from mlca.project.init import initialise, resolve_column
     from mlca.templates.registry import get
@@ -124,7 +125,10 @@ def init_project(
     brief = (
         yaml.safe_load(brief_file.read_text(encoding="utf-8"))
         if brief_file
-        else {q["id"]: typer.prompt(q["text"]) for q in workflow.spec.brief_questions}
+        else {
+            q["id"]: typer.prompt(q["text"], default="", show_default=False)
+            for q in workflow.spec.brief_questions
+        }
     )
 
     def pick_column(field, available):
@@ -135,11 +139,44 @@ def init_project(
         {
             "project": str(
                 initialise(
-                    path, data, template, brief, column_picker=pick_column if brief_file is None else None
+                    path,
+                    data,
+                    template,
+                    brief,
+                    column_picker=pick_column if brief_file is None else None,
+                    primary_data=primary_data,
                 )
             )
         }
     )
+
+
+@app.command("study")
+def study(
+    ctx: typer.Context,
+    target: str | None = None,
+    duration: str | None = None,
+    event_column: str | None = None,
+    unit: str | None = None,
+    aim: str | None = None,
+    primary_data: str | None = None,
+):
+    """Resolve deferred study fields during Onboard; no model call."""
+    answers = {
+        k: v
+        for k, v in {
+            "target": target,
+            "duration": duration,
+            "event_column": event_column,
+            "unit": unit,
+            "aim": aim,
+        }.items()
+        if v is not None
+    }
+    if duration is not None:
+        answers["target"] = duration
+    with Session.open(_path(ctx)) as session:
+        output(session.resolve_study(answers, primary_data))
 
 
 @app.command()

@@ -30,6 +30,7 @@ class ApprovalPolicy(BaseModel):
 class TaskCard(BaseModel):
     model_config = ConfigDict(extra="forbid")
     data: list[str]
+    primary_data: str | None = None
     brief: dict[str, str]
     template: str = "tabular_classification"
     option_policy: str = "default_first"
@@ -156,7 +157,13 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42):
         session = None
         try:
             initialise(
-                project, data, card.template, card.brief, config, principal=manifest["policy_principal"]
+                project,
+                data,
+                card.template,
+                card.brief,
+                config,
+                principal=manifest["policy_principal"],
+                primary_data=card.primary_data,
             )
             session = Session.open(
                 project, client="bench", principal=manifest["policy_principal"], policy=True

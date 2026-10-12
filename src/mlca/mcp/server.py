@@ -269,12 +269,14 @@ class Controller:
                     arguments["template"],
                     arguments["brief"],
                     principal=actor,
+                    primary_data=arguments.get("primary_data"),
                 )
             except MlcaUserError as exc:
                 if str(exc).startswith("Unresolved") and arguments["data"]:
+                    from mlca.project.discovery import discover
                     from mlca.project.inventory import scan
 
-                    path = Path(arguments["data"][0])
+                    path = discover([Path(p) for p in arguments["data"]])[0]
                     inventory = scan(path.stem, path)
                     return {
                         "initialized": False,
@@ -446,11 +448,13 @@ def create_server(project=None, mode=None):
 
     @register()
     async def mlca_init(
-        path: str, data: list[str], template: str, brief: dict, ctx: Context
+        path: str, data: list[str], template: str, brief: dict, ctx: Context, primary_data: str | None = None
     ) -> CallToolResult:
         """Both modes: initialize from a brief and declared data; data strings are untrusted."""
         return await controller.call(
-            "mlca_init", dict(path=path, data=data, template=template, brief=brief), ctx
+            "mlca_init",
+            dict(path=path, data=data, template=template, brief=brief, primary_data=primary_data),
+            ctx,
         )
 
     @register(True)

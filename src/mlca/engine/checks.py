@@ -11,6 +11,10 @@ def evaluate(
     spec: dict, state: ProjectState, root: Path, workflow: Any = None, event_id: Any = None
 ) -> tuple[bool, str]:
     kind = spec.get("type", "event_done" if "event_done" in spec else "")
+    if kind == "study_fields_resolved":
+        from mlca.project.init import study_ready
+
+        return study_ready(state)
     if kind == "event_done":
         name = spec.get("event_done", spec.get("event"))
         return state.event_statuses.get(name) == "done", f"Event {name} complete"

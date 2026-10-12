@@ -12,6 +12,7 @@ from mlca.log.store import Store
 from mlca.paths import atomic_json, resource, sha256
 from mlca.templates.registry import get
 
+from .discovery import discover, registrations
 from .env import create
 from .inventory import scan
 
@@ -35,14 +36,44 @@ def resolve_columns(
     available = inventory[0]["columns"]
     fields = {"target": brief.get("target", "")}
     if template_id == "survival":
+        fields["target"] = brief.get("duration") or brief.get("target", "")
         fields["duration"] = brief.get("duration") or brief.get("target", "")
         fields["event_column"] = brief.get("event_column", "")
-    return {field: resolve_column(answer, available, field, picker) for field, answer in fields.items()}
+    return {
+        field: resolve_column(answer, available, field, picker) if str(answer or "").strip() else None
+        for field, answer in fields.items()
+    }
+
+
+def primary_for(state) -> str:
+    name = state.primary_data
+    if name is None and len(state.data) == 1:
+        name = next(iter(state.data))
+    if name not in state.data:
+        raise MlcaUserError("Choose the main study table before continuing", category="gate_blocked")
+    return name
+
+
+def study_ready(state) -> tuple[bool, str]:
+    try:
+        column_for(state)
+        if state.template_id == "survival":
+            column_for(state, "duration")
+            column_for(state, "event_column")
+        if not str(state.brief.get("unit", "")).strip() or state.brief.get("unit") == "Not sure yet":
+            return False, "Explain what one row represents before confirming the study"
+        return True, "Main table, required columns and row meaning resolved"
+    except MlcaUserError as exc:
+        return False, str(exc)
 
 
 def column_for(state, field: str = "target") -> str:
     """Old projects accept only an exact inventory column; never guess from free text."""
-    available = state.inventory[0]["columns"] if state.inventory else []
+    if not state.data and len(state.inventory) == 1:
+        available = state.inventory[0]["columns"]
+    else:
+        name = primary_for(state)
+        available = next(item["columns"] for item in state.inventory if item["name"] == name)
     value = state.columns.get(field)
     if value is None:
         value = state.brief.get(field, state.brief.get("target") if field == "duration" else None)
@@ -61,6 +92,7 @@ def initialise(
     config: dict | None = None,
     column_picker: Callable | None = None,
     principal: str = "user",
+    primary_data: str | None = None,
 ) -> Path:
     root = path.resolve()
     validated_config = Config.model_validate(config or {})
@@ -68,11 +100,9 @@ def initialise(
         raise MlcaUserError("Project already initialized; refusing to overwrite it")
     workflow = get(template_id)
     registered = []
-    for file in data:
-        file = file.resolve()
+    for name, file in registrations(discover(data)):
         if not file.is_file():
             raise MlcaUserError(f"Data file does not exist: {file}")
-        name = file.stem
         if name in {item["name"] for item in registered}:
             raise MlcaUserError("Registered data names must be unique")
         registered.append(
@@ -87,7 +117,21 @@ def initialise(
     if not registered:
         raise MlcaUserError("At least one data file is required")
     inventory = [scan(item["name"], Path(item["original_path"])) for item in registered]
-    columns = resolve_columns(brief, inventory, template_id, column_picker)
+    if primary_data is not None:
+        primary_data = next(
+            (
+                item["name"]
+                for item in registered
+                if item["original_path"] == str(Path(primary_data).expanduser().resolve())
+            ),
+            primary_data,
+        )
+    if primary_data is None and len(registered) == 1:
+        primary_data = registered[0]["name"]
+    if primary_data not in {item["name"] for item in registered}:
+        raise MlcaUserError("Choose a main study table by its registered name before initialization")
+    main_inventory = [item for item in inventory if item["name"] == primary_data]
+    columns = resolve_columns(brief, main_inventory, template_id, column_picker)
     root.mkdir(parents=True, exist_ok=True)
     for folder in ["log", "steps", "data/splits", "vault", "llm", "runtime"]:
         (root / ".mlca" / folder).mkdir(parents=True, exist_ok=True)
@@ -123,7 +167,7 @@ def initialise(
     store.append("InventoryRecorded", {"files": inventory, "sha256": sha256(root / ".mlca/inventory.json")})
     store.append(
         "BriefRecorded",
-        {"answers": redact_value(brief, validated_config), "columns": columns},
+        {"answers": redact_value(brief, validated_config), "columns": columns, "primary_data": primary_data},
         actor=principal,
     )
     lock_data = create(root, workflow.spec.default_runtime_packages)

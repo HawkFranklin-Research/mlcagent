@@ -26,3 +26,14 @@ def scan(name: str, path: Path) -> dict:
         "sha256": sha256(path),
         "size": path.stat().st_size,
     }
+
+
+def table_columns(path: Path) -> list[str]:
+    """Schema-only preview for selectors; never sends sample rows to a provider."""
+    if path.suffix.lower() in {".parquet", ".pq"}:
+        import pyarrow.parquet as pq
+
+        return pq.ParquetFile(path).schema_arrow.names
+    if path.suffix.lower() in {".csv", ".tsv"}:
+        return list(pd.read_csv(path, sep="\t" if path.suffix.lower() == ".tsv" else ",", nrows=0).columns)
+    raise MlcaUserError("Supported input formats: CSV, TSV and Parquet")

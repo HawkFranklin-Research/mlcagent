@@ -16,6 +16,7 @@ PAYLOAD_FIELDS = {
     "DataRegistered": ["name", "original_path", "sha256", "size", "read_only"],
     "InventoryRecorded": ["files", "sha256"],
     "BriefRecorded": ["answers"],
+    "StudyFieldsResolved": ["answers", "columns", "primary_data"],
     "Refusal": ["category", "operation"],
     "AttemptFailed": ["attempt", "category"],
     "ProviderFailed": ["request_id", "category", "error_type"],
@@ -166,6 +167,7 @@ class Record(StrictModel):
 
 
 class ProjectState(StrictModel):
+    primary_data: str | None = None
     project_id: str = ""
     template_id: str = ""
     template_version: str = ""
@@ -179,7 +181,8 @@ class ProjectState(StrictModel):
     data: dict[str, dict] = Field(default_factory=dict)
     inventory: list[dict] = Field(default_factory=list)
     brief: dict = Field(default_factory=dict)
-    columns: dict[str, str] = Field(default_factory=dict)
+    original_brief: dict = Field(default_factory=dict)
+    columns: dict[str, str | None] = Field(default_factory=dict)
     split: dict | None = None
     test_unlocked: bool = False
     pending_options: list[dict] | None = None
