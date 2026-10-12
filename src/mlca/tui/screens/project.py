@@ -39,7 +39,7 @@ class ProjectScreen(ModalScreen[dict | None]):
                     yield Button("Browse", id="browse-data")
                 yield Button("Find tables", id="find-tables")
                 yield Label("Main study table — the split applies only to this table")
-                yield Select([], id="primary", prompt="Find tables first")
+                yield Select([], id="primary", prompt="Select main study table...")
                 yield Static(
                     "Other discovered tables are supporting inputs. Review the list before creating.",
                     id="file-list",
@@ -103,9 +103,19 @@ class ProjectScreen(ModalScreen[dict | None]):
             self.query_one("#primary", Select).set_options(
                 [(f"{name} — {path.name}", name) for name, path in self.tables.items()]
             )
-            self.query_one("#primary", Select).value = (
-                next(iter(self.tables)) if len(self.tables) == 1 else Select.NULL
-            )
+            first_choice = next(iter(self.tables)) if self.tables else Select.NULL
+            self.query_one("#primary", Select).value = first_choice
+            if first_choice != Select.NULL:
+                try:
+                    from mlca.project.inventory import table_columns
+
+                    self.columns = table_columns(self.tables[first_choice])
+                    for identifier in ["target", "duration", "event_column"]:
+                        select = self.query_one("#" + identifier, Select)
+                        select.set_options([("I'll decide later", ""), *[(str(c), c) for c in self.columns]])
+                        select.value = ""
+                except Exception:
+                    pass
             self.query_one("#file-list", Static).update(
                 "\n".join(
                     f"{name}: {path} ({path.stat().st_size:,} bytes)" for name, path in self.tables.items()

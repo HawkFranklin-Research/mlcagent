@@ -18,11 +18,11 @@ class WelcomeScreen(Screen):
     ]
     DEFAULT_CSS = """
     WelcomeScreen { align: center middle; }
-    WelcomeScreen #welcome { width: auto; height: auto; padding: 1 2; }
-    WelcomeScreen #banner { width: auto; margin-bottom: 1; }
-    WelcomeScreen #hint { color: $text-muted; margin-bottom: 1; }
+    WelcomeScreen #welcome { width: auto; height: auto; padding: 1 2; align-horizontal: center; }
+    WelcomeScreen #banner { width: auto; margin-bottom: 2; }
+    WelcomeScreen #hint { color: $text-muted; margin-bottom: 2; text-align: center; }
     WelcomeScreen #actions { width: auto; height: auto; }
-    WelcomeScreen #actions Button { margin-right: 1; min-width: 12; }
+    WelcomeScreen #actions Button { margin: 0 1; min-width: 16; }
     """
 
     def compose(self) -> ComposeResult:

@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image, ImageFilter, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
-COLUMNS = 36  # terminal cells; each cell holds 2x4 Braille dots
+COLUMNS = 56  # terminal cells; each cell holds 2x4 Braille dots
 SUPERSAMPLE = 4  # source pixels per dot side, pooled to keep thin network lines
 CONTRAST = 22  # local brightness above the blurred background that counts as ink
 BRIGHT = 175  # absolute brightness that always counts as ink (head, nodes)

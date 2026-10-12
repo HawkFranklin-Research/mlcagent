@@ -15,7 +15,13 @@ from mlca import __version__
 from mlca.paths import resource
 from mlca.ui_text import text
 
-WORDMARK = ("█▀▄▀█ █   █▀▀ ▄▀█", "█ ▀ █ █▄▄ █▄▄ █▀█")
+WORDMARK = (
+    "███╗   ███╗ ██╗      ██████╗  █████╗ ",
+    "████╗ ████║ ██║     ██╔════╝ ██╔══██╗",
+    "██╔████╔██║ ██║     ██║      ███████║",
+    "██║╚██╔╝██║ ██║     ██║      ██╔══██║",
+    "██║ ╚═╝ ██║ ███████╗╚██████╗ ██║  ██║",
+)
 HEAD = "#f2f5f8"  # light grey-white: the figure's head and suit
 NETWORK = "#5fb4f0"  # blue: the neural networks on either side
 MUTED = "#8a96a3"
@@ -57,9 +63,9 @@ def short_path(path: Path | None, limit: int = 48) -> str:
 
 def _details(project: Path | None, extra: list[str] | None) -> Text:
     info = Text(no_wrap=True)
-    info.append(WORDMARK[0] + "\n", style=f"bold {HEAD}")
-    info.append(WORDMARK[1] + "\n", style=f"bold {HEAD}")
-    info.append(text("tagline") + "\n", style=NETWORK)
+    for row in WORDMARK:
+        info.append(row + "\n", style=f"bold {HEAD}")
+    info.append("\n" + text("tagline") + "\n", style=f"bold {NETWORK}")
     info.append(f"v{__version__} · {text('subtitle')}", style=MUTED)
     lines = ([short_path(project)] if project else []) + (extra or [])
     for line in lines:
@@ -71,7 +77,7 @@ def banner(width: int = 100, project: Path | None = None, extra: list[str] | Non
     details = _details(project, extra)
     if width < MIN_WIDTH or not logo_lines():
         return details
-    grid = Table.grid(padding=(0, 3))
+    grid = Table.grid(padding=(0, 4))
     grid.add_column(no_wrap=True)
     grid.add_column(no_wrap=True, vertical="middle")
     grid.add_row(logo(), details)
