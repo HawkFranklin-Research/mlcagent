@@ -326,6 +326,12 @@ def build(session, branch=None):
             ),
         },
         "models": models,
+        "model_changes": [
+            {"record_id": r.id, "actor": r.actor, **r.payload}
+            for r in records
+            if r.type.value == "ModelChanged"
+        ],
+        "models_locked": measured(any(r.type.value == "ModelsLocked" for r in session.store.read()), "exact"),
         "egress": {
             "requests": measured(len(envelopes)),
             "bytes": sum_known(e.get("bytes", e.get("bytes_sent")) for e in envelopes),

@@ -116,7 +116,7 @@ def charged(root):
     )
 
 
-def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42):
+def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_models=False):
     if mode != "driver" or runs < 1:
         raise MlcaUserError("Bench supports driver mode and a positive run count")
     path = Path(task_path).resolve()
@@ -144,6 +144,7 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42):
         "schema_version": "1",
         "kind": "independent_agent_runs",
         "task_card_sha256": digest,
+        "models_locked": lock_models,
         "policy_principal": "user:policy/" + digest[:12],
         "runs": [],
     }
@@ -168,6 +169,8 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42):
             session = Session.open(
                 project, client="bench", principal=manifest["policy_principal"], policy=True
             )
+            if lock_models:
+                session.lock_models()
             session.task_card_sha256 = digest
             remaining = card.total_budget_usd - total
             session.config.budgets.session_max_usd = min(

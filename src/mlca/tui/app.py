@@ -34,7 +34,7 @@ from .widgets.subgoals import Subgoals
 
 class MlcaApp(App):
     TITLE = text("title")
-    CSS = """#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #journey { height: 1fr; } #status-bar { height: 2; }"""
+    CSS = """#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #journey { height: 1fr; } #status-bar { height: auto; max-height: 7; }"""
     BINDINGS = []
 
     def __init__(self, project: Path, configure: Any = False) -> None:
@@ -43,6 +43,7 @@ class MlcaApp(App):
         self.configure_first = configure
         self.session = None
         self.busy = False
+        self.pending_config = None
         self.activity = Activity()
 
     def on_mount(self) -> Any:
@@ -76,6 +77,10 @@ class MlcaApp(App):
         if not self.session or not isinstance(self.screen, MainScreen):
             return
         status = self.session.status()
+        from mlca.llm.status import roles
+        from mlca.llm.usage import read
+
+        status["model_status"] = roles(self.session.config, read(self.session.root))
         count = len(status["approvals"])
         self.screen.query_one("#approvals-banner", Static).update(
             f"{count} approval(s) waiting (a)" if count else ""
@@ -139,6 +144,11 @@ class MlcaApp(App):
                 else getattr(self.session, method)(*args)
             )
             self.call_from_thread(self.write_log, result_summary(method, result))
+            if self.pending_config and not self.session.active_step():
+                updated = self.pending_config
+                self.session.change_models(updated)
+                save(updated)
+                self.pending_config = None
             options = result if method == "options" else self.session.options(True)
             self.call_from_thread(self.refresh_project, options)
             if method == "report":
@@ -161,6 +171,12 @@ class MlcaApp(App):
     def finish_progress(self, error=None):
         if isinstance(self.screen, MainScreen):
             self.screen.query_one(Progress).finish(error)
+            from mlca.llm.status import roles
+            from mlca.llm.usage import read
+
+            status = self.session.status()
+            status["model_status"] = roles(self.session.config, read(self.session.root))
+            self.screen.query_one(StatusBar).render_state(status)
 
     def _can_act(self) -> bool:
         if not self.session or isinstance(self.screen, ModalScreen) or self.busy:
@@ -238,22 +254,26 @@ class MlcaApp(App):
         return answer.result()
 
     def action_configure(self) -> Any:
-        if self.busy:
-            return
-
         def selected(result: Any) -> Any:
             if not result:
                 return
             try:
-                save(Config.model_validate(result["config"]))
-                self.notify(text("saved"))
-                if self.session:
-                    self.session.close()
-                    self.open_project(self.project)
+                updated = Config.model_validate(result["config"])
+                if self.session and (self.busy or self.session.active_step()):
+                    self.pending_config = updated
+                    self.notify("Model change queued until the current step finishes")
+                else:
+                    if self.session:
+                        self.session.change_models(updated)
+                    save(updated)
+                    self.notify("Models saved; changes apply to the next request")
+                    if self.session:
+                        self.refresh_project()
             except Exception as exc:
                 self.notify(str(exc), severity="error")
 
-        self.push_screen(OnboardingScreen(load()), selected)
+        current = self.session.config if self.session else load()
+        self.push_screen(OnboardingScreen(current, project=self.project), selected)
 
     def check_action(self, action, parameters):
         if action == "select_card":

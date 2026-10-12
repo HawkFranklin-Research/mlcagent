@@ -27,6 +27,8 @@ usage_app = typer.Typer(invoke_without_command=True)
 app.add_typer(usage_app, name="usage")
 bench_app = typer.Typer()
 app.add_typer(bench_app, name="bench")
+auth_app = typer.Typer()
+app.add_typer(auth_app, name="auth")
 
 
 def output(value: Any, json_output: Any = False) -> Any:
@@ -96,6 +98,26 @@ def mcp_install(
     if client != "claude":
         # Preserve valid generic JSON on stdout; setup advice is separate.
         typer.echo(guidance(client, _path(ctx)), err=True)
+
+
+@auth_app.command("status")
+def auth_status():
+    from mlca.llm.credentials import resolve
+
+    config = load()
+    output(
+        {
+            name: {
+                "kind": p.kind,
+                "credential_available": bool(resolve(p.api_key_env)) if p.api_key_env else None,
+                "storage": "OS keyring"
+                if p.api_key_env and p.api_key_env.startswith("MLCA_KEYRING_")
+                else "environment / session",
+            }
+            for name, p in config.providers.items()
+        },
+        True,
+    )
 
 
 @app.command("signin")
@@ -351,10 +373,11 @@ def bench_run(
     mode: str = typer.Option("driver"),
     budget_usd: float | None = typer.Option(None),
     seed: int = typer.Option(42),
+    lock_models: bool = typer.Option(False, "--lock-models"),
 ):
     from mlca.evaluation.bench import run
 
-    output(run(task_card, runs, out, mode, budget_usd, seed), True)
+    output(run(task_card, runs, out, mode, budget_usd, seed, lock_models), True)
 
 
 @bench_app.command("summarize")

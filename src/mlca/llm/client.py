@@ -66,6 +66,7 @@ class Client:
         images: Any = None,
         context: RequestContext,
         categories: list[str],
+        max_attempts: int = 3,
     ) -> LLMResult:
         if getattr(self, "disabled", False):
             raise MlcaUserError("Model calls are disabled in brain mode")
@@ -115,7 +116,9 @@ class Client:
             }
         digest = egress.classify(payload, categories, self.config.privacy.allow_sample_rows)
         provider = self._provider(selected.provider)
-        for attempt in range(1, 4):
+        if not 1 <= max_attempts <= 3:
+            raise MlcaUserError("Request attempts must be between one and three")
+        for attempt in range(1, max_attempts + 1):
             request_id = str(ULID())
             start = time.monotonic()
             record = {
@@ -170,7 +173,12 @@ class Client:
                     record["status"] = "ok"
                 except Exception as exc:
                     error = exc
-                    record.update(status="error", error_type=type(exc).__name__, category="provider_error")
+                    record.update(
+                        status="error",
+                        error_type=type(exc).__name__,
+                        category="provider_error",
+                        status_code=getattr(exc, "status_code", None),
+                    )
                     if self.emit:
                         self.emit(
                             "ProviderFailed",
@@ -196,7 +204,7 @@ class Client:
                         )
             if error:
                 status = getattr(error, "status_code", None)
-                if attempt < 3 and (status == 429 or (isinstance(status, int) and status >= 500)):
+                if attempt < max_attempts and (status == 429 or (isinstance(status, int) and status >= 500)):
                     time.sleep(min(2 ** (attempt - 1), 4))
                     continue
                 raise MlcaUserError(redact(str(error), self.config), category="provider_error") from error

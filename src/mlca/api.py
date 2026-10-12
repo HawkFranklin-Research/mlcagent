@@ -66,6 +66,9 @@ class Session:
         if not created or created.payload["template_sha256"] != self.workflow.sha256:
             raise IntegrityError("Project metadata disagrees with immutable log")
         self.config = load_config(self.root)
+        from mlca.llm.switching import replay_configuration
+
+        self.config = replay_configuration(self.config, records)
         self.session_id = str(ULID())
         self.turn_id = None
         self.output_callback = None
@@ -202,6 +205,41 @@ class Session:
     def subscribe(self, callback: Any) -> Any:
         self.store.callbacks.append(callback)
         return lambda: self.store.callbacks.remove(callback)
+
+    def change_models(self, config, reason="Changed in Models panel"):
+        from mlca.config import Config
+        from mlca.llm.switching import changes
+
+        self._require_human()
+        config = Config.model_validate(config.model_dump() if isinstance(config, Config) else config)
+        with self.mutation():
+            self._ensure_idle()
+            differences = changes(self.config, config)
+            if differences and any(r.type.value == "ModelsLocked" for r in self.store.read()):
+                raise MlcaUserError("Models are locked for this measured run", category="gate_blocked")
+            for difference in differences:
+                self.emit(
+                    "ModelChanged",
+                    {**difference, "principal": self.principal, "reason": reason},
+                    actor="user",
+                )
+            self.config = config
+            self.client = Client(self.root, config, self.emit)
+            self.client.disabled = self.mode == "brain"
+            self.client.principal = self.principal
+            return {"changed": len(differences)}
+
+    def lock_models(self):
+        self._require_human()
+        with self.mutation():
+            self._ensure_idle()
+            self.emit(
+                "ModelsLocked",
+                {
+                    "roles": {k: v.model_dump() for k, v in self.config.roles.items()},
+                    "principal": self.principal,
+                },
+            )
 
     def packages(self) -> Any:
         file = self.root / ".mlca/requirements.lock"

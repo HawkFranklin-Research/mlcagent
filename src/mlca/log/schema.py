@@ -20,6 +20,8 @@ PAYLOAD_FIELDS = {
     "Refusal": ["category", "operation"],
     "AttemptFailed": ["attempt", "category"],
     "ProviderFailed": ["request_id", "category", "error_type"],
+    "ModelChanged": ["role", "from", "to", "provider", "principal", "reason"],
+    "ModelsLocked": ["roles", "principal"],
     "RunSnapshot": ["mlca_version", "mode", "principal", "roles"],
     "SessionStarted": ["client", "mlca_version", "config_hash"],
     "SessionEnded": ["client"],

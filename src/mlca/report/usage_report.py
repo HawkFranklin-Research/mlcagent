@@ -24,6 +24,16 @@ def build(state: Any, requests: Any, records: Any) -> Any:
         if not script.get("builtin")
     )
     return {
+        "model_changes": [
+            {"record_id": r.id, "actor": r.actor, **r.payload}
+            for r in records
+            if r.type.value == "ModelChanged"
+        ],
+        "model_answers": [
+            {k: r.get(k) for k in ("request_id", "step_id", "role", "model", "model_reported")}
+            for r in requests
+            if r.get("role") not in {"mcp", "external_agent"}
+        ],
         "agent_file_access": "unknown (outside MLCA)",
         "decisions_by_principal": dict(principals),
         "script_attempts_by_source": dict(script_sources),

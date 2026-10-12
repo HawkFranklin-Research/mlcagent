@@ -1,4 +1,4 @@
-"""Session-only keys. Never serialize values or pass them to analysis subprocesses."""
+"""Environment, session and author-approved secure OS keyring references. Never serialize values or pass them to analysis subprocesses."""
 
 import os
 import uuid
@@ -21,6 +21,15 @@ def resolve(name: str | None) -> str | None:
         value = stored_key()
         if value:
             _KEYS[name] = value
+    if name.startswith("MLCA_KEYRING_API_") and name not in _KEYS:
+        try:
+            from .openrouter_auth import secure_backend
+
+            value = secure_backend().get_password("mlca.api_keys", name)
+            if value:
+                _KEYS[name] = value
+        except Exception:
+            return None
     return _KEYS.get(name) or os.environ.get(name)
 
 
@@ -38,3 +47,22 @@ def forget_reference(name: str | None) -> None:
         for other in list(_KEYS):
             if _KEYS[other] == value:
                 del _KEYS[other]
+
+
+def remember_secure(value: str, provider_name: str) -> str:
+    import hashlib
+
+    from mlca.errors import MlcaUserError
+
+    from .openrouter_auth import secure_backend
+
+    name = "MLCA_KEYRING_API_" + hashlib.sha256(provider_name.encode()).hexdigest().upper() + "_KEY"
+    remember(value)  # Redact before any persistence attempt.
+    try:
+        secure_backend().set_password("mlca.api_keys", name, value)
+    except Exception:
+        raise MlcaUserError(
+            "Secure key storage failed; disable Remember API keys for session-only storage"
+        ) from None
+    _KEYS[name] = value
+    return name

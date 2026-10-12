@@ -1,3 +1,4 @@
+from textual import work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
@@ -5,7 +6,7 @@ from textual.widgets import Button, Checkbox, Input, Label, Select, Static
 
 from mlca.config import Config, ProviderConfig, RoleConfig
 from mlca.llm.catalog import DEFAULTS, cached, save_prices
-from mlca.llm.credentials import forget, forget_reference, remember, resolve
+from mlca.llm.credentials import forget, forget_reference, remember, remember_secure, resolve
 
 from .model_picker import ModelPicker
 from .openrouter_signin import OpenRouterSignin
@@ -24,9 +25,10 @@ class OnboardingScreen(ModalScreen[dict | None]):
     Input, Select { margin-bottom: 1; } .model-row { height: 3; margin-bottom: 1; }
     .model-row Input { width: 1fr; } #settings-buttons { height: 3; }"""
 
-    def __init__(self, config):
+    def __init__(self, config, project=None):
         super().__init__()
         self.config = config
+        self.project = project
         self.initial = {}
         self.prices = {}
         self.signed_reference = None
@@ -44,6 +46,11 @@ class OnboardingScreen(ModalScreen[dict | None]):
             yield Button("Start free with OpenRouter", id="start-free", variant="primary")
             yield Static(
                 "Sign in without pasting an API key. Free requests have quotas; model availability varies."
+            )
+            yield Checkbox(
+                "Remember pasted API keys in secure OS keyring (optional)",
+                value=False,
+                id="remember-api-keys",
             )
             yield Checkbox(
                 "Use the Navigator provider and model for the Worker too",
@@ -99,6 +106,7 @@ class OnboardingScreen(ModalScreen[dict | None]):
             with Horizontal(id="settings-buttons"):
                 yield Button("Save", id="save-settings", variant="primary")
                 yield Button("Forget pasted keys", id="forget-keys")
+                yield Button("Test connection (uses requests)", id="test-connection")
                 yield Button("Cancel", id="cancel-settings")
 
     def on_mount(self):
@@ -135,7 +143,11 @@ class OnboardingScreen(ModalScreen[dict | None]):
         if kind == "openrouter" and self.signed_reference and not key:
             env = self.signed_reference
         if include_key and key:
-            env = remember(key)
+            env = (
+                remember_secure(key, self.initial[role][0] + ":" + kind)
+                if self.query_one("#remember-api-keys", Checkbox).value
+                else remember(key)
+            )
         bound = self.query_one(prefix + "bound", Input).value.strip()
         return ProviderConfig.model_validate(
             {
@@ -150,9 +162,56 @@ class OnboardingScreen(ModalScreen[dict | None]):
             }
         )
 
+    @work(thread=True, exclusive=True)
+    def check_connection(self):
+        import uuid
+        from pathlib import Path
+
+        from mlca.llm.connection import test_connection
+        from mlca.paths import user_data_dir
+
+        def preview():
+            providers, roles = {}, {}
+            shared = self.query_one("#shared-model", Checkbox).value
+            for role in ["navigator"] if shared else ["navigator", "worker"]:
+                providers[role] = self.provider(role, include_key=True)
+                roles[role] = RoleConfig(
+                    provider=role, model=self.query_one("#" + role + "-model", Input).value.strip()
+                )
+                if role in self.prices:
+                    save_prices(role, [self.prices[role]])
+            if shared:
+                roles["worker"] = roles["navigator"].model_copy()
+            return Config(providers=providers, roles=roles, budgets=self.config.budgets)
+
+        try:
+            config = self.app.call_from_thread(preview)
+            root = (
+                Path(self.project)
+                if self.project and (Path(self.project) / ".mlca/project.yaml").exists()
+                else user_data_dir() / "connection_checks" / uuid.uuid4().hex
+            )
+            (root / ".mlca").mkdir(parents=True, exist_ok=True)
+            results = [test_connection(config, root, role) for role in config.roles]
+            self.app.call_from_thread(
+                self.query_one("#settings-error", Static).update,
+                " · ".join(
+                    f"{r['role']}: OK · {r['model_reported']} · {r['latency_ms']:.0f}ms" for r in results
+                ),
+            )
+        except Exception as exc:
+            from mlca.config import redact
+
+            self.app.call_from_thread(
+                self.query_one("#settings-error", Static).update,
+                "Connection test failed: " + redact(str(exc)),
+            )
+
     def on_button_pressed(self, event):
         identifier = event.button.id
-        if identifier == "start-free":
+        if identifier == "test-connection":
+            self.check_connection()
+        elif identifier == "start-free":
 
             def signed_in(reference):
                 if not reference:

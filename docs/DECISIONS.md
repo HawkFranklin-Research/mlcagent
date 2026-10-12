@@ -464,3 +464,15 @@ Added a horizontally scrollable event strip and action trail, reconstructed from
 with plain-English messages from ui_text.record_message. Raw protocol JSON and process output stay
 behind the uppercase L toggle. Human study/confirm/test decisions are labelled as yours. No model
 call is used to summarize the journey. Journey/main/progress tests: 5 passed in 1.66 s.
+
+## P11.4 — Switchable models and connection status
+
+Session.change_models validates and records human/policy changes, invalidates menus, replaces cached
+clients and reconstructs settings from ModelChanged on reopen. Busy TUI saves queue until the active
+step ends; bench --lock-models records a durable project-wide lock. Reports/metrics include switches
+and actual model answers. The lock protects configured models, not the free router's upstream choice.
+Status uses request envelopes for success/rate-limit/failure and local credential presence; account
+quota stays explicitly unknown until supplied by the provider, never fabricated from project counts.
+Test connection is user-initiated, one attempt per role, no study content, and uses the ordinary usage/
+egress/budget path. Optional remembered API keys use only secure OS keyring references; environment
+and session-only paths remain available. Auth status never prints secrets. No live test calls made.

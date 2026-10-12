@@ -32,6 +32,8 @@ def replay(records: list[Record]) -> ProjectState:
                 }
             state.event_statuses[p["event_id"]] = "open"
             state.pending_options = None
+        elif kind == "ModelChanged":
+            state.pending_options = None
         elif kind == "OptionsProposed":
             state.pending_options = p["options"]
         elif kind in (

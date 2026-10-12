@@ -111,7 +111,7 @@ def redact(text: str, config: Config | None = None) -> str:
 
     if config:
         for provider in config.providers.values():
-            if provider.api_key_env == "MLCA_KEYRING_OPENROUTER_KEY":
+            if provider.api_key_env and provider.api_key_env.startswith("MLCA_KEYRING_"):
                 resolve(provider.api_key_env)
     for value in secret_values():
         if value:
