@@ -14,7 +14,8 @@ class ConfigModel(BaseModel):
 
 
 class ProviderConfig(ConfigModel):
-    kind: Literal["openai_api", "openrouter", "openai_compatible", "fake"]
+    kind: Literal["openai_api", "openrouter", "openai_compatible", "openai_chatgpt", "fake"]
+    oauth_client_id: str | None = None
     base_url: str | None = None
     api_key_env: str | None = None
     script: str | None = None
@@ -49,7 +50,18 @@ class MCPConfig(ConfigModel):
     mode: Literal["brain", "driver"] = "brain"
 
 
+class ChatGPTAuth(ConfigModel):
+    client_id: str | None = None
+
+    @model_validator(mode="after")
+    def own_registration(self):
+        if self.client_id and not self.client_id.startswith("oaiapp_"):
+            raise ValueError("Use MLCA's own issued oaiapp_ client ID")
+        return self
+
+
 class Config(ConfigModel):
+    chatgpt_auth: ChatGPTAuth = Field(default_factory=ChatGPTAuth)
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     roles: dict[str, RoleConfig] = Field(default_factory=dict)
     privacy: Privacy = Field(default_factory=Privacy)

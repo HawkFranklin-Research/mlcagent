@@ -71,7 +71,8 @@ def signout():
 
 
 class Flow:
-    def __init__(self, headless=False):
+    def __init__(self, headless=False, callback_path="/callback"):
+        self.callback_path = callback_path
         self.verifier = secrets.token_urlsafe(48)
         self.state = secrets.token_urlsafe(32)
         self.deadline = time.monotonic() + 600
@@ -112,7 +113,8 @@ class Flow:
             self.server = CallbackServer(("127.0.0.1", 0), Callback)
             self.server.timeout = 0.25
             params.update(
-                callback_url=f"http://127.0.0.1:{self.server.server_port}/callback", state=self.state
+                callback_url=f"http://127.0.0.1:{self.server.server_port}{self.callback_path}",
+                state=self.state,
             )
         self.url = "https://openrouter.ai/auth?" + urllib.parse.urlencode(params)
 
@@ -127,7 +129,7 @@ class Flow:
             if (
                 parsed.scheme != "http"
                 or parsed.netloc != expected
-                or parsed.path != "/callback"
+                or parsed.path != self.callback_path
                 or query.get("state") != [self.state]
                 or len(query.get("code", [])) != 1
             ):

@@ -9,6 +9,7 @@ from mlca.llm.catalog import DEFAULTS, cached, save_prices
 from mlca.llm.credentials import forget, forget_reference, remember, remember_secure, resolve
 
 from .model_picker import ModelPicker
+from .openai_signin import OpenAISignin
 from .openrouter_signin import OpenRouterSignin
 
 KINDS = [
@@ -44,6 +45,20 @@ class OnboardingScreen(ModalScreen[dict | None]):
         with Vertical(id="settings"):
             yield Static("Models and providers — environment, session keys, or secure OpenRouter sign-in")
             yield Button("Start free with OpenRouter", id="start-free", variant="primary")
+            yield Button("Sign out of OpenRouter", id="router-signout")
+            yield Button(
+                "Continue with ChatGPT"
+                if self.config.chatgpt_auth.client_id
+                else "Continue with ChatGPT — coming soon",
+                id="chatgpt-signin",
+                disabled=not bool(self.config.chatgpt_auth.client_id),
+            )
+            yield Static("ChatGPT sign-in needs MLCA's own registration. OpenAI API keys work now.")
+            yield Button(
+                "Sign out of ChatGPT",
+                id="chatgpt-signout",
+                disabled=not bool(self.config.chatgpt_auth.client_id),
+            )
             yield Static(
                 "Sign in without pasting an API key. Free requests have quotas; model availability varies."
             )
@@ -65,7 +80,15 @@ class OnboardingScreen(ModalScreen[dict | None]):
                         if role == "navigator"
                         else "Worker — writes and repairs Python"
                     )
-                    choices = KINDS + ([("Offline fake provider", "fake")] if provider.kind == "fake" else [])
+                    choices = (
+                        KINDS
+                        + (
+                            [("ChatGPT plan (MLCA registration)", "openai_chatgpt")]
+                            if self.config.chatgpt_auth.client_id or provider.kind == "openai_chatgpt"
+                            else []
+                        )
+                        + ([("Offline fake provider", "fake")] if provider.kind == "fake" else [])
+                    )
                     yield Select(choices, value=provider.kind, allow_blank=False, id=role + "-kind")
                     yield Label("API key (optional paste; forgotten when this application exits)")
                     yield Input(password=True, id=role + "-key")
@@ -154,8 +177,11 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 **base.model_dump(),
                 "kind": kind,
                 "api_key_env": env,
+                "oauth_client_id": self.config.chatgpt_auth.client_id if kind == "openai_chatgpt" else None,
                 "structured_outputs": True
                 if kind == "openrouter" and self.signed_reference
+                else True
+                if kind == "openai_chatgpt"
                 else base.structured_outputs,
                 "base_url": self.query_one(prefix + "url", Input).value.strip() or None,
                 "request_cost_bound_usd": float(bound) if bound else None,
@@ -207,10 +233,59 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 "Connection test failed: " + redact(str(exc)),
             )
 
+    @work(thread=True, exclusive=True)
+    def chatgpt_signout(self):
+        from mlca.llm.openai_auth import signout
+
+        try:
+            if self.app.busy:
+                self.app.call_from_thread(
+                    self.notify, "Wait until the current step finishes before signing out"
+                )
+                return
+            revoked = signout(self.config.chatgpt_auth.client_id)
+            message = "Local ChatGPT tokens removed. " + (
+                "Remote session revoked."
+                if revoked
+                else "Remote revocation not confirmed; disconnect MLCA in ChatGPT settings."
+            )
+            self.app.call_from_thread(self.query_one("#settings-error", Static).update, message)
+            if self.app.session:
+                self.app.session.client.providers.clear()
+        except Exception:
+            self.app.call_from_thread(
+                self.query_one("#settings-error", Static).update,
+                "Could not sign out; unlock the OS keyring and retry.",
+            )
+
     def on_button_pressed(self, event):
         identifier = event.button.id
         if identifier == "test-connection":
             self.check_connection()
+        elif identifier == "chatgpt-signout":
+            self.chatgpt_signout()
+        elif identifier == "chatgpt-signin":
+
+            def chatgpt_signed(reference):
+                if not reference:
+                    return
+                for role in ["navigator", "worker"]:
+                    self.query_one("#" + role + "-kind", Select).value = "openai_chatgpt"
+
+                def apply_chatgpt():
+                    self.query_one("#shared-model", Checkbox).value = True
+                    for role in ["navigator", "worker"]:
+                        self.query_one("#" + role + "-env", Input).value = reference
+                        self.query_one("#" + role + "-url", Input).value = "https://api.openai.com/v1"
+                        self.query_one("#" + role + "-key", Input).value = ""
+                        self.query_one("#" + role + "-model", Input).value = ""
+                        self.query_one("#" + role + "-key-status", Static).update(
+                            "ChatGPT authorized; browse your account models"
+                        )
+
+                self.call_after_refresh(apply_chatgpt)
+
+            self.app.push_screen(OpenAISignin(self.config.chatgpt_auth.client_id), chatgpt_signed)
         elif identifier == "start-free":
 
             def signed_in(reference):
@@ -296,9 +371,14 @@ class OnboardingScreen(ModalScreen[dict | None]):
                     model = self.query_one("#" + role + "-model", Input).value.strip()
                     if not model:
                         raise ValueError("Enter a model ID for " + role)
-                    if provider.kind in {"openrouter", "openai_api"} and not resolve(provider.api_key_env):
+                    if provider.kind in {"openrouter", "openai_api", "openai_chatgpt"} and not resolve(
+                        provider.api_key_env
+                    ):
                         raise ValueError("Paste a key or set the environment variable for " + role)
-                    if provider.request_cost_bound_usd is None and provider.kind != "fake":
+                    if provider.request_cost_bound_usd is None and provider.kind not in {
+                        "fake",
+                        "openai_chatgpt",
+                    }:
                         from mlca.llm.pricing import estimate
 
                         metadata = self.prices.get(role)

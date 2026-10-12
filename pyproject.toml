@@ -23,6 +23,7 @@ dependencies = [
     "openai>=1",
     "cryptography",
     "keyring>=25",
+    "PyJWT[crypto]>=2.10,<3",
     "pandas",
     "pyarrow",
     "filelock",

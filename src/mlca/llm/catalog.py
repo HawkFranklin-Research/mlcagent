@@ -17,6 +17,7 @@ from .credentials import resolve
 
 DEFAULTS = {
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
+    "openai_chatgpt": ("https://api.openai.com/v1", None),
     "openai_api": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
     "openai_compatible": ("http://localhost:11434/v1", None),
 }
@@ -42,6 +43,14 @@ def price(value):
 
 
 def parse(data: dict) -> list[Model]:
+    if "models" in data:
+        data = {
+            "data": [
+                {"id": m["slug"], "name": m.get("display_name", m["slug"])}
+                for m in data["models"]
+                if m.get("visibility") == "list" and m.get("slug")
+            ]
+        }
     result = []
     for entry in data.get("data", []):
         identifier = entry.get("id")
@@ -85,7 +94,18 @@ def fetch(provider) -> list[Model]:
     if not base or provider.kind == "fake":
         raise MlcaUserError("This provider has no model catalogue; enter a model ID manually")
     headers = {"Accept": "application/json"}
-    key = resolve(provider.api_key_env)
+    if provider.kind == "openai_chatgpt":
+        from .openai_auth import RESOURCE, access_token, reference
+
+        if (
+            base != RESOURCE
+            or not provider.oauth_client_id
+            or provider.api_key_env != reference(provider.oauth_client_id)
+        ):
+            raise MlcaUserError("ChatGPT catalogue requires MLCA registration and the public OpenAI endpoint")
+        key = access_token(provider.api_key_env)
+    else:
+        key = resolve(provider.api_key_env)
     if key:
         headers["Authorization"] = "Bearer " + key
     request = urllib.request.Request(base.rstrip("/") + "/models", headers=headers)
@@ -97,6 +117,14 @@ def fetch(provider) -> list[Model]:
         from mlca.config import redact_value
 
         raw = redact_value(json.loads(body))
+        if provider.kind == "openai_chatgpt":
+            raw = {
+                "data": [
+                    {"id": m["slug"], "name": m.get("display_name", m["slug"])}
+                    for m in raw.get("models", [])
+                    if m.get("visibility") == "list" and m.get("slug")
+                ]
+            }
         data = {
             "data": [
                 {

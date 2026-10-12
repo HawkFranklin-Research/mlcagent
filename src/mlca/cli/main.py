@@ -121,7 +121,11 @@ def auth_status():
 
 
 @app.command("signin")
-def signin(headless: bool = False):
+def signin(headless: bool = False, provider: str = "openrouter"):
+    if provider == "openai":
+        return openai_signin(headless)
+    if provider != "openrouter":
+        raise MlcaUserError("Sign-in provider must be openrouter or openai")
     """Connect a user-owned OpenRouter key and select the free router."""
     from mlca.config import save
     from mlca.llm.openrouter_auth import Flow, configure_free, secure_backend, store_key
@@ -143,8 +147,50 @@ def signin(headless: bool = False):
     typer.echo("OpenRouter connected. Navigator and Worker use openrouter/free. Free requests have quotas.")
 
 
+def openai_signin(headless):
+    from mlca.llm.openai_auth import OpenAIFlow, save_profile
+
+    config = load()
+    if not config.chatgpt_auth.client_id:
+        raise MlcaUserError("ChatGPT sign-in is coming soon: register MLCA and set chatgpt_auth.client_id")
+    if not typer.confirm("Allow MLCA to request your ChatGPT plan allowance and its caps?"):
+        return
+    flow = OpenAIFlow(config.chatgpt_auth.client_id)
+    try:
+        typer.echo(flow.url)
+        if headless:
+            flow.accept(typer.prompt("Complete redirected URL", hide_input=True))
+        else:
+            flow.open_browser()
+            flow.wait()
+        save_profile(flow.exchange())
+    finally:
+        flow.close()
+    typer.echo(
+        "ChatGPT authorized. Select ChatGPT plan and an account model in Models; no default model was selected."
+    )
+
+
 @app.command("signout")
-def signout_command():
+def signout_command(provider: str = "openrouter"):
+    if provider == "openai":
+        from mlca.llm.openai_auth import signout as openai_signout
+
+        client_id = load().chatgpt_auth.client_id
+        if not client_id:
+            raise MlcaUserError("No MLCA ChatGPT registration configured")
+        revoked = openai_signout(client_id)
+        typer.echo(
+            "Local ChatGPT tokens removed. "
+            + (
+                "Remote renewable session revoked."
+                if revoked
+                else "Remote revocation not confirmed; disconnect MLCA in ChatGPT settings."
+            )
+        )
+        return
+    if provider != "openrouter":
+        raise MlcaUserError("Sign-out provider must be openrouter or openai")
     from mlca.llm.openrouter_auth import signout
 
     signout()

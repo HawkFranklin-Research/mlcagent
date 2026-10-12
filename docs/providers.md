@@ -90,3 +90,35 @@ work; this sign-in change does not alter the scientific workflow or remove scope
 
 Protocol source: [OpenRouter OAuth PKCE](https://openrouter.ai/docs/guides/overview/auth/oauth).
 Localhost app attribution uses the host/port; MLCA does not promise a branded marketplace identity.
+
+## ChatGPT plan sign-in (P11.5, registration-gated)
+
+**Continue with ChatGPT** is disabled until `chatgpt_auth.client_id` holds MLCA's own issued
+`oaiapp_…` registration. No Codex CLI client ID or private ChatGPT backend is used. The official
+OSS flow can issue a per-user/workspace client during registration; this implementation deliberately
+waits for the author-selected registration rather than dynamically registering it for you.
+[Registration and sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in)
+explains the account/host distinction and consent.
+
+Set your issued ID in global config, then use Models or `mlca signin --provider openai`.
+For SSH use `--headless`, authorize in the browser, and paste the complete redirected loopback URL
+into the masked terminal field. The documented loopback PKCE flow is used; no undocumented device
+endpoint is guessed. A stable UUID host ID is non-secret metadata. State, nonce, callback, JWT
+signature/issuer/audience/expiry and granted plan-use scope are validated before activation.
+
+Access/refresh/ID tokens are a single secure-keyring record per registered client. Refresh is
+serialized across processes and rotates the record together. No plaintext fallback. Sign-out with
+`mlca signout --provider openai` attempts revocation and removes local tokens, reporting if remote
+revocation was not confirmed. [Accounts and sessions](https://developers.openai.com/siwc/token-sharing-open-source/profiles-and-sessions)
+describes those requirements and upstream plan limits.
+
+Choose a model from your authenticated account catalogue; there is no hard-coded default. Inference
+uses the public `https://api.openai.com/v1/responses`, `store=false`, `stream=true`, and accepts only
+a `response.completed` terminal event. Incomplete/failed/interrupted responses are not executed.
+See [Models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference).
+Plan usage is not priced as API USD: MLCA records returned tokens and unknown monetary cost; plan
+and permitted-credit caps belong to OpenAI account settings, not MLCA's USD budget. No paid-provider
+fallback is configured. Identity sign-in alone never authorizes inference.
+
+Offline mocks verify protocol behavior. Registration, eligible account access, native keyring behavior
+and actual inference remain author-run checks; none was performed during implementation.

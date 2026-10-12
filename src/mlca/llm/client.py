@@ -15,6 +15,7 @@ from mlca.paths import atomic_json, canonical
 from . import egress, pricing, usage
 from .providers.fake import FakeProvider
 from .providers.openai_api import OpenAIProvider
+from .providers.openai_chatgpt import ChatGPTProvider
 from .providers.openai_compatible import CompatibleProvider
 from .providers.openrouter import OpenRouterProvider
 
@@ -51,6 +52,7 @@ class Client:
             cls = {
                 "fake": FakeProvider,
                 "openai_api": OpenAIProvider,
+                "openai_chatgpt": ChatGPTProvider,
                 "openrouter": OpenRouterProvider,
                 "openai_compatible": CompatibleProvider,
             }[cfg.kind]
@@ -219,8 +221,8 @@ class Client:
         raise MlcaUserError("Provider retry limit exhausted")
 
     def _bound(self, payload: Any, role: Any, provider: Any) -> Any:
-        if provider.kind == "fake":
-            return 0.0
+        if provider.kind in {"fake", "openai_chatgpt"}:
+            return 0.0  # ChatGPT plan limits are enforced upstream; USD cost remains unavailable.
         if provider.request_cost_bound_usd is not None:
             return provider.request_cost_bound_usd
         # Byte count deliberately overestimates typical token counts, including schema overhead.

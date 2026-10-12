@@ -21,6 +21,14 @@ def resolve(name: str | None) -> str | None:
         value = stored_key()
         if value:
             _KEYS[name] = value
+    if name.startswith("MLCA_KEYRING_CHATGPT_"):
+        from .openai_auth import load_profile
+
+        try:
+            profile = load_profile(name)
+            return profile.get("access_token") if profile else None
+        except Exception:
+            return None
     if name.startswith("MLCA_KEYRING_API_") and name not in _KEYS:
         try:
             from .openrouter_auth import secure_backend

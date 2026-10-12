@@ -476,3 +476,18 @@ quota stays explicitly unknown until supplied by the provider, never fabricated 
 Test connection is user-initiated, one attempt per role, no study content, and uses the ordinary usage/
 egress/budget path. Optional remembered API keys use only secure OS keyring references; environment
 and session-only paths remain available. Auth status never prints secrets. No live test calls made.
+
+## P11.5 — Registration-gated ChatGPT plan integration
+
+Verified official OpenAI SIWC docs (13 October): issuer auth.openai.com, public authorize/token/JWKS,
+loopback /auth/callback, identity plus offline_access/resource.invoke/chatgpt.tokens.use.direct scopes,
+resource api.openai.com/v1 and streamed public Responses with store=false. Uses only a configured
+MLCA-issued oaiapp_ ID. Current OSS docs also offer per-user dynamic registration; the author's
+explicit registration gate takes precedence, so no dynamic or Codex registration is borrowed.
+Headless uses a pasted loopback redirect, since no device endpoint was established by these docs.
+Tokens live only in keyring, refresh serializes/rotates, JWT and scopes gate inference, and failed
+streams never become scripts. Monetary plan usage stays unknown; OpenAI enforces plan/credit caps.
+
+P11.5 focused validation: JWT signature/nonce/audience, PKCE/state/client identity, explicit plan grant,
+keyring-only rotating refresh, terminal Responses stream, disabled registration button and existing
+OpenRouter paths pass offline. Native authorization and OpenAI program approval remain unverified.
