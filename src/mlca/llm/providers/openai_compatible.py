@@ -1,14 +1,14 @@
-import os
 from typing import Any
 
 from openai import OpenAI
 
 from mlca.errors import MlcaUserError
+from mlca.llm.credentials import resolve
 
 
 class CompatibleProvider:
     def __init__(self, config: Any) -> None:
-        key = os.environ.get(config.api_key_env) if config.api_key_env else "local"
+        key = resolve(config.api_key_env) if config.api_key_env else "local"
         if not key:
             raise MlcaUserError(f"Missing environment variable: {config.api_key_env}")
         self.client = OpenAI(api_key=key, base_url=config.base_url, timeout=config.timeout_s, max_retries=0)

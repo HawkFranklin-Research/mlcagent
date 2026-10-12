@@ -107,6 +107,11 @@ def save(config: Config) -> Path:
 
 
 def redact(text: str, config: Config | None = None) -> str:
+    from mlca.llm.credentials import secret_values
+
+    for value in secret_values():
+        if value:
+            text = text.replace(value, "[REDACTED]")
     names = [p.api_key_env for p in config.providers.values() if p.api_key_env] if config else []
     names += [
         name
