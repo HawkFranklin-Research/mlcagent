@@ -386,3 +386,19 @@ Published wheel and sdist for [mlcagent 0.2.0b1](https://pypi.org/project/mlcage
 ## 2026-10-07 — Published-beta verification
 
 [PyPI release](https://pypi.org/project/mlcagent/0.2.0b1/). Fresh PyPI verification used an empty temporary HOME/XDG and uv cache: `uv tool install mlcagent==0.2.0b1`, `mlca --version` (0.2.0b1), `mlca doctor --json` (level A capability; execution must confirm isolation), and `mlca mcp doctor` (14 tools) all passed. Published wheel/sdist SHA256 hashes match the scanned release artifacts. Local tag `v0.2.0b1` points to release source `16bcc72`; no push. P10 is complete, while M7, real providers/data, and native macOS/Windows remain pending. The beta description contains an overlooked historical README Status paragraph; it is corrected in source for the next release, with no second upload. Token rotation to a project-scoped token and removal of the account-wide file remain an author account step; the file was read only by the publish command.
+
+## 2026-10-12 — Native onboarding redesign (author authorized)
+
+Work is isolated on native-onboarding; master and the user's existing README/plan/web-plan edits are preserved. N1–N6 cover the native experience only. Folder discovery selects a main table and optional supporting files, never implicit joins. Main-table identity is recorded in BriefRecorded/StudyFieldsResolved and SplitFrozen; old single-table projects retain an explicit compatibility fallback.
+
+Blank outcome columns are unresolved, not guessed. New template content version 0.2.1 requires deterministic study-field resolution during Onboard. Original answers are preserved; later human resolutions reset Onboard generations and confirmations. Frozen project templates are not overwritten. Repeated-subject answers are context, not automatically inferred group identifiers; choosing a scientifically appropriate split still requires the author.
+
+The author approved masked key entry by executing the proposed plan. Initial persistence is session-only: a memory registry and redaction, with no key values in config/files/exports or analysis subprocesses. Restart requires environment credentials or repasting. Persistent OS keyring support is deferred. Provider settings preserve role assignments and generation options; sharing the Navigator configuration is an explicit checkbox.
+
+Model catalogues are fetched only on Refresh, never on save/start, and send no study data. Caches are credential-redacted and store only catalogue metadata. Unknown/non-token fees require an explicit request bound; catalogue token prices are sourced/timestamped. A model listing is not a live generation test. No automatic model fallback. Native connection/generation smoke calls remain separately authorized future checks. See docs/native-onboarding.md.
+
+N6 final verification: 152 passed, 1 skipped in 619.88 s; Ruff lint/format pass. Native forms visually
+inspected from Textual exports; study-details selection/save passed. Main-table split, replayed
+resolution, original answers, attribution/intervention counts and session-key/cached-catalogue
+canaries are covered. Old projects load in the new implementation; new record types are not claimed
+to load in the old published binary. Master remains c6fabad; no publication or remote push.

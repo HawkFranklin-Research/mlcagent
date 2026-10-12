@@ -46,6 +46,9 @@ def enrich(kind, payload, records, event, activity=None, expected_goals=()):
         payload["options_record_id"] = proposal.id if proposal else None
         if kind == "CustomInstructionSubmitted":
             payload.update(chars=len(payload["text"]), words=len(payload["text"].split()))
+    elif kind == "StudyFieldsResolved":
+        payload["decision_wait_s"] = None
+        payload["timing_source"] = "unavailable"
     elif kind == "ApprovalResolved":
         request = next((r for r in records if r.id == payload["request_id"]), None)
         payload["wait_s"] = elapsed(request.ts) if request else None

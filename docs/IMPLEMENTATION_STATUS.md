@@ -1,5 +1,30 @@
 # Implementation status — 7 October 2026
 
+## Native onboarding branch — 12 October 2026
+
+Implemented on `native-onboarding`, separate from frozen master and published beta artifacts.
+File/folder browsing, explicit main/supporting tables, deferred study fields, plain-language dynamic
+forms, role-aware provider settings, masked session-only keys, cached searchable catalogues/free
+filtering and sourced pricing are implemented. Human study resolutions are included in intervention
+counts; their wall decision time remains unavailable unless separately instrumented.
+
+Final full offline suite: **152 passed, 1 skipped in 619.88 s** (PowerShell unavailable). Ruff lint and
+format checks pass. Focused CLI/TUI/MCP/init/catalogue checks: 24 passed; study-resolution/screen checks:
+5 passed; metrics/resolution/UI subset: 8 passed. The first broad run was 147 passed, 1 skipped before
+the additional tests were included.
+
+Native forms were exported and visually inspected at 120×45; UI tests also run at 100×35 and 80×30.
+A deferred Study details screen passed a separate selection/save check. Screenshot artifacts are
+local under ~/.cache/mlca-onboarding-screens, outside the repository. No real-provider completions,
+original-data studies, public deployment or remote push were performed.
+
+See [native onboarding](native-onboarding.md) for commands, session-key lifetime, supporting-table
+limits and local installation refresh. New StudyFieldsResolved records require the updated native
+code; compatibility means this code reads old single-table projects, not that the old PyPI binary
+understands newly added record types. Existing project templates remain frozen.
+
+The pre-existing README.md/plan.md edits and untracked web plans remain untouched/uncommitted.
+
 ## Current result
 
 **Published beta:** [`mlcagent` 0.2.0b1](https://pypi.org/project/mlcagent/0.2.0b1/). Both files were accepted by PyPI with the author-provided token; public SHA256 hashes match the tested artifacts. Local release source: `16bcc72`.

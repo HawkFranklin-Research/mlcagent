@@ -19,6 +19,9 @@ def test_deferred_resolution_preserves_answers_and_gates(project_factory):
         assert session.state.pending_options is None
         assert not session.state.confirmations
         assert session.state.generations["onboard"] == 2
+        from mlca.evaluation.metrics import build
+
+        assert build(session)["interventions"]["user"]["study_resolutions"]["value"] == 1
         with pytest.raises(MlcaUserError, match="Unresolved"):
             session.resolve_study({"target": "invented"})
         assert column_for(session.state) == "y"

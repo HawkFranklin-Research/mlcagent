@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — native onboarding (12 October 2026)
+
+- File/folder picker, supported-table discovery, explicit main table and optional supporting inputs; split and replay select that table.
+- Deferred outcome columns and plain-language study details, attributed resolution records, deterministic Onboard gate and original-answer preservation.
+- Larger role-aware OpenRouter/OpenAI/local settings with session-only masked keys, budgets, searchable cached model catalogues and zero-price filter.
+- No live provider calls, scientific runs or publication; native changes are isolated on native-onboarding.
+
 ## 0.2.0b1 (beta, prepared; publication blocked) — 7 October 2026
 
 - Release gates pass (106 tests, 1 skipped). PyPI refused the initial upload because `mlca` is too similar to another project; no release is published.

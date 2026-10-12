@@ -143,6 +143,7 @@ def build(session, branch=None):
             "OptionChosen": "option_choices",
             "CustomInstructionSubmitted": "custom_instructions",
             "UserConfirmed": "confirmations",
+            "StudyFieldsResolved": "study_resolutions",
             "ApprovalRequested": "approvals_requested",
             "TestUnlocked": "test_unlocks",
             "PackageApproved": "package_approvals",

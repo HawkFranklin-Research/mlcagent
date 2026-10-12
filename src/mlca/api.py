@@ -118,7 +118,13 @@ class Session:
             if event_id in self.workflow.events
             else [],
         )
-        if kind in {"OptionChosen", "CustomInstructionSubmitted", "ApprovalResolved", "UserConfirmed"}:
+        if kind in {
+            "OptionChosen",
+            "CustomInstructionSubmitted",
+            "ApprovalResolved",
+            "UserConfirmed",
+            "StudyFieldsResolved",
+        }:
             payload["principal"] = self.principal
         from mlca.evaluation.failures import enrich as failure_fields
 

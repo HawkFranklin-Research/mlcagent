@@ -1,6 +1,6 @@
 import asyncio
 
-from textual.widgets import Checkbox, Input, Select, Static
+from textual.widgets import Checkbox, DirectoryTree, Input, Select, Static
 
 from mlca.config import Config, ProviderConfig, RoleConfig
 from mlca.tui.app import MlcaApp
@@ -35,7 +35,11 @@ def test_dynamic_project_form_and_directory(tmp_path):
             screen.dismiss(None)
             app.push_screen(FilePicker(tmp_path))
             await pilot.pause()
-            app.screen.query_one("#picked-path", Input)
+            picker = app.screen
+            tree = picker.query_one(DirectoryTree)
+            tree.post_message(DirectoryTree.DirectorySelected(tree.root, tmp_path))
+            await pilot.pause()
+            assert picker.query_one("#picked-path", Input).value == str(tmp_path)
             app.screen.dismiss(None)
             await pilot.pause()
 

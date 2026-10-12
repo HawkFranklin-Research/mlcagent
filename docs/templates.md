@@ -15,7 +15,7 @@ are relative to the action output directory. `prior_outputs` excludes raw-stage 
 and stale artifacts from invalidated workflow generations.
 
 Available checks: event_done, fact_present, output_exists, artefact_hash_recorded, metric_present,
-figure_count, split_frozen, fit_on_train_only, test_unlocked, user_confirm and template_check.
+figure_count, split_frozen, fit_on_train_only, test_unlocked, user_confirm, study_fields_resolved and template_check.
 An explicit user confirmation records a dated decision, not a model's assertion of scientific validity.
 Facts must cite hashed, indexed artifacts; citation validation is not semantic fact verification.
 
@@ -53,3 +53,12 @@ Concrete defaults in the v0.2.0 templates, to be reviewed for each study:
 - classification: 60/20/20 stratified split with seed 42; logistic regression baseline and gradient-boosting
   alternative; primary metric ROC AUC; threshold by Youden's J on validation; 1,000-resample bootstrap CI on test;
 - survival: 60/20/20 random split; Cox and penalised-Cox models; primary metric Harrell's C-index.
+
+## Deferred study fields (content version 0.2.1)
+
+The new built-in Onboard check requires an explicit main table, validated outcome columns and a row
+meaning before progression. Initialization may leave columns unresolved. Human resolution is recorded
+through Session.resolve_study; it resets Onboard generations/confirmations and preserves the original
+brief. Single-table legacy projects retain compatibility; frozen historical templates are not edited.
+Supporting tables are never implicitly merged and original inputs remain inaccessible after split.
+See [native onboarding](native-onboarding.md).

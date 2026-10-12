@@ -28,6 +28,7 @@ def record_summary(record: Any) -> str:
     parts = [
         str(payload[key])
         for key in (
+            "primary_data",
             "action_id",
             "event_id",
             "step_id",
