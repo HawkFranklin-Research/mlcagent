@@ -3,6 +3,8 @@ from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
+from mlca.project.restart import is_incomplete
+
 
 class ExistingProjectScreen(ModalScreen[str | None]):
     CSS = """ExistingProjectScreen { align: center middle; }
@@ -27,7 +29,16 @@ class ExistingProjectScreen(ModalScreen[str | None]):
                 disabled=not (self.path / ".mlca/project.yaml").is_file(),
             )
             yield Button("Create fresh study in a new subfolder", id="existing-fresh", variant="primary")
+            yield Button(
+                "Archive incomplete setup (confirmation required)",
+                id="existing-archive",
+                disabled=not is_incomplete(self.path),
+            )
             yield Button("Cancel", id="existing-cancel")
 
     def on_button_pressed(self, event):
-        self.dismiss({"existing-open": "open", "existing-fresh": "fresh"}.get(event.button.id))
+        self.dismiss(
+            {"existing-open": "open", "existing-fresh": "fresh", "existing-archive": "archive"}.get(
+                event.button.id
+            )
+        )

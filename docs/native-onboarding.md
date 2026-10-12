@@ -74,3 +74,11 @@ existing project continues its recorded state; it does not apply the new-study f
 
 CLI initialization still refuses to overwrite an existing attempt. Choose a new `mlca init` path
 for a fresh CLI study, or use `mlca -p <existing-folder>` to open the existing project.
+
+Initialization now builds private state and the analysis environment in a hidden staging folder,
+then atomically publishes `.mlca` after success. Failed setup leaves the selected folder's data and
+existing files untouched and no half-made `.mlca`. Virtualenv entry-point/activation metadata is
+rebased on publication; frozen runtime code remains unchanged. Old incomplete setups can be
+archived only after typing `ARCHIVE INCOMPLETE SETUP`. This retains the private state in a hidden
+`.mlca-incomplete-*` folder, then retries the submitted form. Corrupt or established histories are
+not offered as incomplete setups to archive.

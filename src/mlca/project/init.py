@@ -1,15 +1,19 @@
+import hashlib
+import os
 import shutil
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
 import yaml
+from filelock import FileLock
 from ulid import ULID
 
 from mlca import __version__
 from mlca.config import Config, redact_value
 from mlca.errors import MlcaUserError
 from mlca.log.store import Store
-from mlca.paths import atomic_json, resource, sha256
+from mlca.paths import atomic_json, resource, sha256, user_data_dir
 from mlca.templates.registry import get
 
 from .discovery import discover, registrations
@@ -84,7 +88,7 @@ def column_for(state, field: str = "target") -> str:
     return value
 
 
-def initialise(
+def _build_initialisation(
     path: Path,
     data: list[Path],
     template_id: str,
@@ -180,3 +184,55 @@ def initialise(
         event_id=workflow.spec.events[0],
     )
     return root
+
+
+def _rebase_environment(staged: Path, destination: Path):
+    # Virtualenv entry-point shebangs, activators, cfg and local direct_url metadata contain
+    # absolute paths. Installed wheels/runtime sources stay byte-identical.
+    environment = staged / ".mlca/env"
+    old = str(staged).encode()
+    new = str(destination).encode()
+    for file in environment.rglob("*"):
+        if not file.is_file() or file.is_symlink():
+            continue
+        if file.parent.name not in {"bin", "Scripts"} and file.name not in {"pyvenv.cfg", "direct_url.json"}:
+            continue
+        body = file.read_bytes()
+        if b"\0" in body or old not in body:
+            continue
+        try:
+            body.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        mode = file.stat().st_mode
+        # uv may hardlink dependency files to its shared cache. Replace, never edit in place.
+        temporary = file.with_name(file.name + ".mlca-rebase")
+        temporary.write_bytes(body.replace(old, new))
+        temporary.chmod(mode)
+        os.replace(temporary, file)
+
+
+def initialise(
+    path, data, template_id, brief, config=None, column_picker=None, principal="user", primary_data=None
+):
+    root = Path(path).expanduser().resolve()
+    locks = user_data_dir() / "init-locks"
+    locks.mkdir(parents=True, exist_ok=True)
+    with FileLock(str(locks / (hashlib.sha256(str(root).encode()).hexdigest() + ".lock"))):
+        if (root / ".mlca").exists() or (root / ".mlca").is_symlink():
+            raise MlcaUserError(
+                "This folder already contains an MLCA study or an earlier initialization attempt. Open it to continue, or choose a new project folder. Existing files will not be overwritten."
+            )
+        root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix=".mlca-init-", dir=root) as directory:
+            staged = Path(directory)
+            _build_initialisation(
+                staged, data, template_id, brief, config, column_picker, principal, primary_data
+            )
+            _rebase_environment(staged, root)
+            if (root / ".mlca").exists() or (root / ".mlca").is_symlink():
+                raise MlcaUserError(
+                    "Another study appeared during initialization; no existing files were replaced"
+                )
+            os.rename(staged / ".mlca", root / ".mlca")
+        return root

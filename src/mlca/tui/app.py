@@ -212,6 +212,27 @@ class MlcaApp(App):
                 self.open_project(path)
             elif choice == "fresh":
                 self.initialise_project({**result, "fresh_parent": str(path)})
+            elif choice == "archive":
+
+                def confirmed(answer):
+                    if not answer:
+                        return
+                    try:
+                        from mlca.project.restart import archive_incomplete
+
+                        archived = archive_incomplete(path, answer["phrase"])
+                        self.notify("Earlier attempt archived at " + str(archived))
+                        self.initialise_project(result)
+                    except Exception as exc:
+                        self.notify(str(exc), severity="error")
+
+                self.push_screen(
+                    FormScreen(
+                        "Archive the incomplete setup, retaining its files. Then retry this new-study form.",
+                        [("phrase", "Type ARCHIVE INCOMPLETE SETUP", "")],
+                    ),
+                    confirmed,
+                )
 
         self.push_screen(ExistingProjectScreen(path), selected)
 

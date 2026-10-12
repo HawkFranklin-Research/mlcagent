@@ -491,3 +491,13 @@ streams never become scripts. Monetary plan usage stays unknown; OpenAI enforces
 P11.5 focused validation: JWT signature/nonce/audience, PKCE/state/client identity, explicit plan grant,
 keyring-only rotating refresh, terminal Responses stream, disabled registration button and existing
 OpenRouter paths pass offline. Native authorization and OpenAI program approval remain unverified.
+
+## P11.6 — Atomic private-state initialization
+
+Build inside a hidden staging folder on the destination filesystem, under an initialization lock,
+then rename only .mlca atomically so existing user data/files are preserved. Rebase virtualenv
+entry-point/activation/direct_url metadata by replacement (never edit shared uv hardlinks). Frozen
+runtime sources/hashes and registered source paths stay unchanged. Old structurally incomplete
+setups offer a typed-confirmation archive, not deletion. Corrupt history is not classified as a
+partial setup. Failed setup/retry, old-evidence preservation, relocated runtime and existing guards:
+15 focused tests passed in 3.10 s.
