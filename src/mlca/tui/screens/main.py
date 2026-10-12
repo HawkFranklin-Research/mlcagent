@@ -1,12 +1,12 @@
 from typing import Any
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
 from mlca.tui.banner import brand_line
-from mlca.ui_text import text
 
 from ..widgets.event_graph import EventGraph
 from ..widgets.facts import Facts
@@ -18,28 +18,24 @@ from ..widgets.subgoals import Subgoals
 
 class MainScreen(Screen):
     BINDINGS = [
-        (key, "app." + action, text(label))
-        for key, action, label in [
-            ("d", "study", "study"),
-            ("a", "approvals", "approvals"),
-            ("1", "choose_1", "choose"),
-            ("2", "choose_2", "choose"),
-            ("3", "choose_3", "choose"),
-            ("4", "choose_4", "choose"),
-            ("n", "next", "next"),
-            ("l", "loop", "loop"),
-            ("c", "custom", "custom"),
-            ("f", "confirm", "confirm"),
-            ("b", "branches", "branches"),
-            ("r", "report", "report"),
-            ("u", "usage", "usage"),
-            ("v", "view_figure", "view_figure"),
-            ("t", "unlock", "unlock"),
-            ("o", "open", "open"),
-            ("s", "configure", "configure"),
-            ("q", "quit", "quit"),
-        ]
+        *[(str(i), f"app.select_card({i})", f"Card {i}") for i in range(1, 10)],
+        ("m", "app.configure", "Models"),
+        Binding("s", "app.configure", "Models", show=False),
+        ("r", "app.report", "Reports"),
+        ("q", "app.quit", "Quit"),
+        Binding("d", "app.study", "Study details", show=False),
+        Binding("a", "app.approvals", "Approvals", show=False),
+        Binding("n", "app.next", "Next", show=False),
+        Binding("c", "app.custom", "Custom", show=False),
+        Binding("f", "app.confirm", "Confirm", show=False),
+        Binding("t", "app.unlock", "Unlock", show=False),
+        Binding("b", "app.branches", "Branches", show=False),
+        Binding("u", "app.usage", "Usage", show=False),
+        Binding("v", "app.view_figure", "Figure", show=False),
+        Binding("o", "app.open", "Open", show=False),
+        Binding("l", "app.loop", "Loop", show=False),
     ]
+
     DEFAULT_CSS = "MainScreen #brand { height: 1; margin-bottom: 1; }"
 
     def compose(self) -> ComposeResult:

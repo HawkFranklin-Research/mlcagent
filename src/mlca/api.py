@@ -218,7 +218,7 @@ class Session:
             "event_spec": self.workflow.events[state.current_event].model_dump(),
         }
 
-    def options(self) -> Any:
+    def options(self, guided=False) -> Any:
         with self.mutation():
             state = self.state
             if state.pending_options is None:
@@ -301,9 +301,13 @@ class Session:
             custom = {"id": "custom", "title": "Custom instruction (current event scope)"}
             if not options and state.event_statuses.get(state.current_event) != "done":
                 custom["note"] = (
-                    "All available actions are exhausted; this event needs a custom instruction or a branch."
+                    "The recorded actions are complete. Review the remaining study decisions or add a scoped instruction."
                 )
             options.append(custom)
+            if guided:
+                from mlca.engine.guidance import cards
+
+                return cards(self, options)
             return options
 
     def choose(self, n: Any) -> Any:

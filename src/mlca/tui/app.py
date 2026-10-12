@@ -85,7 +85,7 @@ class MlcaApp(App):
             records = self.session.branches.records()
             anchor = next((r.id for r in reversed(records) if r.type.value == "OptionsProposed"), None)
             self.activity.begin(anchor)
-            self.screen.query_one(Options).render_options(options)
+            self.call_later(self.screen.query_one(Options).render_options, options)
         else:
             self.run_session_action("options", refresh_only=True)
 
@@ -111,9 +111,13 @@ class MlcaApp(App):
             return
         self.busy = True
         try:
-            result = getattr(self.session, method)(*args)
+            result = (
+                getattr(self.session, method)(True)
+                if method == "options"
+                else getattr(self.session, method)(*args)
+            )
             self.call_from_thread(self.write_log, result_summary(method, result))
-            options = result if method == "options" else self.session.options()
+            options = result if method == "options" else self.session.options(True)
             self.call_from_thread(self.refresh_project, options)
             if method == "report":
                 self.call_from_thread(self.show_reports, result)
@@ -214,6 +218,36 @@ class MlcaApp(App):
                 self.notify(str(exc), severity="error")
 
         self.push_screen(OnboardingScreen(load()), selected)
+
+    def check_action(self, action, parameters):
+        if action == "select_card":
+            if not isinstance(self.screen, MainScreen):
+                return None
+            return True if parameters[0] <= len(self.screen.query_one(Options).items) else None
+        return True
+
+    def on_options_selected(self, event):
+        self.select_option(event.option_id)
+
+    def action_select_card(self, number):
+        if self._can_act():
+            options = self.screen.query_one(Options).items
+            if 1 <= number <= len(options):
+                self.select_option(options[number - 1]["id"])
+
+    def select_option(self, identifier):
+        if not self._can_act():
+            return
+        if identifier == "human:study":
+            self.action_study()
+        elif identifier.startswith("human:confirm:"):
+            self.action_confirm()
+        elif identifier == "human:unlock":
+            self.action_unlock()
+        elif identifier == "custom":
+            self.action_custom()
+        else:
+            self.run_session_action("choose", identifier)
 
     def action_choose_1(self) -> Any:
         if self._can_act():

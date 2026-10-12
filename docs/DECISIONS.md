@@ -437,3 +437,15 @@ Concurrent ProjectScreen changes are preserved; this fix lives in app.py and a n
 
 Existing-folder validation: 11 focused tests passed (4.99 s); Ruff passes. Local installation
 refreshed. No real study retried; the reason for the original experiment failure is still unknown.
+
+## P11.1 — Guided cards
+
+Added an explicitly guided presentation of Session.options(guided=True); existing CLI/MCP callers
+retain the stable action menu. Human card metadata is computed in engine/guidance.py, never accepted
+from Navigator output. The TUI dispatches those cards to the existing human-only study/confirmation/
+unlock APIs. Card position and catalog option ID remain separate, preserving stale-option checks.
+Number keys, arrow focus/Enter and clickable cards expose the same choices; obsolete hotkeys stay
+hidden as compatibility shortcuts. The exhausted-message wording is replaced with remaining decisions.
+
+P11.1 validation: 11 focused guidance/TUI/restart tests passed in 2.97 s. Button content uses literal
+Rich text; the installed Textual API does not accept a markup keyword on Button constructors.
