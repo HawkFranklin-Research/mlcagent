@@ -449,3 +449,11 @@ hidden as compatibility shortcuts. The exhausted-message wording is replaced wit
 
 P11.1 validation: 11 focused guidance/TUI/restart tests passed in 2.97 s. Button content uses literal
 Rich text; the installed Textual API does not accept a markup keyword on Button constructors.
+
+## P11.2 — Visible agent work
+
+Added transient progress callbacks to Session/runner, without changing the replay protocol or
+recording a fake completion. The TUI spinner shows elapsed time and selected model; worker phases
+show write/check/run/collect/sub-goal checks with repair attempts. The engine's timeouts/budgets
+remain the cancellation boundary; Esc closes dialogs but does not kill an executing study.
+Fake-clock progress plus existing main-screen tests pass (4 tests, 1.62 s).

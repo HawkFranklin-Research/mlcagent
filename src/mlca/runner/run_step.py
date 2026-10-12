@@ -269,6 +269,9 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
         step_id=step_id,
         actor=session.principal if session.mode == "brain" else "worker",
     )
+    session.progress(
+        "Checking the script", attempt=attempt, max_attempts=session.config.budgets.worker_max_attempts
+    )
     violations = static_check(
         source, action.allow_network, require_fit=action.event in {"preprocess", "features", "model"}
     )
@@ -303,6 +306,9 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
         mapping = {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()}
         atomic_json(step / "inputs.json", mapping)
         atomic_json(directory / "inputs.json", mapping)
+        session.progress(
+            "Running in the sandbox", attempt=attempt, max_attempts=session.config.budgets.worker_max_attempts
+        )
         execution = execute(
             python(session.root / ".mlca/env"),
             directory,
@@ -321,6 +327,9 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
     session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)
     if execution["exit_status"] != 0 or sha256(script) != script_hash:
         return None, diagnostics(execution, session.config.privacy.allow_sample_rows)
+    session.progress(
+        "Collecting outputs", attempt=attempt, max_attempts=session.config.budgets.worker_max_attempts
+    )
     try:
         collect(session.root, directory, action, state)
     except MlcaUserError as exc:
@@ -341,6 +350,12 @@ def _worker(session, action, params, step_id, step, state, inputs):
     source = ExternalSource() if session.mode == "brain" else WorkerSource(session)
     previous, error = "", None
     for attempt in range(1, session.config.budgets.worker_max_attempts + 1):
+        session.progress(
+            "Writing the script" if not error else "Repairing the script",
+            attempt=attempt,
+            max_attempts=session.config.budgets.worker_max_attempts,
+            reason=error or "",
+        )
         order = work_order(session, action, params, step_id, inputs, attempt, error)
         if isinstance(source, ExternalSource):
             return {"step_id": step_id, "status": "awaiting_script", "work_order": order}

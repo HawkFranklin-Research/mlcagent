@@ -12,6 +12,7 @@ from ..widgets.event_graph import EventGraph
 from ..widgets.facts import Facts
 from ..widgets.log_stream import LogStream
 from ..widgets.options import Options
+from ..widgets.progress import Progress
 from ..widgets.status_bar import StatusBar
 from ..widgets.subgoals import Subgoals
 
@@ -46,6 +47,7 @@ class MainScreen(Screen):
                 yield Subgoals(id="subgoals")
                 yield Options(id="options")
             yield Facts(id="facts")
+        yield Progress(id="progress")
         yield Static("", id="approvals-banner")
         yield LogStream(id="log-stream")
         yield StatusBar(id="status-bar")

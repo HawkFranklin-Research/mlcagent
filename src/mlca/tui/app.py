@@ -26,6 +26,7 @@ from .widgets.event_graph import EventGraph
 from .widgets.facts import Facts
 from .widgets.log_stream import LogStream, record_summary, result_summary
 from .widgets.options import Options
+from .widgets.progress import Progress
 from .widgets.status_bar import StatusBar
 from .widgets.subgoals import Subgoals
 
@@ -59,6 +60,9 @@ class MlcaApp(App):
             self.session.timing_context = self.activity.value
             self.session.output_callback = lambda channel, chunk: self.call_from_thread(
                 self.write_log, channel + ": " + chunk[-2000:]
+            )
+            self.session.progress_callback = lambda payload: self.call_from_thread(
+                self.update_progress, payload
             )
             self.session.subscribe(
                 lambda record: (
@@ -110,6 +114,10 @@ class MlcaApp(App):
         if self.busy:
             return
         self.busy = True
+        role = self.session.config.roles.get("navigator" if method == "options" else "worker")
+        model = role.model if role else "engine / template"
+        self.call_from_thread(self.start_progress, method, model)
+        error = None
         try:
             result = (
                 getattr(self.session, method)(True)
@@ -122,9 +130,23 @@ class MlcaApp(App):
             if method == "report":
                 self.call_from_thread(self.show_reports, result)
         except Exception as exc:
-            self.call_from_thread(self.notify, str(exc), severity="error")
+            error = self.session.redact(str(exc))
+            self.call_from_thread(self.notify, error, severity="error")
         finally:
+            self.call_from_thread(self.finish_progress, error)
             self.busy = False
+
+    def start_progress(self, operation, model):
+        if isinstance(self.screen, MainScreen):
+            self.screen.query_one(Progress).start(operation, model)
+
+    def update_progress(self, payload):
+        if isinstance(self.screen, MainScreen):
+            self.screen.query_one(Progress).phase(payload)
+
+    def finish_progress(self, error=None):
+        if isinstance(self.screen, MainScreen):
+            self.screen.query_one(Progress).finish(error)
 
     def _can_act(self) -> bool:
         if not self.session or isinstance(self.screen, ModalScreen) or self.busy:

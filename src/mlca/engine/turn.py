@@ -99,6 +99,7 @@ def finish(session, action, observation):
                     )
                 except MlcaUserError as exc:
                     session.emit("Note", {"text": "Figure inspection unavailable: " + str(exc)})
+    session.progress("Checking sub-goals")
     checks.run_all(session.state, session.workflow, session.root, session.emit)
     edits = materialise(session.root, session.state, session.emit)
     return {

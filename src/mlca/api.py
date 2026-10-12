@@ -69,6 +69,7 @@ class Session:
         self.session_id = str(ULID())
         self.turn_id = None
         self.output_callback = None
+        self.progress_callback = None
         self.timing_context = None
         self.client = Client(self.root, self.config, self.emit)
         self.client.disabled = mode == "brain"
@@ -100,6 +101,10 @@ class Session:
         from mlca.privacy.rows import guard
 
         return guard(self.root, self.state)
+
+    def progress(self, phase, **details):
+        if self.progress_callback:
+            self.progress_callback({"phase": phase, **redact_value(details, self.config)})
 
     def emit(
         self, kind: Any, payload: Any, *, step_id: Any = None, actor: Any = "engine", event_id: Any = None
