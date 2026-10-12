@@ -58,6 +58,7 @@ def test_workflows_parse_and_publish_is_protected():
     [
         ("0.2.0", "0.2.0"),
         ("0.2.0b1", "0.2.0-beta.1"),
+        ("0.2.0b2", "0.2.0-beta.2"),
         ("1.2.3a2", "1.2.3-alpha.2"),
         ("1.2.3rc1", "1.2.3-rc.1"),
     ],
@@ -78,7 +79,8 @@ def test_prerelease_metadata(tmp_path, monkeypatch, python_version, semver):
     assert verify(tmp_path, "v" + python_version, "mlca") == ("mlca", python_version)
 
 
-def test_beta_wrapper_uses_python_pin():
+def test_beta_wrapper_uses_python_pin(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
     import json
 
     from mlca import __version__
@@ -86,7 +88,9 @@ def test_beta_wrapper_uses_python_pin():
     package = json.loads((ROOT / "packaging/npm/package.json").read_text())
     assert package["mlca"]["pythonVersion"] == __version__
     assert package["license"] == "CC-BY-NC-ND-4.0"
-    if __version__ == "0.2.0b1":
-        assert package["version"] == "0.2.0-beta.1"
-        assert "VERSION='0.2.0b1'" in (ROOT / "installers/install.sh").read_text()
-        assert "$Version = '0.2.0b1'" in (ROOT / "installers/install.ps1").read_text()
+    from release_metadata import npm_version
+
+    assert package["version"] == npm_version(__version__)
+    if package["version"] != __version__:
+        assert f"VERSION='{__version__}'" in (ROOT / "installers/install.sh").read_text()
+        assert f"$Version = '{__version__}'" in (ROOT / "installers/install.ps1").read_text()

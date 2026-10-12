@@ -1,6 +1,6 @@
 # Installation channels
 
-The author-approved Python package name is `mlcagent`; the beta is `0.2.0b1`. npm, shell download
+The author-approved Python package name is `mlcagent`; the beta is `0.2.0b2`. npm, shell download
 and Homebrew channels remain unpublished. Replace
 `<release-base-url>` and `<tap>` only after the author chooses the public repository and publishes.
 All channels delegate to the same versioned Python wheel/source distribution; they need uv and
@@ -18,14 +18,14 @@ Python >=3.11. uv can provision a compatible Python interpreter.
 The distribution is `mlcagent`; the command remains `mlca`. The beta must be requested explicitly.
 
 ```sh
-uv tool install mlcagent==0.2.0b1
+uv tool install mlcagent==0.2.0b2
 # or
-pipx install mlcagent==0.2.0b1
+pipx install mlcagent==0.2.0b2
 ```
 
 `pipx` users also need uv available on PATH for MLCA's separate analysis environments. To try this
 local checkout, run `uv build`, then `uv tool install dist/mlcagent-*.whl` (select one wheel).
-For the browser view: `uv tool install 'mlcagent[web]==0.2.0b1' --reinstall`, then `mlca web`.
+For the browser view: `uv tool install 'mlcagent[web]==0.2.0b2' --reinstall`, then `mlca web`.
 
 ## Shell installer: Linux, macOS, WSL
 
@@ -34,7 +34,7 @@ curl -LsSf <release-base-url>/install.sh | sh
 ```
 
 The installer asks before bootstrapping uv from Astral. When downloaded to a file, use
-`sh install.sh --yes --version 0.2.0b1 --no-modify-path` for a pinned non-interactive installation without
+`sh install.sh --yes --version 0.2.0b2 --no-modify-path` for a pinned non-interactive installation without
 shell profile changes. Beta installer files default to their explicit beta pin; stable installer files install or upgrade the latest stable release. On Linux it prints
 the appropriate bubblewrap package command; it never runs sudo. On macOS it explains level B.
 
@@ -44,7 +44,7 @@ the appropriate bubblewrap package command; it never runs sudo. On macOS it expl
 irm <release-base-url>/install.ps1 | iex
 ```
 
-For flags, download the script, then run `./install.ps1 -Yes -Version 0.2.0b1 -NoModifyPath`.
+For flags, download the script, then run `./install.ps1 -Yes -Version 0.2.0b2 -NoModifyPath`.
 It recommends WSL2, asks before Astral bootstrap, installs the Python artifact and runs doctor.
 
 ## npm

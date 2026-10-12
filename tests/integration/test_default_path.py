@@ -77,7 +77,9 @@ def test_exhausted_event_explains_custom(project_factory):
         choose_action(session, "confirm_brief")
         options = session.options()
         assert len(options) == 1 and options[0]["id"] == "custom"
-        assert "custom instruction or a branch" in options[0]["note"]
+        assert "remaining study decisions" in options[0]["note"]
+        assert "scoped instruction" in options[0]["note"]
+        assert "exhausted" not in options[0]["note"].lower()
 
 
 @pytest.mark.slow

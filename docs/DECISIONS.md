@@ -501,3 +501,13 @@ runtime sources/hashes and registered source paths stay unchanged. Old structura
 setups offer a typed-confirmation archive, not deletion. Corrupt history is not classified as a
 partial setup. Failed setup/retry, old-evidence preservation, relocated runtime and existing guards:
 15 focused tests passed in 3.10 s.
+
+## P11.7 — Offline pilot and beta 2 authorization
+
+The click-only synthetic pilot reaches DATA without hidden hotkeys. Unresolved study fields defer
+Navigator calls; model selection queues until the active step ends. Screenshots were captured from
+the fake-provider UI, and explicit quota metadata is labelled provider-reported or unavailable.
+The author authorized mlcagent 0.2.0b2 publication and beta 1 yanking after beta 2 verification.
+Only the PyPI publish command may read the existing token file. The PyPI upload token does not
+provide a signed-in browser management session; the yank remains conditional on that session.
+No GitHub/npm publication, original-data runs or live model tests are authorized by this release.

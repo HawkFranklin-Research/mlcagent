@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0b2 (beta) — 13 October 2026
+
+- Guided numbered action and human-decision cards, visible progress, a branch journey and literal readable logs.
+- Provider switching between steps, recorded model changes, benchmark model locking and explicit connection/quota checks.
+- Registered ChatGPT plan sign-in using MLCA's own configured client ID and public API; disabled until registration. No Codex identity is borrowed.
+- Secure OS-keyring credentials, atomic study initialization and explicit archival of incomplete setups.
+- Offline guided-user pilot, OAuth/refresh/stream checks, model-switch, quota and initialization regression tests; updated native and VM guides.
+- Beta 2 publication and beta 1 yank are authorized; validation and actual publication results are recorded in docs/IMPLEMENTATION_STATUS.md.
+
+
 ## Unreleased — native onboarding (12 October 2026)
 
 - File/folder picker, supported-table discovery, explicit main table and optional supporting inputs; split and replay select that table.
@@ -259,3 +269,7 @@ Published wheel and sdist for [mlcagent 0.2.0b1](https://pypi.org/project/mlcage
 
 - Creating a study in an existing project folder now offers resume, fresh subfolder or cancel.
 - Preserve earlier attempts and new-study form; clarify backend overwrite refusal.
+
+## P11.7 — Guided-user regression and release preparation
+
+Final focused native/auth/model/initialization coverage: 45 passed in 14.57 s; the later queued-switch/pilot/status subset passed 5 tests in 4.67 s. The beta-wrapper pin test also passes in isolation. The full offline suite is still pending at preparation time. No live model calls or OAuth authorization were made.

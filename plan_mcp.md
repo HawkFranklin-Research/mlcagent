@@ -225,8 +225,8 @@ OpenClaw implementation update (M6): its native registry is `mcp.servers`, regis
 Before writing exact flags, check each client's current CLI help on this machine (`claude mcp add --help`, `codex mcp add --help`). Record the versions checked in `docs/mcp.md`.
 
 ### 7.2 Without a permanent install
-- `uvx --from mlcagent==0.2.0b1 mlca mcp` and `npx mlcagent mcp` (the npm launcher forwards arguments).
-- `docs/mcp.md` warns that the first run downloads packages and may exceed a client's server start timeout. Recommend `uv tool install mlcagent==0.2.0b1` first.
+- `uvx --from mlcagent==0.2.0b2 mlca mcp` and `npx mlcagent mcp` (the npm launcher forwards arguments).
+- `docs/mcp.md` warns that the first run downloads packages and may exceed a client's server start timeout. Recommend `uv tool install mlcagent==0.2.0b2` first.
 
 ### 7.3 Agent skill
 - `skills/mlca/SKILL.md`, at most 60 lines: what MLCA is, the two modes, the tool loop, the work-order contract, human-only decisions, and "do not try to bypass rules; failures are evidence".

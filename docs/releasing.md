@@ -1,7 +1,7 @@
 # Release preparation and author setup
 
-D1 is resolved as CC-BY-NC-ND-4.0 and D3 as `mlcagent`. The author authorized one manual PyPI
-upload of 0.2.0b1. This does not authorize GitHub pushes, npm publication or a new remote.
+D1 is resolved as CC-BY-NC-ND-4.0 and D3 as `mlcagent`. The author authorized the initial manual PyPI upload of 0.2.0b1 and now authorizes
+0.2.0b2, followed by yanking b1 after b2 is verified. This does not authorize GitHub pushes, npm publication or a new remote.
 The GitHub release pipeline remains unconfigured; the steps below describe future setup.
 See [implementation status](IMPLEMENTATION_STATUS.md) for the actual publication result.
 
@@ -40,7 +40,7 @@ changed those settings or stored secrets.
 - Run `uv sync --locked --group dev`, dependency-cache priming, `uv run pytest -q`, lint/format,
   `uv run python scripts/check_wheel.py`, Node launcher tests and `npm pack --dry-run`.
 - With D1/D3 resolved, run `uv run python scripts/verify_release.py --tag v<VERSION>
-  --approved-name <NAME>`. The author-approved beta tag is `v0.2.0b1`.
+  --approved-name <NAME>`. The author-approved beta tag is `v0.2.0b2`.
 - Confirm the six-job OS/Python CI matrix is green. Native Windows/macOS results cannot be inferred
   from Linux level-B tests. Linux CI uses bubblewrap; its ephemeral runner enables user namespaces
   if AppArmor restricts them, without changing developer machines.
