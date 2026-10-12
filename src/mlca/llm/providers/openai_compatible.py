@@ -8,7 +8,13 @@ from mlca.llm.credentials import resolve
 
 class CompatibleProvider:
     def __init__(self, config: Any) -> None:
+        if config.api_key_env == "MLCA_KEYRING_OPENROUTER_KEY" and (
+            config.kind != "openrouter" or config.base_url not in {None, "https://openrouter.ai/api/v1"}
+        ):
+            raise MlcaUserError("OpenRouter sign-in credentials can only be used at OpenRouter")
         key = resolve(config.api_key_env) if config.api_key_env else "local"
+        if not key and config.api_key_env == "MLCA_KEYRING_OPENROUTER_KEY":
+            raise MlcaUserError("OpenRouter credential unavailable; unlock your OS keyring or sign in again")
         if not key:
             raise MlcaUserError(f"Missing environment variable: {config.api_key_env}")
         self.client = OpenAI(api_key=key, base_url=config.base_url, timeout=config.timeout_s, max_retries=0)

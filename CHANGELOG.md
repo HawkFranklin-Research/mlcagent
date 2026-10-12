@@ -246,3 +246,11 @@ Published wheel and sdist for [mlcagent 0.2.0b1](https://pypi.org/project/mlcage
 ## 2026-10-07 — Published-beta verification
 
 [PyPI release](https://pypi.org/project/mlcagent/0.2.0b1/). Fresh PyPI verification used an empty temporary HOME/XDG and uv cache: `uv tool install mlcagent==0.2.0b1`, `mlca --version` (0.2.0b1), `mlca doctor --json` (level A capability; execution must confirm isolation), and `mlca mcp doctor` (14 tools) all passed. Published wheel/sdist SHA256 hashes match the scanned release artifacts. Local tag `v0.2.0b1` points to release source `16bcc72`; no push. P10 is complete, while M7, real providers/data, and native macOS/Windows remain pending. The beta description contains an overlooked historical README Status paragraph; it is corrected in source for the next release, with no second upload. Token rotation to a project-scoped token and removal of the account-wide file remain an author account step; the file was read only by the publish command.
+
+### Native OpenRouter sign-in (unreleased)
+
+- Start free with OpenRouter in model settings: PKCE browser authorization or masked headless code.
+- Secure OS keyring storage; session-only TUI fallback with no plaintext persistence.
+- `mlca signin`, `mlca signin --headless`, `mlca signout`; doctor reports local credential availability.
+- Navigator/Worker free-router preset, preserving other role and generation settings.
+- Offline PKCE, callback, secret storage, redaction, configuration and TUI regressions.

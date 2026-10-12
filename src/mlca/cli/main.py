@@ -98,6 +98,39 @@ def mcp_install(
         typer.echo(guidance(client, _path(ctx)), err=True)
 
 
+@app.command("signin")
+def signin(headless: bool = False):
+    """Connect a user-owned OpenRouter key and select the free router."""
+    from mlca.config import save
+    from mlca.llm.openrouter_auth import Flow, configure_free, secure_backend, store_key
+
+    # Separate CLI commands require secure persistence; a process-only key would vanish.
+    secure_backend()
+    flow = Flow(headless=headless)
+    try:
+        typer.echo("Authorize OpenRouter at: " + flow.url)
+        if headless:
+            flow.accept(typer.prompt("Authorization code", hide_input=True))
+        else:
+            flow.open_browser()
+            flow.wait()
+        reference = store_key(flow.exchange())
+        save(configure_free(load(), reference))
+    finally:
+        flow.close()
+    typer.echo("OpenRouter connected. Navigator and Worker use openrouter/free. Free requests have quotas.")
+
+
+@app.command("signout")
+def signout_command():
+    from mlca.llm.openrouter_auth import signout
+
+    signout()
+    typer.echo(
+        "Local OpenRouter credential removed. Revoke the remote key at https://openrouter.ai/settings/keys"
+    )
+
+
 @app.command()
 def web(ctx: typer.Context, port: int = typer.Option(8000, min=1, max=65535)) -> None:
     from mlca.web import serve
@@ -418,6 +451,7 @@ def configuration(ctx: typer.Context, operation: str = typer.Argument("show")) -
 @app.command()
 def doctor(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")) -> Any:
     config = load(_path(ctx))
+    from mlca.llm.credentials import resolve
     from mlca.sandbox.level import explanation
 
     if not json_output:
@@ -438,6 +472,7 @@ def doctor(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")
                 name: {
                     "kind": p.kind,
                     "credential_env_present": bool(os.environ.get(p.api_key_env)) if p.api_key_env else None,
+                    "credential_available": bool(resolve(p.api_key_env)),
                 }
                 for name, p in config.providers.items()
             },

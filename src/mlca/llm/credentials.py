@@ -13,7 +13,15 @@ def remember(value: str) -> str:
 
 
 def resolve(name: str | None) -> str | None:
-    return _KEYS.get(name) or os.environ.get(name) if name else None
+    if not name:
+        return None
+    if name == "MLCA_KEYRING_OPENROUTER_KEY" and name not in _KEYS:
+        from .openrouter_auth import stored_key
+
+        value = stored_key()
+        if value:
+            _KEYS[name] = value
+    return _KEYS.get(name) or os.environ.get(name)
 
 
 def secret_values() -> list[str]:
@@ -22,3 +30,11 @@ def secret_values() -> list[str]:
 
 def forget() -> None:
     _KEYS.clear()
+
+
+def forget_reference(name: str | None) -> None:
+    value = _KEYS.pop(name, None)
+    if value:
+        for other in list(_KEYS):
+            if _KEYS[other] == value:
+                del _KEYS[other]

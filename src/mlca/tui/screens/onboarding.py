@@ -5,9 +5,10 @@ from textual.widgets import Button, Checkbox, Input, Label, Select, Static
 
 from mlca.config import Config, ProviderConfig, RoleConfig
 from mlca.llm.catalog import DEFAULTS, cached, save_prices
-from mlca.llm.credentials import forget, remember, resolve
+from mlca.llm.credentials import forget, forget_reference, remember, resolve
 
 from .model_picker import ModelPicker
+from .openrouter_signin import OpenRouterSignin
 
 KINDS = [
     ("OpenRouter", "openrouter"),
@@ -28,6 +29,7 @@ class OnboardingScreen(ModalScreen[dict | None]):
         self.config = config
         self.initial = {}
         self.prices = {}
+        self.signed_reference = None
         for role in ["navigator", "worker"]:
             selected = config.roles.get(role)
             name = selected.provider if selected else role + "_provider"
@@ -38,8 +40,10 @@ class OnboardingScreen(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="settings"):
+            yield Static("Models and providers — environment, session keys, or secure OpenRouter sign-in")
+            yield Button("Start free with OpenRouter", id="start-free", variant="primary")
             yield Static(
-                "Models and providers — keys remain in environment variables or this application session only"
+                "Sign in without pasting an API key. Free requests have quotas; model availability varies."
             )
             yield Checkbox(
                 "Use the Navigator provider and model for the Worker too",
@@ -128,6 +132,8 @@ class OnboardingScreen(ModalScreen[dict | None]):
         base = current if kind == current.kind else ProviderConfig(kind=kind)
         env = self.query_one(prefix + "env", Input).value.strip() or None
         key = self.query_one(prefix + "key", Input).value
+        if kind == "openrouter" and self.signed_reference and not key:
+            env = self.signed_reference
         if include_key and key:
             env = remember(key)
         bound = self.query_one(prefix + "bound", Input).value.strip()
@@ -136,6 +142,9 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 **base.model_dump(),
                 "kind": kind,
                 "api_key_env": env,
+                "structured_outputs": True
+                if kind == "openrouter" and self.signed_reference
+                else base.structured_outputs,
                 "base_url": self.query_one(prefix + "url", Input).value.strip() or None,
                 "request_cost_bound_usd": float(bound) if bound else None,
             }
@@ -143,10 +152,55 @@ class OnboardingScreen(ModalScreen[dict | None]):
 
     def on_button_pressed(self, event):
         identifier = event.button.id
-        if identifier == "cancel-settings":
+        if identifier == "start-free":
+
+            def signed_in(reference):
+                if not reference:
+                    return
+                from mlca.llm.catalog import Model
+
+                for role in ["navigator", "worker"]:
+                    self.query_one("#" + role + "-kind", Select).value = "openrouter"
+
+                # Apply after provider-change messages, which reset endpoint/model fields.
+                def apply_free():
+                    self.signed_reference = reference
+                    self.query_one("#shared-model", Checkbox).value = True
+                    for role in ["navigator", "worker"]:
+                        self.query_one("#" + role + "-url", Input).value = DEFAULTS["openrouter"][0]
+                        self.query_one("#" + role + "-env", Input).value = reference
+                        self.query_one("#" + role + "-key", Input).value = ""
+                        self.query_one("#" + role + "-model", Input).value = "openrouter/free"
+                        self.query_one("#" + role + "-bound", Input).value = ""
+                        self.query_one("#" + role + "-key-status", Static).update("OpenRouter connected")
+                        self.prices[role] = Model("openrouter/free", "Free Models Router", 0, 0, free=True)
+
+                self.call_after_refresh(apply_free)
+
+            self.app.push_screen(OpenRouterSignin(), signed_in)
+        elif identifier == "router-signout":
+            from mlca.llm.openrouter_auth import signout
+
+            try:
+                if self.signed_reference and self.signed_reference.startswith("MLCA_SESSION_"):
+                    forget_reference(self.signed_reference)
+                else:
+                    signout()
+                self.signed_reference = None
+                if self.app.session:
+                    self.app.session.client.providers.clear()
+                self.query_one("#settings-error", Static).update(
+                    "Local OpenRouter key removed. Revoke the remote key at https://openrouter.ai/settings/keys"
+                )
+            except Exception:
+                self.query_one("#settings-error", Static).update(
+                    "Could not remove the key; unlock your OS keyring and retry."
+                )
+        elif identifier == "cancel-settings":
             self.dismiss(None)
         elif identifier == "forget-keys":
             forget()
+            self.signed_reference = None
             if self.app.session:
                 self.app.session.client.providers.clear()
             for role in ["navigator", "worker"]:

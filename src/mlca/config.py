@@ -107,8 +107,12 @@ def save(config: Config) -> Path:
 
 
 def redact(text: str, config: Config | None = None) -> str:
-    from mlca.llm.credentials import secret_values
+    from mlca.llm.credentials import resolve, secret_values
 
+    if config:
+        for provider in config.providers.values():
+            if provider.api_key_env == "MLCA_KEYRING_OPENROUTER_KEY":
+                resolve(provider.api_key_env)
     for value in secret_values():
         if value:
             text = text.replace(value, "[REDACTED]")

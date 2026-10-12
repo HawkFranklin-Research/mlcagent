@@ -1,3 +1,19 @@
+## Native OpenRouter sign-in — 2026-10-13 (unreleased)
+
+Implemented browser/headless PKCE S256, state-checked loopback callback, expiry/single-use exchange,
+secure OS keyring-only persistence and session-only TUI fallback. Model settings offer Start free
+with OpenRouter and Sign out; CLI provides signin/signout. The free preset configures Navigator
+and Worker without paid fallbacks, preserves optional roles/settings, and enables structured output.
+Doctor reports local credential availability only. Documentation: docs/providers.md.
+
+Verification: full offline suite **164 passed, 1 skipped in 609.33 s** (PowerShell unavailable).
+The suite began before the final callback timeout/cancellation/redaction hardening; the final
+focused auth/catalogue/onboarding suite passed **20 tests in 3.82 s** afterwards. Ruff lint/format,
+CLI help, wheel build and 194-entry resource check pass. No real sign-in, OS-keyring write or
+inference call performed. Native OS keyring integration and live OpenRouter authorization require
+manual verification. Concurrent logo/welcome/main-table changes remain outside this commit;
+master remains c6fabad. The published beta is unchanged.
+
 # Implementation status — 7 October 2026
 
 ## Native onboarding branch — 12 October 2026

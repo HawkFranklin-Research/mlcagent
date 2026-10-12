@@ -407,3 +407,20 @@ Installed-source checks: local uv tool refresh succeeded; mlca --version, instal
 headless new forms and mlca mcp doctor (14 tools) passed. A final UI-only blank-path guard prevents
 empty data input from registering the current directory implicitly; the post-guard focused suite
 passed 24 tests in 6.96 s. The full 152-pass/1-skip result above precedes that UI-only hardening.
+
+## 2026-10-13 — OpenRouter sign-in in native driver mode
+
+Author authorized replacing manual-key-only onboarding with OpenRouter's documented PKCE
+integration. Implemented S256/state-checked loopback callback and official headless code flow,
+secure OS keyring storage with a session-only TUI fallback, free-router preset, CLI signin/signout
+and offline doctor credential availability. No gateway or copied Cline credentials. The author
+request supersedes the earlier session-only rule only for OAuth keys in a secure OS keyring.
+Persistent plaintext and third-party fallback backends are refused. Other manual providers stay
+available. No real authorization, account inspection or inference call performed during development.
+Do not claim an account name or remaining quota from credential presence. Request-economy changes
+remain separate because caching can change the workflow's observed decisions and benchmark protocol.
+Concurrent logo/welcome/main-table edits and web plan drafts are preserved unstaged.
+
+Verification: full offline suite 164 passed, 1 skipped (609.33 s); final focused checks 20 passed
+(3.82 s), including hardening added while the full run was active. Ruff/build/resource checks pass.
+Real user authorization and native OS keyring writes are not verified by fake-provider tests.
