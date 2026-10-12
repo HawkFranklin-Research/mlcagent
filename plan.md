@@ -85,6 +85,8 @@ Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_dist
     reachable before/after `audit_schema`, scoped custom execution preserves completed checks,
     primary proposals remain refused, and out-of-scope custom instructions still fail.
 - **P10 evaluation instrumentation:** implemented in local sub-phase commits (section 8, P10); targeted tests pass. Full release-suite validation passed: 137 passed, 1 skipped. Original-data and live-provider measurements remain pending.
+- **P11 guided TUI and provider switching** (implemented 2026-10-13; live authorization pending): option cards, engine-appended human-decision cards, visible agent progress, left-to-right journey strip, model status and switching at any time, OpenAI sign-in through the official program (section 8, P11).
+- **Browser edition (driver mode in WebAssembly):** planned separately in [`plan_web.md`](plan_web.md) (2026-10-12); branch `web-edition`, after the paper's code freeze. Brain mode stays native; its browser follow-up `mlcagent-web-mcp` is mapped in [`plan_web_mcp.md`](plan_web_mcp.md).
 - **P9 remainder:** general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT-account login, opencode free models.
 
 ### Redesigns and additions relative to the original spec (R-list)
@@ -1059,6 +1061,111 @@ Never copy message text, only the numbers. The import is idempotent (keyed by me
 - `mlca bench run` with the fake provider and N=3, then `summarize`, works end to end;
 - `docs/metrics.md` is written;
 - local commits per sub-phase (`P10.<n>: …`); nothing published.
+
+### P11: a TUI that guides, plus providers you can switch at any time
+
+> **Status:** ✅ P11.1–P11.7 implemented on native-onboarding; focused tests pass and full/release validation is in progress. OpenAI sign-in remains registration-gated; real-provider and native keyring checks are pending. Details: docs/IMPLEMENTATION_STATUS.md.
+> Engine guidance is opt-in for TUI presentation, preserving existing MCP/CLI action IDs; account quotas stay unknown unless explicitly reported. Cancellation during execution remains the engine timeout/budget boundary.
+
+**What went wrong in that run:**
+- the options were not recognisable as distinct choices;
+- after the only scripted action in `onboard`, the screen said "All available actions are exhausted". The remaining steps (choose the target column, confirm the brief, move on) were hidden behind footer hotkeys (`d`, `f`, `n`);
+- the orange panel showed raw engine records (`TurnStarted`, `SubgoalChecked …`);
+- nothing showed whether the model was connected or which one answered.
+
+**Goal:** at every moment the screen says, in plain words, **where you are, what just happened, and your 2–4 choices**, while the agent works visibly in the background.
+
+**Rule kept from §3:** human and navigation cards are appended **by the engine**, never by the Navigator (I5, I6). The Navigator still proposes only catalog actions.
+
+#### P11.1 Options as cards
+- **One card per option**, numbered and keyboard-selectable (`1`–`n`, arrows + Enter):
+  - title (≤ 8 words);
+  - one line on what it does;
+  - "produces: …" (the action's outputs);
+  - "why now: …" (the sub-goal or fact it advances);
+  - a source tag (`agent` / `template` / `you decide`);
+  - estimated cost or time where known.
+- **Human-decision cards as numbered cards**, appended by the engine whenever a sub-goal needs a person or the event is done:
+  - "Choose the target column" (opens Study details);
+  - "Confirm the study brief" (the confirmation dialog with a note);
+  - "Continue to <next event> →";
+  - "Return to <event>" (validation loops);
+  - "Custom instruction" is always the last card.
+
+  The footer lists only the keys of the cards shown.
+- **Never show "All available actions are exhausted".** Instead, a plain sentence plus the human cards, e.g. "Inventory recorded. Next, choose what to predict."
+- Files: `tui/widgets/options.py` (card widget), `api.py: options()` (engine-appended human cards with their action), `ui_text.py`.
+
+#### P11.2 Visible agent work
+- **While the Navigator prepares options:** an animated card, "Agent is preparing options…", with the model name and elapsed seconds.
+- **While a step runs:** a progress card with phases that tick:
+  1. writing the script;
+  2. checks;
+  3. running in the sandbox (attempt n/3);
+  4. collecting outputs;
+  5. checking sub-goals.
+
+  On failure: the reason in one plain line, then the repair attempt.
+- Use Textual's spinner or `LoadingIndicator`; the UI never blocks; `Esc` cancels where the engine allows it.
+- Files: `tui/app.py` (worker callbacks), `tui/widgets/progress.py` (new).
+
+#### P11.3 The journey panel (replaces the raw orange log)
+The bottom panel, top to bottom:
+1. **Event strip, left to right with arrows:** `onboard ✓ → data ● → eda · → split 🔒 → preprocess · → …`. Done ✓, current ●, locked 🔒; it updates live.
+2. **Action trail** for the current branch, left to right: `Record brief ✓ → Choose target ✓ → Audit schema ✓ → Count classes ⏳`. Human decisions are included and marked as yours; it scrolls when long.
+3. **Plain-English log**, generated from records through one message map in `ui_text.py`:
+   - "✓ Registered table breast_cancer_diagnostic_uci (569 rows, 31 columns)";
+   - "⚠ Target column not chosen yet: card 1";
+   - "✓ Brief recorded".
+
+   The raw engine log moves to a toggle (`L` "engine log") for debugging.
+
+Files: `tui/widgets/log_stream.py` → `tui/widgets/journey.py`; `event_graph.py` can shrink to the left list or merge into the strip.
+
+#### P11.4 Model status, and switching provider or model at any time
+- **Status line:** `● OpenRouter · openrouter/free → last answered by <model_reported> · 12/50 today`. The dot is green (last call OK), yellow (rate-limited or slow), red (failing), or grey ("not connected: press m"). Plus a per-role summary (Navigator, Worker).
+- **Test connection:** one small call per role, showing OK, latency and the model that answered. It counts as a request, so the button says so.
+- **`m` opens the Models panel.** Per role: choose a provider and model, and sign in or out. The providers:
+  - OpenRouter sign-in (exists);
+  - OpenAI sign-in (P11.5);
+  - OpenAI API key;
+  - local Ollama (auto-detect `localhost:11434`);
+  - custom OpenAI-compatible.
+- **A change takes effect at the next model request,** never in the middle of a step. It writes a new record `ModelChanged {role, from, to, provider, principal, reason}`.
+- **Reports and metrics** show which model answered each step (already in `model_reported`) and every switch. `mlca bench --lock-models` forbids switching during measured runs.
+- **`mlca auth status`** lists signed-in providers, never values. All credentials live in the keyring, one entry per provider.
+- Files: `tui/screens/model_picker.py`, `tui/widgets/status_bar.py`, `config.py`, `llm/client.py`, `llm/credentials.py`, `log/schema.py` (record type), `evaluation/metrics.py`.
+
+#### P11.5 OpenAI sign-in ("Sign in with ChatGPT")
+- **Use OpenAI's official "Sign in with ChatGPT" program for third-party apps** (launched late September 2026; open-source apps self-serve, commercial apps apply).
+  - The author registers MLCA and gets **MLCA's own client ID**, kept in config.
+  - **Do not reuse the Codex CLI client ID or private ChatGPT backend endpoints** shown in third-party snippets.
+  - Take the endpoints, scopes and the plan-usage approval step from OpenAI's current developer docs at implementation time, and record them in `docs/providers.md`.
+- **Flow:**
+  - browser PKCE with a localhost callback, or device code / pasted redirect URL on SSH;
+  - access and refresh tokens in the keyring, refreshed automatically;
+  - the user's approval for MLCA to use their plan allowance (with its cap) as the program requires;
+  - a new provider kind `openai_chatgpt` on the API surface the program documents.
+- **Until registration exists:** show "Sign in with ChatGPT" disabled with a one-line reason; the OpenAI API key path (keyring) works meanwhile.
+- Files: `llm/openai_auth.py` (new, mirrors `openrouter_auth.py`), `llm/providers/openai_chatgpt.py`, `tui/screens/openai_signin.py`, `cli/main.py` (`mlca signin --provider openai`).
+
+#### P11.6 Existing folders and failed initialisation
+- Verify commit `245ac50` ("offer a fresh study after existing-folder refusal"). Opening a folder that holds a study offers **Open** or **New study** (a new subfolder, `study-002`, …), never overwriting.
+- **Make initialisation atomic:** build in a temporary folder and rename it at the end. A failed init then leaves no half-made `.mlca/`. An old partial folder is detected and offered for cleanup, with a confirmation.
+
+#### P11.7 Tests and docs
+- **Textual pilot tests:**
+  - cards render, and keys map to visible cards;
+  - human cards appear when only human sub-goals remain;
+  - "exhausted" never appears;
+  - the progress card ticks through its phases (fake provider, fake clock);
+  - the journey strip and trail update after each step;
+  - `m` switches the model and writes `ModelChanged`;
+  - the status dot changes on fake success, rate-limit and failure.
+- **Auth tests:** OpenAI sign-in with mocked endpoints and a mocked keyring; no live calls.
+- **Docs:** README screenshots; `docs/providers.md` (switching, sign-ins, free tier); the first-run part of `docs/m7-vm-brain-mode.md`.
+
+**Done when:** a new user can init a study, see 2–4 clear cards, follow the journey strip, see which model is connected, switch provider mid-study, and reach `data` without knowing any footer hotkey. All tests green; local commits `P11.<n>: …`; nothing published.
 
 ---
 

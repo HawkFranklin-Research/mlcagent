@@ -42,8 +42,8 @@ def trail(records, workflow):
 
 
 class Journey(Vertical):
-    DEFAULT_CSS = """Journey { height: 1fr; min-height: 5; border: round $primary; }
-    Journey HorizontalScroll { height: 1; } Journey Static { width: auto; height: 1; }
+    DEFAULT_CSS = """Journey { height: 1fr; min-height: 8; border: round $primary; }
+    Journey HorizontalScroll { height: 2; } Journey Static { width: auto; height: 1; }
     Journey RichLog { height: 1fr; }"""
 
     def compose(self) -> ComposeResult:

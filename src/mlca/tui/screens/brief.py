@@ -9,6 +9,11 @@ from mlca.ui_text import text
 
 
 class FormScreen(ModalScreen[dict | None]):
+    BINDINGS = [("escape", "cancel_form", "Cancel")]
+
+    def action_cancel_form(self):
+        self.dismiss(None)
+
     CSS = """FormScreen { align: center middle; } #form { width: 80%; height: auto; max-height: 90%; border: round $accent; padding: 1 2; overflow-y: auto; } Input { margin-bottom: 1; }"""
 
     def __init__(self, title: str, fields: list[tuple[str, str, str]]) -> None:

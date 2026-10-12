@@ -122,3 +122,22 @@ fallback is configured. Identity sign-in alone never authorizes inference.
 
 Offline mocks verify protocol behavior. Registration, eligible account access, native keyring behavior
 and actual inference remain author-run checks; none was performed during implementation.
+
+
+## Switching and status (P11)
+
+Open Models with m at any time. Switching is applied at a step boundary, clears stale menus/clients,
+and records ModelChanged with who changed which role and why. On reopening, recorded model/provider
+settings take precedence over the initial project configuration. Reports and metrics retain changes
+and actual returned model IDs. Bench --lock-models records a durable lock; it forbids configuration
+switches, not changes chosen upstream by a router. Prefer a fixed model for fixed-model measurements.
+
+The status dot uses observed success, 429/slow requests or failure. A configured credential is not
+proof of a working connection. Test connection is explicit, one attempt per role, logged and budgeted;
+it sends only a tiny instruction. Refresh quota is a separate explicit OpenRouter metadata request.
+Only known nonnegative daily used/limit fields are shown, labelled as the last provider refresh and
+bound to the credential's non-secret fingerprint. Missing fields remain unknown.
+
+Optional Remember API keys stores pasted keys in supported secure OS keyrings; unchecked input
+remains session-only. Never put a key in YAML. mlca auth status lists local availability/storage only,
+not secret values. Earlier descriptions of pasted keys being exclusively session-only predate P11.

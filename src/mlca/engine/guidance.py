@@ -23,7 +23,7 @@ def cards(session, options):
         item["produces"] = (
             ", ".join(o.name for o in action.outputs) if action else "A recorded navigation decision"
         )
-        item["why_now"] = item.get("why_now") or event.goal
+        item["why_now"] = event.goal if origin == "template" else item.get("why_now") or event.goal
         result.append(item)
     human = []
     if event.id == "onboard" and not study_ready(state)[0]:
@@ -33,7 +33,7 @@ def cards(session, options):
                 "title": "Choose the target column"
                 if not state.columns.get("target")
                 else "Complete the study details",
-                "description": study_ready(state)[1],
+                "description": "Select the outcome columns and describe what one row represents in Study details.",
                 "produces": "Validated study fields",
                 "why_now": "Required before confirming the brief",
             }

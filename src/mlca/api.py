@@ -264,6 +264,13 @@ class Session:
     def options(self, guided=False) -> Any:
         with self.mutation():
             state = self.state
+            if guided and state.current_event == "onboard":
+                from mlca.project.init import study_ready
+
+                if not study_ready(state)[0]:
+                    from mlca.engine.guidance import cards
+
+                    return cards(self, [{"id": "custom", "title": "Custom instruction"}])
             if state.pending_options is None:
                 source, request_id = "fallback", None
                 if state.event_statuses.get(state.current_event) == "done":

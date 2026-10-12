@@ -34,7 +34,7 @@ from .widgets.subgoals import Subgoals
 
 class MlcaApp(App):
     TITLE = text("title")
-    CSS = """#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #journey { height: 1fr; } #status-bar { height: auto; max-height: 7; }"""
+    CSS = """#panels { height: 3fr; } #event-graph { display: none; } #center { width: 72%; } #subgoals { height: auto; max-height: 7; padding: 1; overflow-y: auto; } #options { height: 1fr; min-height: 8; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #journey { height: 1fr; } #status-bar { height: auto; max-height: 7; }"""
     BINDINGS = []
 
     def __init__(self, project: Path, configure: Any = False) -> None:
@@ -81,6 +81,12 @@ class MlcaApp(App):
         from mlca.llm.usage import read
 
         status["model_status"] = roles(self.session.config, read(self.session.root))
+        from mlca.llm.quota import for_provider
+
+        for info in status["model_status"].values():
+            info["quota"] = for_provider(
+                self.session.root, info["provider"], self.session.config.providers[info["provider"]]
+            )
         count = len(status["approvals"])
         self.screen.query_one("#approvals-banner", Static).update(
             f"{count} approval(s) waiting (a)" if count else ""
@@ -144,12 +150,21 @@ class MlcaApp(App):
                 else getattr(self.session, method)(*args)
             )
             self.call_from_thread(self.write_log, result_summary(method, result))
+            changed_models = False
             if self.pending_config and not self.session.active_step():
                 updated = self.pending_config
-                self.session.change_models(updated)
-                save(updated)
+                try:
+                    self.session.change_models(updated)
+                    save(updated)
+                    changed_models = True
+                except Exception as exc:
+                    self.call_from_thread(
+                        self.notify,
+                        "Model switch was not applied: " + self.session.redact(str(exc)),
+                        severity="error",
+                    )
                 self.pending_config = None
-            options = result if method == "options" else self.session.options(True)
+            options = result if method == "options" and not changed_models else self.session.options(True)
             self.call_from_thread(self.refresh_project, options)
             if method == "report":
                 self.call_from_thread(self.show_reports, result)
@@ -176,6 +191,12 @@ class MlcaApp(App):
 
             status = self.session.status()
             status["model_status"] = roles(self.session.config, read(self.session.root))
+            from mlca.llm.quota import for_provider
+
+            for info in status["model_status"].values():
+                info["quota"] = for_provider(
+                    self.session.root, info["provider"], self.session.config.providers[info["provider"]]
+                )
             self.screen.query_one(StatusBar).render_state(status)
 
     def _can_act(self) -> bool:
@@ -277,6 +298,8 @@ class MlcaApp(App):
     def action_configure(self) -> Any:
         def selected(result: Any) -> Any:
             if not result:
+                if self.session and not self.busy:
+                    self.refresh_project()
                 return
             try:
                 updated = Config.model_validate(result["config"])
@@ -300,7 +323,7 @@ class MlcaApp(App):
         if action == "select_card":
             if not isinstance(self.screen, MainScreen):
                 return None
-            return True if parameters[0] <= len(self.screen.query_one(Options).items) else None
+            return True if parameters[0] <= len(self.screen.query_one(Options).items) else False
         return True
 
     def on_options_selected(self, event):

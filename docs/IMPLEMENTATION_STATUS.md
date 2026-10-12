@@ -1,3 +1,19 @@
+## P11 guided TUI — 2026-10-13
+
+P11.1–P11.7 implemented on native-onboarding in local sub-phase commits. Numbered clickable cards
+include engine-generated study/confirmation/navigation decisions; unresolved onboarding defers
+Navigator calls. Visible progress, branch journey, raw-log toggle, observed model status, explicit
+connection/quota checks, queued switches, durable bench model locks, secure keyring references and
+registration-gated official ChatGPT Responses integration are implemented. Setup publishes .mlca
+atomically; old incomplete setup can be archived with confirmation, never silently deleted.
+
+Focused pilot reaches data using cards only. Fake provider/auth/quota/clock, canary, model switch,
+replay and relocated-environment regressions pass. Synthetic screenshots: docs/screens; capture
+script: scripts/capture_tui.py. Full suite/release gates pending. No live model or OAuth exchange,
+real datasets or native macOS/Windows validation performed. OpenAI registration remains an author
+step; its dynamic-registration option is not enabled by this implementation. Account-wide quota,
+unknown monetary plan cost and upstream router model identity are not invented.
+
 ## Native OpenRouter sign-in — 2026-10-13 (unreleased)
 
 Implemented browser/headless PKCE S256, state-checked loopback callback, expiry/single-use exchange,

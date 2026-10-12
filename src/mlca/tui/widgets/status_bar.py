@@ -23,7 +23,12 @@ class StatusBar(Static):
                 if info["health"] == "grey"
                 else info["health"]
             )
-            quota = f"{info['requests_today_in_project']} project requests today; account quota unknown"
+            reported = info.get("quota", {})
+            quota = (
+                f"{reported['used']}/{reported['limit']} today (last provider refresh)"
+                if reported.get("used") is not None and reported.get("limit") is not None
+                else f"{info['requests_today_in_project']} project requests today; account quota unknown"
+            )
             rendered.append(
                 f"{role}: {info['kind']} · {info['model']} → {info['model_reported'] or 'not answered yet'} · {label} · {quota}"
             )

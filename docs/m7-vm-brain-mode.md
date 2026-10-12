@@ -16,11 +16,11 @@ curl -LsSf https://astral.sh/uv/install.sh | sh     # installs uv; open a new sh
 
 ## 2. Install the MLCA beta
 
-Install the explicitly versioned beta below. For local validation instead, transfer `dist/mlcagent-0.2.0b1-py3-none-any.whl` to the VM and run `uv tool install /path/to/mlcagent-0.2.0b1-py3-none-any.whl`. The command remains `mlca`.
+Install the explicitly versioned beta below. For local validation instead, transfer `dist/mlcagent-0.2.0b2-py3-none-any.whl` to the VM and run `uv tool install /path/to/mlcagent-0.2.0b2-py3-none-any.whl`. The command remains `mlca`.
 
 ```sh
-uv tool install mlcagent==0.2.0b1      # a pre-release must be named explicitly (or: --prerelease allow)
-mlca --version                     # 0.2.0b1
+uv tool install mlcagent==0.2.0b2      # a pre-release must be named explicitly (or: --prerelease allow)
+mlca --version                     # 0.2.0b2
 mlca doctor                        # banner, Python, uv, bubblewrap, sandbox level
 ```
 
@@ -145,3 +145,12 @@ claude mcp remove mlca            # and/or: codex mcp remove mlca
 uv tool uninstall mlcagent
 rm -rf ~/.config/mlca ~/.local/share/mlca ~/studies
 ```
+
+
+## Optional native first-run pilot (P11)
+
+For standalone driver mode, open mlca, create a study with the synthetic table, and follow cards:
+Choose target → Record brief → Confirm brief → Continue to data. No d/f/n hotkey knowledge is needed.
+Models (m) opens settings: OpenRouter sign-in or your API/local provider; Test connection uses requests.
+Study choices and model switches are recorded. Do not interpret fixture screenshots or offline test
+results as this manual client/provider run. This optional pilot is separate from the brain-mode study.

@@ -11,15 +11,30 @@ class OptionCard(Button):
     def __init__(self, number, option):
         self.option_id = option["id"]
         title = " ".join(option["title"].split()[:8])
+
+        def short(value):
+            value = " ".join(value.split())
+            return value if len(value) <= 95 else value[:92] + "…"
+
         lines = [
             f"{number}. {title}  ·  {option.get('source', 'template')}",
-            option.get("description", ""),
-            "Produces: " + option.get("produces", "Recorded outputs"),
-            "Why now: " + option.get("why_now", ""),
+            short(option.get("description", "")),
+            "Produces: " + short(option.get("produces", "Recorded outputs")),
+            "Why now: " + short(option.get("why_now", "")),
         ]
         if option.get("est_cost_usd") is not None:
             lines.append(f"Estimated request cost ≤ ${option['est_cost_usd']:.4f}")
-        super().__init__(Text("\n".join(lines)), id=f"option-{number}")
+        super().__init__(
+            Text("\n".join(lines)),
+            id=f"option-{number}",
+            tooltip=Text(
+                option.get("description", "")
+                + "\nProduces: "
+                + option.get("produces", "")
+                + "\nWhy now: "
+                + option.get("why_now", "")
+            ),
+        )
 
 
 class Options(Vertical):
@@ -39,7 +54,7 @@ class Options(Vertical):
         self.items = options
         await self.query(OptionCard).remove()
         hint = (
-            "Inventory recorded. Next, choose what to predict."
+            "Inventory recorded. Next, choose what to predict and what one row represents."
             if any(o["id"] == "human:study" for o in options)
             else "Choose a card to continue. Custom instructions must stay within this event."
         )

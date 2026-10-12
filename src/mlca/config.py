@@ -78,6 +78,14 @@ class Config(ConfigModel):
             ):
                 raise ValueError(f"Unknown role or provider: {name}")
         for provider in self.providers.values():
+            if provider.kind == "openai_chatgpt" and (
+                not provider.oauth_client_id
+                or not provider.oauth_client_id.startswith("oaiapp_")
+                or provider.base_url not in {None, "https://api.openai.com/v1"}
+            ):
+                raise ValueError(
+                    "ChatGPT plan requests require MLCA registration and the public OpenAI endpoint"
+                )
             if provider.api_key_env and not provider.api_key_env.replace("_", "").isalnum():
                 raise ValueError("api_key_env must name an environment variable")
             if provider.base_url:

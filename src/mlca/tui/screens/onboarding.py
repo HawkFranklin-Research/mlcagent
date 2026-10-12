@@ -15,7 +15,7 @@ from .openrouter_signin import OpenRouterSignin
 KINDS = [
     ("OpenRouter", "openrouter"),
     ("OpenAI", "openai_api"),
-    ("Local / OpenAI-compatible server", "openai_compatible"),
+    ("Local Ollama / OpenAI-compatible server", "openai_compatible"),
 ]
 
 
@@ -126,6 +126,7 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 id="allow-b",
             )
             yield Static("", id="settings-error")
+            yield Button("Refresh OpenRouter quota (metadata only)", id="refresh-quota")
             with Horizontal(id="settings-buttons"):
                 yield Button("Save", id="save-settings", variant="primary")
                 yield Button("Forget pasted keys", id="forget-keys")
@@ -149,6 +150,10 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 return
             url, env = DEFAULTS.get(event.value, ("", None))
             self.query_one("#" + role + "-url", Input).value = url
+            if event.value == "openai_chatgpt" and self.config.chatgpt_auth.client_id:
+                from mlca.llm.openai_auth import reference
+
+                env = reference(self.config.chatgpt_auth.client_id)
             self.query_one("#" + role + "-env", Input).value = env or ""
             self.query_one("#" + role + "-key", Input).value = ""
             self.query_one("#" + role + "-model", Input).value = ""
@@ -187,6 +192,32 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 "request_cost_bound_usd": float(bound) if bound else None,
             }
         )
+
+    @work(thread=True, exclusive=True)
+    def refresh_quota(self):
+        if not self.project:
+            self.app.call_from_thread(self.notify, "Open a project first to record quota metadata")
+            return
+        try:
+            from pathlib import Path
+
+            from mlca.llm.quota import refresh
+
+            values = refresh(Path(self.project), self.config)
+            label = " · ".join(
+                f"{name}: {v['used']}/{v['limit']} today (provider report)"
+                if v["used"] is not None and v["limit"] is not None
+                else f"{name}: provider daily counter unavailable"
+                for name, v in values.items()
+            )
+            self.app.call_from_thread(
+                self.query_one("#settings-error", Static).update, label or "No connected OpenRouter provider"
+            )
+        except Exception:
+            self.app.call_from_thread(
+                self.query_one("#settings-error", Static).update,
+                "Quota unavailable; local request counts do not establish account limits.",
+            )
 
     @work(thread=True, exclusive=True)
     def check_connection(self):
@@ -260,7 +291,9 @@ class OnboardingScreen(ModalScreen[dict | None]):
 
     def on_button_pressed(self, event):
         identifier = event.button.id
-        if identifier == "test-connection":
+        if identifier == "refresh-quota":
+            self.refresh_quota()
+        elif identifier == "test-connection":
             self.check_connection()
         elif identifier == "chatgpt-signout":
             self.chatgpt_signout()
@@ -313,6 +346,9 @@ class OnboardingScreen(ModalScreen[dict | None]):
 
             self.app.push_screen(OpenRouterSignin(), signed_in)
         elif identifier == "router-signout":
+            if self.app.busy:
+                self.notify("Wait until the current step finishes before signing out")
+                return
             from mlca.llm.openrouter_auth import signout
 
             try:

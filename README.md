@@ -60,7 +60,7 @@ The distribution name is `mlcagent`; the command and Python imports remain `mlca
 Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/) are required. Install the beta with an explicit version:
 
 ```sh
-uv tool install mlcagent==0.2.0b1
+uv tool install mlcagent==0.2.0b2
 ```
 
 Plain `uv tool install mlcagent` does not select this prerelease. Shell download, npm and Homebrew channels remain unpublished.
@@ -72,9 +72,33 @@ From this checkout: `uv sync --group dev`, then `uv run mlca`. See [installation
 - **macOS and native Windows:** only the weaker level B, which must be enabled explicitly (`sandbox.allow_level_b: true`).
 - **Windows:** WSL2 is recommended.
 
+## Guided terminal UI
+
+Start `mlca`, create or open a study, and follow the numbered cards. Study details, confirmation,
+navigation and scoped custom instructions are visible choices; no hidden hotkey is needed to reach
+`data`. Arrow keys plus Enter and clicking work too. The journey shows your branch's progress;
+**L** toggles the raw engine log, and **m** opens Models even while a step is running.
+
+![Guided study with engine-generated decisions](docs/screens/guided-study.svg)
+
+Screenshots use synthetic fixtures and fake providers, not a live scientific run.
+[First-run guide](docs/native-onboarding.md) · [Models screen](docs/screens/models.svg)
+
 ## Configure models (standalone mode)
 
-Copy [examples/config.yaml](examples/config.yaml) to `~/.config/mlca/config.yaml` (or run `mlca config edit`). Choose a provider and model for each role. Keys are read from environment variables (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`) and never written to disk. No default models or prices are assumed. See [providers](docs/providers.md).
+**Start free with OpenRouter** authorizes your own account through browser PKCE or a headless code.
+A secure OS keyring can remember the returned key; session-only fallback is available in the TUI.
+Navigator and Worker use `openrouter/free`, whose selected model is logged per request. Free requests
+have quotas, and a full study may exceed them. Use **Test connection** only when ready to consume
+one request per role. **Refresh OpenRouter quota** asks for account metadata, not inference.
+
+Models can be switched between steps; saves during execution queue until the step ends. Changes are
+logged and reported. `mlca bench run ... --lock-models` protects configured models for a measured
+run; it cannot freeze a router's upstream selection. **Continue with ChatGPT** is registration-gated
+until MLCA's own OpenAI client ID is supplied. OpenAI API keys, local Ollama and custom servers remain
+available. Optional pasted-key persistence uses the secure OS keyring only, never a plaintext file.
+
+Copy [examples/config.yaml](examples/config.yaml) to `~/.config/mlca/config.yaml` (or run `mlca config edit`). Choose a provider and model for each role. Environment keys (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`), session-only pasted keys and secure keyring references are supported. The explicit free-router preset supplies its known zero token prices; other model prices or request bounds must be configured. See [providers](docs/providers.md).
 
 ## Quick start
 
@@ -164,11 +188,29 @@ mlca report all          # methods draft, provenance, figure index, usage (no mo
 mlca branch alt --from <record or step>   # try another path; mlca checkout main to return
 ```
 
+## Test datasets (for hands-on testing; not part of this repository)
+
+Public benchmark datasets for trying MLCA, outside the repository so the code tree stays small. **No test run on them has begun** (as of 2026-10-12); the table is only a record of what is available and where.
+
+Folder: `/home/prime/Documents/github/mlca-paper-codebases/benchmark_datasets/` (provenance in its `README.md`; produced by its `pull_datasets.py`).
+
+| File | Task / template | Rows | Columns | Target |
+|---|---|---|---|---|
+| `breast_cancer_diagnostic_uci.csv` | binary classification (`tabular_classification`) | 569 | 31 | `Diagnosis` (M / B) |
+| `heart_disease_cleveland_uci.csv` | clinical binary classification | 303 | 15 | `heart_disease_binary` (an original `num` column is also present) |
+| `adult_census_uci.csv` | mixed continuous and categorical, binary | 48,842 | 15 | `income` |
+| `dry_bean_uci.csv` | multiclass (7 classes) | 13,611 | 17 | `Class` |
+| `lung_cancer_survival.csv` (NCCTG) | survival (`survival`) | 228 | 11 | duration `time`, event **`status`** (1 = death, 0 = censored). The added `event` column is all zeros: do not use it |
+| `gbsg2_breast_cancer_survival.csv` (GBSG2) | survival (`survival`) | 686 | 10 | duration `time`, event `cens` |
+
+Row and column counts were checked on the files (columns include the target). When creating a study, name the target column exactly as above. For the survival files, give the duration and event columns separately. **Known defect in `lung_cancer_survival.csv`:** `pull_datasets.py` (line 108) derives `event` as `status == 2`, but this file's `status` is already 0/1 (165 deaths, 63 censored), so `event` is 0 for every row and a study using it would have no events. Use `status` as the event column, or regenerate the file after fixing the script. The dataset folder was not modified.
+
 ## Status
 
+- **Hands-on testing:** not begun. Neither the terminal UI, the CLI, driver mode nor brain mode has been tried by the author on these datasets. The datasets above are staged for it.
 - **PyPI beta:** [`mlcagent` 0.2.0b1](https://pypi.org/project/mlcagent/0.2.0b1/) is published; the command remains `mlca`. Release source: `16bcc72`. The old `mlca` name was rejected before any files were accepted.
 
-- **Core (plan.md):** P0–P8 plus P10.1–P10.7 built; beta version `0.2.0b1`. **137 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
+- **Core (plan.md):** P0–P8 plus P10.1–P10.7 built; beta version `0.2.0b2`. **137 offline tests pass, 1 skipped** (PowerShell unavailable); see [validation](docs/IMPLEMENTATION_STATUS.md).
 - **Not yet done:**
   - runs with real providers;
   - the study on real data;
@@ -182,6 +224,8 @@ mlca branch alt --from <record or step>   # try another path; mlca checkout main
 |---|---|
 | [plan.md](plan.md) | Core design, phases and current status |
 | [docs/mcp.md](docs/mcp.md) | Client setup, tool loop, approvals and manual validation |
+| [plan_web_mcp.md](plan_web_mcp.md) | `mlcagent-web-mcp`: brain mode for the browser edition (follow-up, stage 1 mapping) |
+| [plan_web.md](plan_web.md) | Browser edition: driver mode running in WebAssembly (planned) |
 | [plan_mcp.md](plan_mcp.md) | MCP server: docking modes, tools, safety, phases |
 | [docs/architecture.md](docs/architecture.md) | Components and data flow |
 | [docs/templates.md](docs/templates.md) | Writing workflow templates (short-content rules) |

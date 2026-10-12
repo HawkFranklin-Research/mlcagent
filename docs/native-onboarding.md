@@ -82,3 +82,20 @@ rebased on publication; frozen runtime code remains unchanged. Old incomplete se
 archived only after typing `ARCHIVE INCOMPLETE SETUP`. This retains the private state in a hidden
 `.mlca-incomplete-*` folder, then retries the submitted form. Corrupt or established histories are
 not offered as incomplete setups to archive.
+
+
+## Follow cards, not hidden hotkeys
+
+The guided terminal starts with engine-computed study decisions when required fields are unresolved,
+without a Navigator call. Choose the target/outcome columns and row meaning, record the brief,
+confirm it, then select Continue to data. All are clickable/numbered cards. Their source tags distinguish
+agent proposals, template actions and your decisions. Custom instruction is always last and keeps
+the same scope guard. Numeric footer shortcuts appear only for displayed cards; arrows/Enter also
+work. Models: m; engine log: uppercase L. Esc closes the general confirmation/instruction dialog;
+running analysis is bounded by engine budgets/timeouts and is not forcibly cancelled by Esc.
+
+The progress card shows preparation and write/check/sandbox/collect/sub-goal phases. The journey
+strip/trail use verified branch records, not an LLM recap. Models can be opened during a step;
+a saved configuration queues until that step finishes. Test connection consumes one request per
+role, with no study content. Account quotas are unknown unless explicitly refreshed and reported
+by OpenRouter; project-local request counts are not account-wide totals.
