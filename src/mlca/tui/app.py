@@ -24,7 +24,8 @@ from .screens.report import ReportScreen
 from .screens.welcome import WelcomeScreen
 from .widgets.event_graph import EventGraph
 from .widgets.facts import Facts
-from .widgets.log_stream import LogStream, record_summary, result_summary
+from .widgets.journey import Journey
+from .widgets.log_stream import LogStream, result_summary
 from .widgets.options import Options
 from .widgets.progress import Progress
 from .widgets.status_bar import StatusBar
@@ -33,7 +34,7 @@ from .widgets.subgoals import Subgoals
 
 class MlcaApp(App):
     TITLE = text("title")
-    CSS = """#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #status-bar { height: 2; }"""
+    CSS = """#panels { height: 2fr; } #event-graph { width: 22%; padding: 1; border: solid $primary; } #center { width: 50%; } #subgoals { height: 1fr; padding: 1; overflow-y: auto; } #options { height: 1fr; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #journey { height: 1fr; } #status-bar { height: 2; }"""
     BINDINGS = []
 
     def __init__(self, project: Path, configure: Any = False) -> None:
@@ -65,9 +66,7 @@ class MlcaApp(App):
                 self.update_progress, payload
             )
             self.session.subscribe(
-                lambda record: (
-                    self.call_from_thread(self.write_log, record_summary(record)) if self.busy else None
-                )
+                lambda record: self.call_from_thread(self.record_arrived, record) if self.busy else None
             )
             self.switch_screen(MainScreen())
         except Exception as exc:
@@ -80,6 +79,9 @@ class MlcaApp(App):
         count = len(status["approvals"])
         self.screen.query_one("#approvals-banner", Static).update(
             f"{count} approval(s) waiting (a)" if count else ""
+        )
+        self.screen.query_one(Journey).render_state(
+            status, self.session.branches.records(), self.session.workflow
         )
         self.screen.query_one(EventGraph).render_state(status)
         self.screen.query_one(Subgoals).render_state(status)
@@ -108,6 +110,18 @@ class MlcaApp(App):
     def write_log(self, value: Any) -> Any:
         if isinstance(self.screen, MainScreen):
             self.screen.query_one(LogStream).write(value)
+
+    def record_arrived(self, record):
+        if isinstance(self.screen, MainScreen):
+            self.write_log(json.dumps(record.model_dump(mode="json"), ensure_ascii=False))
+            self.screen.query_one(Journey).render_state(
+                self.session.status(), self.session.branches.records(), self.session.workflow
+            )
+
+    def action_engine_log(self):
+        if isinstance(self.screen, MainScreen):
+            log = self.screen.query_one(LogStream)
+            log.display = not log.display
 
     @work(thread=True, exclusive=True, group="session")
     def run_session_action(self, method: Any, *args: Any, refresh_only: Any = False) -> Any:

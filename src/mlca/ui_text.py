@@ -72,3 +72,31 @@ TEXT = {
 
 def text(key: str) -> str:
     return TEXT[key]
+
+
+def record_message(record):
+    """One presentation map; raw protocol records remain separately accessible."""
+    p, kind = record.payload, record.type.value
+    if kind == "InventoryRecorded":
+        return "\n".join(
+            f"✓ Registered table {f['name']} ({f['rows']:,} rows, {len(f['columns'])} columns)"
+            for f in p["files"]
+        )
+    messages = {
+        "BriefRecorded": lambda: "✓ Brief recorded",
+        "StudyFieldsResolved": lambda: "✓ Study details chosen by you",
+        "UserConfirmed": lambda: "✓ Your confirmation recorded: " + p["subgoal_id"],
+        "EventEntered": lambda: "→ Continue to " + p["event_id"],
+        "StepCompleted": lambda: "✓ Step completed; outputs recorded",
+        "StepFailed": lambda: "⚠ Step failed: " + p["last_error"][:180],
+        "StaticCheckFailed": lambda: "⚠ Script checks refused this attempt",
+        "GateBlocked": lambda: "⚠ Complete the current requirements before moving on",
+        "TestUnlocked": lambda: "✓ Planned test evaluation approved by you",
+        "ApprovalRequested": lambda: "⚠ Your approval is required: " + p["kind"],
+        "ApprovalResolved": lambda: "✓ Approval " + p["decision"],
+        "ModelChanged": lambda: "✓ " + p["role"] + " model changed to " + p["to"]["model"],
+        "ProviderFailed": lambda: "⚠ Model request failed; see Models for connection details",
+        "BudgetStopped": lambda: "⚠ Budget reached; review Models before continuing",
+        "Refusal": lambda: "⚠ Action refused: " + p.get("reason", p["category"]).replace("_", " "),
+    }
+    return messages[kind]() if kind in messages else None

@@ -10,6 +10,7 @@ from mlca.tui.banner import brand_line
 
 from ..widgets.event_graph import EventGraph
 from ..widgets.facts import Facts
+from ..widgets.journey import Journey
 from ..widgets.log_stream import LogStream
 from ..widgets.options import Options
 from ..widgets.progress import Progress
@@ -24,6 +25,7 @@ class MainScreen(Screen):
         Binding("s", "app.configure", "Models", show=False),
         ("r", "app.report", "Reports"),
         ("q", "app.quit", "Quit"),
+        ("L", "app.engine_log", "Engine log"),
         Binding("d", "app.study", "Study details", show=False),
         Binding("a", "app.approvals", "Approvals", show=False),
         Binding("n", "app.next", "Next", show=False),
@@ -49,9 +51,11 @@ class MainScreen(Screen):
             yield Facts(id="facts")
         yield Progress(id="progress")
         yield Static("", id="approvals-banner")
+        yield Journey(id="journey")
         yield LogStream(id="log-stream")
         yield StatusBar(id="status-bar")
         yield Footer()
 
     def on_mount(self) -> Any:
+        self.query_one(LogStream).display = False
         self.app.refresh_project()

@@ -457,3 +457,10 @@ recording a fake completion. The TUI spinner shows elapsed time and selected mod
 show write/check/run/collect/sub-goal checks with repair attempts. The engine's timeouts/budgets
 remain the cancellation boundary; Esc closes dialogs but does not kill an executing study.
 Fake-clock progress plus existing main-screen tests pass (4 tests, 1.62 s).
+
+## P11.3 — Journey panel
+
+Added a horizontally scrollable event strip and action trail, reconstructed from the active branch,
+with plain-English messages from ui_text.record_message. Raw protocol JSON and process output stay
+behind the uppercase L toggle. Human study/confirm/test decisions are labelled as yours. No model
+call is used to summarize the journey. Journey/main/progress tests: 5 passed in 1.66 s.
