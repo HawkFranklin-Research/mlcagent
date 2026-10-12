@@ -1,5 +1,12 @@
 # MLCA v2: implementation plan
 
+## Beta 2 published and beta 1 yanked — 2026-10-13
+
+Published [mlcagent 0.2.0b2](https://pypi.org/project/mlcagent/0.2.0b2/) using the authorized upload token; both public artifact hashes match. Fresh isolated HOME/XDG PyPI install, version, doctor and 14-tool MCP verification pass. Beta 1 is yanked (both files), verified in release management and public PyPI JSON. Local tag v0.2.0b2 records release source bdc2f376ef2b9b2848d5f5ed5b272ee9aad2a311; global mlca was refreshed to 0.2.0b2. No GitHub/npm push or publication occurred. Master and uncommitted browser plans remain untouched.
+
+Final suite: 193 passed, 1 skipped in 647.09 s; lint/format, metadata, wrappers, Twine, wheel resources and isolated synthetic init/permission-preview pass. Real OAuth/model/data validation and OpenAI registration remain pending. The token was read only by the publish command and never displayed, copied or committed.
+
+
 Plan for a coding agent. It specifies a new harness, **MLCA v2** (ML Copilot Agent, revised), to be built in this repository: `/home/prime/Documents/github/mlca-paper-codebases/mlca-revized/`.
 
 Written 2026-10-06. When the code is done, it will be reviewed against section 13 (evaluation checklist). Read the whole file before writing code. Where this plan and the code you find disagree, stop and record the conflict in `docs/DECISIONS.md`. Do not guess.

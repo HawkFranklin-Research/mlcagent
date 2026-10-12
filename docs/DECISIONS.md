@@ -519,3 +519,7 @@ legacy wording assertion replaced by P11's guidance. The other caught a new empt
 after rejected MCP initialization. Atomic init now removes only an empty folder it created itself
 on failure, preserving pre-existing folders and concurrent files. Six focused initialization/MCP/
 wording tests pass in 4.15 s; a fresh full run follows.
+
+## Publication verification notes
+
+PyPI accepted beta 2; fresh-index install and 14-tool checks passed. An initial isolated verification completed all commands but encountered a temporary-directory cleanup race during client detection. The verification was repeated successfully with cleanup errors kept separate from command results. No published artifact was changed. Beta 1 was yanked through the authenticated management page, then confirmed via public JSON.

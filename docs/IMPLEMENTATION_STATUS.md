@@ -1,5 +1,12 @@
 ## Beta 2 release validation — 2026-10-13
 
+## Beta 2 published and beta 1 yanked — 2026-10-13
+
+Published [mlcagent 0.2.0b2](https://pypi.org/project/mlcagent/0.2.0b2/) using the authorized upload token; both public artifact hashes match. Fresh isolated HOME/XDG PyPI install, version, doctor and 14-tool MCP verification pass. Beta 1 is yanked (both files), verified in release management and public PyPI JSON. Local tag v0.2.0b2 records release source bdc2f376ef2b9b2848d5f5ed5b272ee9aad2a311; global mlca was refreshed to 0.2.0b2. No GitHub/npm push or publication occurred. Master and uncommitted browser plans remain untouched.
+
+Final suite: 193 passed, 1 skipped in 647.09 s; lint/format, metadata, wrappers, Twine, wheel resources and isolated synthetic init/permission-preview pass. Real OAuth/model/data validation and OpenAI registration remain pending. The token was read only by the publish command and never displayed, copied or committed.
+
+
 Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailable). Ruff lint/format, release metadata and wrapper checks pass. Rebuilt wheel/sdist pass Twine and the 206-entry wheel check. Isolated HOME/XDG install, version/doctor, synthetic initialization and 14-tool MCP discovery pass; Claude registration/skill preview writes no configuration. No live models, real OAuth authorization or original-data study was run.
 
 PyPI 0.2.0b2 upload and subsequent beta 1 yank are authorized; publication verification follows.
