@@ -140,17 +140,37 @@ class MlcaApp(App):
 
         def selected(result: Any) -> Any:
             if result:
-                self.initialise_project(result)
+                self.prepare_initialisation(result)
 
         self.push_screen(ProjectScreen(self.project, initialise=True), selected)
+
+    def prepare_initialisation(self, result):
+        path = Path(result["path"]).expanduser().resolve()
+        if not (path / ".mlca").exists():
+            self.initialise_project(result)
+            return
+        from mlca.tui.screens.existing_project import ExistingProjectScreen
+
+        def selected(choice):
+            if choice == "open":
+                self.open_project(path)
+            elif choice == "fresh":
+                self.initialise_project({**result, "fresh_parent": str(path)})
+
+        self.push_screen(ExistingProjectScreen(path), selected)
 
     @work(thread=True, exclusive=True, group="init")
     def initialise_project(self, result: Any) -> Any:
         from mlca.project.init import initialise
 
         try:
+            destination = Path(result["path"]).expanduser()
+            if result.get("fresh_parent"):
+                from mlca.project.restart import reserve_fresh_study
+
+                destination = reserve_fresh_study(Path(result["fresh_parent"]))
             path = initialise(
-                Path(result["path"]).expanduser(),
+                destination,
                 [Path(p).expanduser() for p in result["data"]],
                 result["template"],
                 {

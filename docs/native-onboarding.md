@@ -62,3 +62,15 @@ Installed-source checks: local uv tool refresh succeeded; mlca --version, instal
 headless new forms and mlca mcp doctor (14 tools) passed. A final UI-only blank-path guard prevents
 empty data input from registering the current directory implicitly; the post-guard focused suite
 passed 24 tests in 6.96 s. The full 152-pass/1-skip result above precedes that UI-only hardening.
+
+## Restart after a failed attempt
+
+If **Create study** selects a folder already containing `.mlca`, MLCA offers **Open existing
+study**, **Create fresh study in a new subfolder**, or **Cancel**. The fresh option retains your
+new-study form and creates the first unused `study-NNN` folder within the selected folder.
+Earlier data, results and logs are preserved; no reset deletes them. A partial initialization
+without `project.yaml` cannot be opened, but can still be followed by a fresh study. Opening an
+existing project continues its recorded state; it does not apply the new-study form.
+
+CLI initialization still refuses to overwrite an existing attempt. Choose a new `mlca init` path
+for a fresh CLI study, or use `mlca -p <existing-folder>` to open the existing project.

@@ -424,3 +424,16 @@ Concurrent logo/welcome/main-table edits and web plan drafts are preserved unsta
 Verification: full offline suite 164 passed, 1 skipped (609.33 s); final focused checks 20 passed
 (3.82 s), including hardening added while the full run was active. Ruff/build/resource checks pass.
 Real user authorization and native OS keyring writes are not verified by fake-provider tests.
+
+## 2026-10-13 — Existing-folder initialization recovery
+
+An earlier failed experiment can leave `.mlca`, so initialization correctly refuses overwrite but
+previously gave no recovery choice. The native create flow now offers open/fresh/cancel. Fresh
+reserves the first unused study-NNN subfolder atomically and retains the form; no previous attempt
+is deleted or reset. Partial folders without project.yaml disable Open. Opening a partially
+initialized project with project.yaml can still report integrity/environment issues; Fresh remains
+the supported way to make an independent attempt. Backend overwrite refusal remains for CLI/MCP.
+Concurrent ProjectScreen changes are preserved; this fix lives in app.py and a new modal/helper.
+
+Existing-folder validation: 11 focused tests passed (4.99 s); Ruff passes. Local installation
+refreshed. No real study retried; the reason for the original experiment failure is still unknown.

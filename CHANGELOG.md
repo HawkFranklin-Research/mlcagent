@@ -254,3 +254,8 @@ Published wheel and sdist for [mlcagent 0.2.0b1](https://pypi.org/project/mlcage
 - `mlca signin`, `mlca signin --headless`, `mlca signout`; doctor reports local credential availability.
 - Navigator/Worker free-router preset, preserving other role and generation settings.
 - Offline PKCE, callback, secret storage, redaction, configuration and TUI regressions.
+
+### Existing project folders (unreleased)
+
+- Creating a study in an existing project folder now offers resume, fresh subfolder or cancel.
+- Preserve earlier attempts and new-study form; clarify backend overwrite refusal.

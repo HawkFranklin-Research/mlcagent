@@ -299,3 +299,11 @@ Installed-source checks: local uv tool refresh succeeded; mlca --version, instal
 headless new forms and mlca mcp doctor (14 tools) passed. A final UI-only blank-path guard prevents
 empty data input from registering the current directory implicitly; the post-guard focused suite
 passed 24 tests in 6.96 s. The full 152-pass/1-skip result above precedes that UI-only hardening.
+
+## Existing-folder recovery — 2026-10-13
+
+Native Create study now offers open/fresh/cancel when `.mlca` exists. A fresh attempt retains the
+form and reserves a study-NNN subfolder without replacing old files; a missing project.yaml
+marks the earlier attempt as not openable. CLI/MCP still refuse overwrite. Focused existing-folder,
+onboarding and auth TUI regressions: **11 passed in 4.99 s**. Ruff passes. Installed source refreshed;
+no full suite or real experiment rerun for this small UI change. Master and concurrent edits preserved.

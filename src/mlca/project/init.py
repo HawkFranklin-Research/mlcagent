@@ -97,7 +97,9 @@ def initialise(
     root = path.resolve()
     validated_config = Config.model_validate(config or {})
     if (root / ".mlca").exists():
-        raise MlcaUserError("Project already initialized; refusing to overwrite it")
+        raise MlcaUserError(
+            "This folder already contains an MLCA study or an earlier initialization attempt. Open it to continue, or choose a new project folder. Existing files will not be overwritten."
+        )
     workflow = get(template_id)
     registered = []
     for name, file in registrations(discover(data)):
