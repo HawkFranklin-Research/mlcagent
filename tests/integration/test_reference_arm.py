@@ -79,6 +79,7 @@ def test_reference_full_path_no_models(tmp_path, task):
             "train_cox" if task == "survival" else "train_logistic",
             "train_alternative",
         }
+        assert "retain_features" in {st["action_id"] for st in s.state.steps}
         assert read(root) == []
         assert all(st["measurement_arm"] == "reference" for st in s.state.steps)
         metrics = generate(s)

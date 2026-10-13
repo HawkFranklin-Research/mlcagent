@@ -156,3 +156,15 @@ responses:
     role: navigator
     purpose: scope
   text: '{"decision": "in_scope", "reason": "test"}'
+
+- match:
+    role: worker
+    action_id: retain_features
+  text: |
+    ```python
+    import pandas as pd, mlca_runtime as m
+    from sklearn.preprocessing import FunctionTransformer
+    tr = pd.read_parquet(m.inputs()["train"])
+    sel = m.fit_record(FunctionTransformer(), tr.drop(columns="y"), "train")
+    m.save_model(sel, "selector_all.pkl")
+    ```

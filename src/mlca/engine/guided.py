@@ -206,8 +206,10 @@ def present(session):
             legal = []
     if state.current_event == "features" and state.split and state.inventory:
         main = next((i for i in state.inventory if i["name"] == state.primary_data), state.inventory[0])
-        if len(main["columns"]) > state.split["counts"]["train"]:
-            legal.sort(key=lambda o: o.get("action_id") != "select_features")
+        preferred = (
+            "select_features" if len(main["columns"]) > state.split["counts"]["train"] else "retain_features"
+        )
+        legal.sort(key=lambda o: o.get("action_id") != preferred)
     scene, source, request_id = None, "fallback", None
     # Human decisions and navigation are computed by the engine, never invented by a model.
     if (
