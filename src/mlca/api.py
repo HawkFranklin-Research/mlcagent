@@ -15,7 +15,7 @@ from mlca.engine import checks, gates
 from mlca.engine.options import fallback, parameters
 from mlca.engine.scope_guard import layer_one
 from mlca.engine.turn import execute
-from mlca.errors import BudgetError, IntegrityError, MlcaUserError
+from mlca.errors import IntegrityError, MlcaUserError
 from mlca.llm.client import Client
 from mlca.llm.usage import read as read_usage
 from mlca.llm.usage import summary
@@ -356,14 +356,20 @@ class Session:
                     try:
                         options, request_id = Navigator(self).propose_options()
                         source = "navigator"
-                    except BudgetError:
+                    except IntegrityError:
                         raise
-                    except (MlcaUserError, ValueError, TypeError) as exc:
+                    except Exception as exc:
+                        from mlca.evaluation.failures import valid
+
+                        category = getattr(exc, "category", "invalid_options")
+                        if not isinstance(category, str) or not valid(category):
+                            category = "invalid_options"
                         self.emit(
                             "Refusal",
                             {
-                                "category": getattr(exc, "category", "invalid_options"),
+                                "category": category,
                                 "operation": "navigator_options",
+                                "reason": "AI suggestions were unavailable; showing built-in cards",
                                 "error_type": type(exc).__name__,
                             },
                         )

@@ -331,3 +331,12 @@ the TUI and retains older evaluation value/source shapes for fully known values.
 Existing uncommitted P13/catalogue/browser work is preserved. P16 needs only the existing catalogue
 JSON-support property; that small dependency is included separately from the catalogue-snapshot work.
 No publish, push, tag, version bump or installed-tool refresh is performed.
+
+## P14.6 — Navigator recovery within the revision cut
+
+Navigator JSON gets at most one repair. Provider errors, exhausted suggestion budgets and unexpected
+response failures leave template choices available and log a safe plain-language fallback reason.
+Integrity errors still stop. Worker steps, repair limits, failure records, fit rules and test unlock
+remain unchanged; no reference script substitutes for a measured Worker failure. Six focused
+Navigator regressions pass, including repair/caching and integrity-stop behavior. Combined isolated
+P16/P14.6 candidate checks: 34 passed. Final full-suite verification follows.
