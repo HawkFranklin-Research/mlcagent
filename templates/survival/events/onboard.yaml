@@ -1,6 +1,6 @@
 # Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: onboard
-title: Onboard
+title: Project setup
 goal: 'Fix the question before touching the data: aim, target and unit of analysis.'
 gate: []
 subgoals:

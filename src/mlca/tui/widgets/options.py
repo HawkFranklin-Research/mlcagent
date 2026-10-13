@@ -4,38 +4,60 @@ from textual.containers import Vertical
 from textual.message import Message
 from textual.widgets import Button, Static
 
+WHITE, BODY, MUTED, BLUE, AMBER = "#f2f5f8", "#c7d0d9", "#8a96a3", "#5fb4f0", "#f0c040"
+
+
+def short(value, limit=110):
+    value = " ".join(str(value or "").split())
+    return value if len(value) <= limit else value[: limit - 1] + "…"
+
+
+def card_text(number, option):
+    title = " ".join(option["title"].split()[:8])
+    text = Text()
+    text.append(f" {number} ", style=f"bold reverse {AMBER if option.get('locked') else BLUE}")
+    text.append("  " + title, style=f"bold {MUTED if option.get('disabled') else WHITE}")
+    if option.get("source") == "agent":
+        text.append("   ✦ suggested by AI", style=BLUE)
+    text.append("\n")
+    if option.get("description"):
+        text.append(
+            "     " + short(option["description"]) + "\n", style=MUTED if option.get("disabled") else BODY
+        )
+    produces = option.get("produces")
+    if produces:
+        text.append("     • Produces: " + short(produces, 90) + "\n", style=MUTED)
+    why = option.get("why_now")
+    if why and option.get("source") == "agent":
+        text.append("     • Why now: " + short(why, 90) + "\n", style=MUTED)
+    if option.get("est_cost_usd") is not None:
+        text.append(f"     • Cost: ≤ ${option['est_cost_usd']:.4f}\n", style=MUTED)
+    return text
+
 
 class OptionCard(Button):
-    DEFAULT_CSS = "OptionCard { width: 100%; height: auto; min-height: 5; margin-bottom: 1; padding: 0 1; border: round $primary; text-align: left; }"
+    DEFAULT_CSS = """OptionCard { width: 100%; height: auto; min-height: 3; margin-bottom: 1; padding: 0 2;
+        border: round $primary-darken-2; background: $panel; text-align: left; content-align: left top; }
+    OptionCard:focus { border: round $accent; background: $boost; text-style: none; }
+    OptionCard:hover { border: round $primary; }
+    OptionCard.-disabled { opacity: 70%; border: round $panel-lighten-1; }"""
 
     def __init__(self, number, option):
         self.option_id = option["id"]
-        title = " ".join(option["title"].split()[:8])
-
-        def short(value):
-            value = " ".join(value.split())
-            return value if len(value) <= 95 else value[:92] + "…"
-
-        lines = [
-            f"{number}. {title}  ·  {option.get('source', 'template')}",
-            short(option.get("description", "")),
-            "Produces: " + short(option.get("produces", "Recorded outputs")),
-            "Why now: " + short(option.get("why_now", "")),
-        ]
-        if option.get("est_cost_usd") is not None:
-            lines.append(f"Estimated request cost ≤ ${option['est_cost_usd']:.4f}")
         super().__init__(
-            Text("\n".join(lines)),
-            id=f"option-{number}",
-            disabled=option.get("disabled", False),
-            tooltip=Text(
-                option.get("description", "")
-                + "\nProduces: "
-                + option.get("produces", "")
-                + "\nWhy now: "
-                + option.get("why_now", "")
-            ),
+            card_text(number, option), id=f"option-{number}", disabled=option.get("disabled", False)
         )
+
+
+def hint_for(options):
+    ids = {o["id"] for o in options}
+    if "ui:connect" in ids:
+        return "No AI model connected yet. Built-in steps still work."
+    if "human:study" in ids:
+        return "Next, choose what to predict and what one row represents."
+    if "next" in ids:
+        return "This step is complete. Continue, or run an optional extra."
+    return "Choose a card to continue."
 
 
 class Options(Vertical):
@@ -54,12 +76,7 @@ class Options(Vertical):
     async def render_options(self, options):
         self.items = options
         await self.query(OptionCard).remove()
-        hint = (
-            "Inventory recorded. Next, choose what to predict and what one row represents."
-            if any(o["id"] == "human:study" for o in options)
-            else "Choose a card to continue. Custom instructions must stay within this event."
-        )
-        self.query_one("#options-hint", Static).update(hint)
+        self.query_one("#options-hint", Static).update(Text(hint_for(options), style=f"bold {AMBER}"))
         await self.mount(*(OptionCard(i, o) for i, o in enumerate(options, 1)))
         self.app.refresh_bindings()
 

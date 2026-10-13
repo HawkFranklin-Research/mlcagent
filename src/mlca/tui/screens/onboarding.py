@@ -341,6 +341,8 @@ class OnboardingScreen(ModalScreen[dict | None]):
                         self.query_one("#" + role + "-bound", Input).value = ""
                         self.query_one("#" + role + "-key-status", Static).update("OpenRouter connected")
                         self.prices[role] = Model("openrouter/free", "Free Models Router", 0, 0, free=True)
+                    # Signing in is the user's choice: save at once, no hidden Save step.
+                    self.call_after_refresh(self.save_settings)
 
                 self.call_after_refresh(apply_free)
 
@@ -395,73 +397,76 @@ class OnboardingScreen(ModalScreen[dict | None]):
                     "Invalid endpoint or request bound; use HTTPS for remote endpoints"
                 )
         elif identifier == "save-settings":
-            try:
-                providers, roles = dict(self.config.providers), dict(self.config.roles)
-                shared = self.query_one("#shared-model", Checkbox).value
-                selected_roles = ["navigator"] if shared else ["navigator", "worker"]
-                for role in selected_roles:
-                    name = self.initial[role][0]
-                    if role == "worker" and name == self.initial["navigator"][0]:
-                        name += "_worker"
-                    provider = self.provider(role, include_key=True)
-                    model = self.query_one("#" + role + "-model", Input).value.strip()
-                    if not model:
-                        raise ValueError("Enter a model ID for " + role)
-                    if provider.kind in {"openrouter", "openai_api", "openai_chatgpt"} and not resolve(
-                        provider.api_key_env
+            self.save_settings()
+
+    def save_settings(self):
+        try:
+            providers, roles = dict(self.config.providers), dict(self.config.roles)
+            shared = self.query_one("#shared-model", Checkbox).value
+            selected_roles = ["navigator"] if shared else ["navigator", "worker"]
+            for role in selected_roles:
+                name = self.initial[role][0]
+                if role == "worker" and name == self.initial["navigator"][0]:
+                    name += "_worker"
+                provider = self.provider(role, include_key=True)
+                model = self.query_one("#" + role + "-model", Input).value.strip()
+                if not model:
+                    raise ValueError("Enter a model ID for " + role)
+                if provider.kind in {"openrouter", "openai_api", "openai_chatgpt"} and not resolve(
+                    provider.api_key_env
+                ):
+                    raise ValueError("Paste a key or set the environment variable for " + role)
+                if provider.request_cost_bound_usd is None and provider.kind not in {
+                    "fake",
+                    "openai_chatgpt",
+                }:
+                    from mlca.llm.pricing import estimate
+
+                    metadata = self.prices.get(role)
+                    models, _ = cached(provider)
+                    metadata = (
+                        metadata
+                        if metadata and metadata.id == model
+                        else next((m for m in models if m.id == model), None)
+                    )
+                    if (
+                        metadata
+                        and metadata.input_per_million is not None
+                        and metadata.output_per_million is not None
                     ):
-                        raise ValueError("Paste a key or set the environment variable for " + role)
-                    if provider.request_cost_bound_usd is None and provider.kind not in {
-                        "fake",
-                        "openai_chatgpt",
-                    }:
-                        from mlca.llm.pricing import estimate
-
-                        metadata = self.prices.get(role)
-                        models, _ = cached(provider)
-                        metadata = (
-                            metadata
-                            if metadata and metadata.id == model
-                            else next((m for m in models if m.id == model), None)
-                        )
-                        if (
-                            metadata
-                            and metadata.input_per_million is not None
-                            and metadata.output_per_million is not None
-                        ):
-                            self.prices[role] = metadata
-                        elif estimate(name, model, 1000, 1000) is None:
-                            raise ValueError("Set a maximum USD per request; pricing is unknown for " + model)
-                    providers[name] = provider
-                    previous = self.initial[role][2]
-                    roles[role] = RoleConfig.model_validate(
-                        {**(previous.model_dump() if previous else {}), "provider": name, "model": model}
-                    )
-                if shared:
-                    old = roles.get("worker")
-                    roles["worker"] = RoleConfig.model_validate(
-                        {
-                            **(old.model_dump() if old else {}),
-                            "provider": roles["navigator"].provider,
-                            "model": roles["navigator"].model,
-                        }
-                    )
-                data = self.config.model_dump()
-                data.update(
-                    providers={k: p.model_dump() for k, p in providers.items()},
-                    roles={k: r.model_dump() for k, r in roles.items()},
+                        self.prices[role] = metadata
+                    elif estimate(name, model, 1000, 1000) is None:
+                        raise ValueError("Set a maximum USD per request; pricing is unknown for " + model)
+                providers[name] = provider
+                previous = self.initial[role][2]
+                roles[role] = RoleConfig.model_validate(
+                    {**(previous.model_dump() if previous else {}), "provider": name, "model": model}
                 )
-                data["budgets"].update(
-                    turn_max_usd=float(self.query_one("#turn-budget", Input).value),
-                    session_max_usd=float(self.query_one("#session-budget", Input).value),
+            if shared:
+                old = roles.get("worker")
+                roles["worker"] = RoleConfig.model_validate(
+                    {
+                        **(old.model_dump() if old else {}),
+                        "provider": roles["navigator"].provider,
+                        "model": roles["navigator"].model,
+                    }
                 )
-                data["sandbox"]["allow_level_b"] = self.query_one("#allow-b", Checkbox).value
-                config = Config.model_validate(data)
-                for role, model in self.prices.items():
-                    if role in selected_roles and roles[role].model == model.id:
-                        save_prices(roles[role].provider, [model])
-                self.dismiss({"config": config.model_dump()})
-            except Exception as exc:
-                from mlca.config import redact
+            data = self.config.model_dump()
+            data.update(
+                providers={k: p.model_dump() for k, p in providers.items()},
+                roles={k: r.model_dump() for k, r in roles.items()},
+            )
+            data["budgets"].update(
+                turn_max_usd=float(self.query_one("#turn-budget", Input).value),
+                session_max_usd=float(self.query_one("#session-budget", Input).value),
+            )
+            data["sandbox"]["allow_level_b"] = self.query_one("#allow-b", Checkbox).value
+            config = Config.model_validate(data)
+            for role, model in self.prices.items():
+                if role in selected_roles and roles[role].model == model.id:
+                    save_prices(roles[role].provider, [model])
+            self.dismiss({"config": config.model_dump()})
+        except Exception as exc:
+            from mlca.config import redact
 
-                self.query_one("#settings-error", Static).update(redact(str(exc)))
+            self.query_one("#settings-error", Static).update(redact(str(exc)))

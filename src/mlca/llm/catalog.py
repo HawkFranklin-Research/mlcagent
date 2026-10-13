@@ -32,6 +32,7 @@ class Model:
     context: int | None = None
     parameters: list[str] | None = None
     free: bool = False
+    text_output: bool | None = None  # None: the provider did not say
 
 
 def price(value):
@@ -61,6 +62,7 @@ def parse(data: dict) -> list[Model]:
         other = [price(v) for k, v in prices.items() if k not in {"prompt", "completion"}]
         if any(v != 0 for v in other):
             a, b = None, None  # Non-token/unknown fees need an explicit request bound.
+        outputs = (entry.get("architecture") or {}).get("output_modalities")
         result.append(
             Model(
                 identifier,
@@ -70,6 +72,7 @@ def parse(data: dict) -> list[Model]:
                 entry.get("context_length"),
                 entry.get("supported_parameters"),
                 a == 0 and b == 0 and all(v == 0 for v in other),
+                ("text" in outputs) if isinstance(outputs, list) and outputs else None,
             )
         )
     return sorted(result, key=lambda m: m.name.casefold())
@@ -129,7 +132,14 @@ def fetch(provider) -> list[Model]:
             "data": [
                 {
                     k: e[k]
-                    for k in ["id", "name", "pricing", "context_length", "supported_parameters"]
+                    for k in [
+                        "id",
+                        "name",
+                        "pricing",
+                        "context_length",
+                        "supported_parameters",
+                        "architecture",
+                    ]
                     if k in e
                 }
                 for e in raw.get("data", [])

@@ -34,7 +34,7 @@ from .widgets.subgoals import Subgoals
 
 class MlcaApp(App):
     TITLE = text("title")
-    CSS = """#panels { height: 3fr; } #event-graph { display: none; } #center { width: 72%; } #subgoals { height: auto; max-height: 7; padding: 1; overflow-y: auto; } #options { height: 1fr; min-height: 8; padding: 1; overflow-y: auto; } #facts { width: 28%; padding: 1; overflow-y: auto; } #log-stream { height: 1fr; border: solid $accent; } #journey { height: 1fr; } #status-bar { height: auto; max-height: 7; }"""
+    CSS = """#panels { height: 1fr; } #event-graph { width: 22; padding: 1 1; border-right: tall $panel; } #center { width: 1fr; } #subgoals { height: auto; max-height: 9; padding: 1 2; overflow-y: auto; } #options { height: 1fr; min-height: 8; padding: 0 2; overflow-y: auto; } #facts { width: 30; padding: 1; overflow-y: auto; } #log-stream { height: 10; border: solid $accent; } #status-bar { height: auto; max-height: 4; }"""
     BINDINGS = []
 
     def __init__(self, project: Path, configure: Any = False) -> None:
@@ -112,9 +112,8 @@ class MlcaApp(App):
         except Exception as exc:
             self.call_from_thread(self.notify, str(exc), severity="error")
 
-    def refresh_project(self, options: Any = None) -> Any:
-        if not self.session or not isinstance(self.screen, MainScreen):
-            return
+    def decorated_status(self) -> dict:
+        """Session status plus the presentation facts every panel needs."""
         status = self.session.status()
         status["external_client"] = self.external_client
         from mlca.llm.status import roles
@@ -127,6 +126,37 @@ class MlcaApp(App):
             info["quota"] = for_provider(
                 self.session.root, info["provider"], self.session.config.providers[info["provider"]]
             )
+        from mlca.project.init import study_ready
+        from mlca.ui_text import EVENT_TITLES
+
+        state, workflow = self.session.state, self.session.workflow
+        status["event_titles"] = {
+            e: EVENT_TITLES.get(e, workflow.events[e].title) for e in workflow.spec.events
+        }
+        last = {}
+        for step in state.steps:
+            last[step["event_id"]] = step["status"]
+        status["failed_events"] = {e for e, s in last.items() if s == "failed"}
+        status["study_detail"] = study_ready(state)[1]
+        return status
+
+    def with_connect_card(self, options):
+        """Driver mode without any model: offer connecting as the first card."""
+        if self.external_client or self.session.config.roles or any(o["id"] == "ui:connect" for o in options):
+            return options
+        card = {
+            "id": "ui:connect",
+            "title": "Connect an AI model",
+            "description": "Sign in free with OpenRouter, or use an OpenAI key or a local model.",
+            "produces": "Navigator and Worker ready; AI-proposed cards and custom steps",
+            "source": "template",
+        }
+        return [card, *options]
+
+    def refresh_project(self, options: Any = None) -> Any:
+        if not self.session or not isinstance(self.screen, MainScreen):
+            return
+        status = self.decorated_status()
         count = len(status["approvals"])
         self.screen.query_one("#approvals-banner", Static).update(
             f"{count} approval(s) waiting (a)" if count else ""
@@ -141,6 +171,7 @@ class MlcaApp(App):
         if options is None and self.external_client:
             options = self.session.guided_view()
         if options is not None:
+            options = self.with_connect_card(options)
             records = self.session.branches.records()
             anchor = next((r.id for r in reversed(records) if r.type.value == "OptionsProposed"), None)
             self.activity.begin(anchor)
@@ -168,7 +199,7 @@ class MlcaApp(App):
         if isinstance(self.screen, MainScreen):
             self.write_log(json.dumps(record.model_dump(mode="json"), ensure_ascii=False))
             self.screen.query_one(Journey).render_state(
-                self.session.status(), self.session.branches.records(), self.session.workflow
+                self.decorated_status(), self.session.branches.records(), self.session.workflow
             )
 
     def action_engine_log(self):
@@ -185,6 +216,7 @@ class MlcaApp(App):
         model = role.model if role else "engine / template"
         self.call_from_thread(self.start_progress, method, model)
         error = None
+        note = None
         try:
             result = (
                 getattr(self.session, method)(True)
@@ -192,6 +224,15 @@ class MlcaApp(App):
                 else getattr(self.session, method)(*args)
             )
             self.call_from_thread(self.write_log, result_summary(method, result))
+            if (
+                method == "custom"
+                and isinstance(result, dict)
+                and result.get("decision") in {"reject", "other_event"}
+            ):
+                from mlca.ui_text import scope_message
+
+                note = scope_message(result)
+                self.call_from_thread(self.notify, note, severity="warning", timeout=12)
             changed_models = False
             if self.pending_config and not self.session.active_step():
                 updated = self.pending_config
@@ -214,7 +255,7 @@ class MlcaApp(App):
             error = self.session.redact(str(exc))
             self.call_from_thread(self.notify, error, severity="error")
         finally:
-            self.call_from_thread(self.finish_progress, error)
+            self.call_from_thread(self.finish_progress, error, note)
             self.busy = False
 
     def start_progress(self, operation, model):
@@ -225,9 +266,9 @@ class MlcaApp(App):
         if isinstance(self.screen, MainScreen):
             self.screen.query_one(Progress).phase(payload)
 
-    def finish_progress(self, error=None):
+    def finish_progress(self, error=None, note=None):
         if isinstance(self.screen, MainScreen):
-            self.screen.query_one(Progress).finish(error)
+            self.screen.query_one(Progress).finish(error, note)
             from mlca.llm.status import roles
             from mlca.llm.usage import read
 
@@ -380,7 +421,11 @@ class MlcaApp(App):
     def select_option(self, identifier):
         if not self._can_act():
             return
-        if identifier == "human:study":
+        if identifier == "ui:connect":
+            self.action_configure()
+        elif identifier.startswith("locked:"):
+            self.notify("Not yet: complete the study details first (card 1).", severity="warning")
+        elif identifier == "human:study":
             self.action_study()
         elif identifier.startswith("human:confirm:"):
             self.action_confirm()
@@ -414,7 +459,11 @@ class MlcaApp(App):
     def action_custom(self) -> Any:
         if self._can_act():
             self.push_screen(
-                FormScreen(text("custom"), [("instruction", text("custom"), "")]),
+                FormScreen(
+                    "Custom instruction · allowed here: "
+                    + self.session.workflow.events[self.session.state.current_event].custom_scope.description,
+                    [("instruction", "Your instruction", "")],
+                ),
                 lambda result: self.run_session_action("custom", result["instruction"]) if result else None,
             )
 

@@ -55,8 +55,13 @@ class Progress(Vertical):
         elapsed = f" · {self.clock() - self.started_at:.1f}s" if self.started_at is not None else ""
         self.query_one("#agent-progress", Static).update(self.label + elapsed)
 
-    def finish(self, error=None):
-        self.label = "Action failed: " + error[:180] if error else "Ready — choose your next card"
+    def finish(self, error=None, note=None):
+        if error:
+            self.label = "Action failed: " + error[:180]
+        elif note:
+            self.label = note
+        else:
+            self.label = "Ready — choose your next card"
         self.started_at = None
         self.query_one(LoadingIndicator).display = False
         self.tick()

@@ -1,6 +1,6 @@
 import asyncio
 
-from textual.widgets import Button, Input, Static
+from textual.widgets import Input
 
 from mlca.config import Config
 from mlca.llm import credentials
@@ -29,19 +29,13 @@ def test_headless_signin_sets_free_router_without_key_in_config(monkeypatch, tmp
             await pilot.click("#signin-headless")
             app.screen.query_one("#signin-code", Input).value = "one-use-code"
             await pilot.click("#signin-submit")
-            for _ in range(10):
+            for _ in range(20):
                 await pilot.pause()
-                if app.screen is screen:
+                if results:
                     break
-            assert app.screen is screen
-            assert screen.query_one("#navigator-model", Input).value == "openrouter/free"
-            assert screen.query_one("#navigator-key", Input).value == ""
-            button = screen.query_one("#save-settings", Button)
-            button.scroll_visible(animate=False)
-            await pilot.pause()
-            await pilot.click("#save-settings")
-            await pilot.pause()
-            assert results, screen.query_one("#settings-error", Static).content
+            # Sign-in saves at once: no separate Save step.
+            assert results, "sign-in did not save the configuration"
+            assert app.screen is not screen
 
     try:
         asyncio.run(check())

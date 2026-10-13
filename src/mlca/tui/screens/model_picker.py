@@ -21,11 +21,11 @@ class ModelPicker(ModalScreen[object | None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="models"):
-            yield Static("Choose a model — Refresh contacts the provider, sending no study data")
+            yield Static("[b]Choose a model[/b]")
             yield Input(placeholder="Search by name or ID", id="model-search")
-            yield Checkbox("Free models only (availability and quotas may vary)", id="free-only")
+            yield Checkbox("Free models only", id="free-only")
             yield Static(
-                "Cached catalogue may be stale" if self.stale else "Cached catalogue", id="catalog-status"
+                "Loading models…" if not self.models or self.stale else "Models loaded", id="catalog-status"
             )
             yield OptionList(id="model-list")
             with Horizontal(id="model-buttons"):
@@ -34,6 +34,9 @@ class ModelPicker(ModalScreen[object | None]):
 
     def on_mount(self):
         self.render_models()
+        if not self.models or self.stale:
+            self.query_one("#refresh-models", Button).disabled = True
+            self.refresh_models()
 
     def on_input_changed(self, event):
         if event.input.id == "model-search":
@@ -45,9 +48,13 @@ class ModelPicker(ModalScreen[object | None]):
     def render_models(self):
         search = self.query_one("#model-search", Input).value.casefold()
         free = self.query_one("#free-only", Checkbox).value
-        self.filtered_models = [
+        matches = [
             m for m in self.models if (not free or m.free) and search in (m.id + " " + m.name).casefold()
         ]
+        # Free router first; models that cannot output text (cannot write code) last.
+        self.filtered_models = sorted(
+            matches, key=lambda m: (m.id != "openrouter/free", m.text_output is False, m.name.casefold())
+        )
         listing = self.query_one("#model-list", OptionList)
         listing.clear_options()
         for m in self.filtered_models:
@@ -58,9 +65,13 @@ class ModelPicker(ModalScreen[object | None]):
                 if m.input_per_million is not None
                 else "price unknown — set a request bound"
             )
-            listing.add_option(
-                Option(f"{m.name}\n{m.id} · {cost} · context {m.context or 'unknown'}", id=m.id)
-            )
+            if m.id == "openrouter/free":
+                label = "★ Free models router\n  picks an available free model for each request"
+            elif m.text_output is False:
+                label = f"{m.name}  (cannot write code)\n  {m.id} · {cost}"
+            else:
+                label = f"{m.name}\n  {m.id} · {cost} · context {m.context or 'unknown'}"
+            listing.add_option(Option(label, id=m.id, disabled=m.text_output is False))
 
     @work(thread=True, exclusive=True)
     def refresh_models(self):
@@ -75,9 +86,7 @@ class ModelPicker(ModalScreen[object | None]):
             return
         if models is not None:
             self.models = models
-            self.query_one("#catalog-status", Static).update(
-                "Provider catalogue loaded; no completion request was made"
-            )
+            self.query_one("#catalog-status", Static).update(f"{len(models)} models loaded")
             self.render_models()
         else:
             self.query_one("#catalog-status", Static).update(error)

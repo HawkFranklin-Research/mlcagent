@@ -31,18 +31,38 @@ def cards(session, options):
         item["why_now"] = event.goal if origin == "template" else item.get("why_now") or event.goal
         result.append(item)
     human = []
-    if event.id == "onboard" and not study_ready(state)[0]:
+    ready, detail = study_ready(state)
+    if event.id == "onboard" and not ready:
+        from mlca.ui_text import missing_study_fields
+
+        missing = missing_study_fields(detail)
         human.append(
             {
                 "id": "human:study",
-                "title": "Choose the target column"
+                "title": "Choose what to predict"
                 if not state.columns.get("target")
                 else "Complete the study details",
-                "description": "Select the outcome columns and describe what one row represents in Study details.",
+                "description": "Still missing: " + missing
+                if missing
+                else "Pick the outcome column and say what one row represents.",
                 "produces": "Validated study fields",
-                "why_now": "Required before confirming the brief",
+                "why_now": "Needed before the brief can be recorded and confirmed",
             }
         )
+        for name in event.actions:
+            action = workflow.actions[name]
+            if action.role == "primary" and not any(o.get("action_id") == name for o in options):
+                human.append(
+                    {
+                        "id": "locked:" + name,
+                        "title": action.title,
+                        "description": "Available once the study details are complete.",
+                        "produces": ", ".join(o.name for o in action.outputs),
+                        "why_now": "Waiting for the study details",
+                        "disabled": True,
+                        "locked": True,
+                    }
+                )
     ordinary_done = all(
         state.subgoals.get(event.id + "." + g.id, {}).get("passed")
         for g in event.subgoals
@@ -76,7 +96,7 @@ def cards(session, options):
             },
         )
     for item in human:
-        item["source"] = "you decide"
+        item.setdefault("source", "you decide")
         result.append(item)
     custom = next(
         (dict(o) for o in options if o["id"] == "custom"), {"id": "custom", "title": "Custom instruction"}
@@ -99,7 +119,7 @@ def mcp_card(option):
     item["actor"] = (
         "human"
         if identifier.startswith("human:")
-        else ("engine" if identifier == "next" or identifier.startswith("loop:") else "agent")
+        else ("engine" if identifier == "next" or identifier.startswith(("loop:", "locked:")) else "agent")
     )
     if item["actor"] == "human":
         how = {"tool": "mlca_request_approval"}

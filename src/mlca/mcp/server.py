@@ -340,6 +340,10 @@ class Controller:
                 or s.state.pending_options is None
             ):
                 raise MlcaUserError("Option is stale; request current options")
+            if parts[2].startswith("locked:"):
+                raise MlcaUserError(
+                    "This step is locked until the study details are complete", category="gate_blocked"
+                )
             if parts[2].startswith("human:"):
                 from mlca.engine.guidance import cards, mcp_card
 

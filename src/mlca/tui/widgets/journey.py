@@ -1,66 +1,59 @@
+"""Activity panel: what happened, left to right, and what to do next."""
+
+from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import HorizontalScroll, Vertical
-from textual.widgets import RichLog, Static
+from textual.containers import VerticalScroll
+from textual.widgets import Static
 
-from mlca.ui_text import record_message
+from mlca.ui_text import next_hint, record_message
 
-
-def strip(status):
-    return " → ".join(
-        event
-        + " "
-        + (
-            "●"
-            if event == status["current_event"]
-            else "✓"
-            if status["event_statuses"].get(event) == "done"
-            else "🔒"
-            if event == "split" or status["event_statuses"].get(event) == "locked"
-            else "·"
-        )
-        for event in status["workflow"]["events"]
-    )
+GREEN, AMBER, RED, BLUE, GREY = "#5fd068", "#f0c040", "#ff6b6b", "#5fb4f0", "#7a8591"
+LIMIT = 14
 
 
-def trail(records, workflow):
-    steps, items = {}, []
+def colour(message):
+    if message.startswith("✓"):
+        return GREEN
+    if message.startswith("⚠"):
+        return AMBER
+    if message.startswith("✗"):
+        return RED
+    return BLUE
+
+
+def flow(records):
+    """Plain-language messages, oldest left; consecutive repeats collapsed."""
+    items = []
     for record in records:
-        kind, p = record.type.value, record.payload
-        if kind == "StepStarted":
-            action = workflow.actions.get(p["action_id"])
-            items.append([action.title if action else "Custom instruction", "⏳"])
-            steps[p["step_id"]] = items[-1]
-        elif kind in {"StepCompleted", "StepFailed"} and p["step_id"] in steps:
-            steps[p["step_id"]][1] = "✓" if kind == "StepCompleted" else "⚠"
-        elif kind == "StudyFieldsResolved":
-            items.append(["Choose target (you)", "✓"])
-        elif kind == "UserConfirmed":
-            items.append(["Confirm brief (you)", "✓"])
-        elif kind == "TestUnlocked":
-            items.append(["Approve test (you)", "✓"])
-    return " → ".join(" ".join(item) for item in items) or "No recorded actions yet"
+        for line in (record_message(record) or "").splitlines():
+            if line and (not items or items[-1] != line):
+                items.append(line)
+    return items[-LIMIT:]
 
 
-class Journey(Vertical):
-    DEFAULT_CSS = """Journey { height: 1fr; min-height: 8; border: round $primary; }
-    Journey HorizontalScroll { height: 2; } Journey Static { width: auto; height: 1; }
-    Journey RichLog { height: 1fr; }"""
+def render_flow(items):
+    result = Text()
+    if not items:
+        return Text("Nothing has happened yet.", style=GREY)
+    for index, item in enumerate(items):
+        if index:
+            result.append("  →  ", style=GREY)
+        result.append(item, style=f"bold {colour(item)}" if index == len(items) - 1 else colour(item))
+    return result
+
+
+class Journey(VerticalScroll):
+    DEFAULT_CSS = """Journey { height: auto; max-height: 9; border: round $primary; padding: 0 1; }
+    Journey #journey-flow { height: auto; } Journey #journey-next { height: auto; margin-top: 1; }"""
 
     def compose(self) -> ComposeResult:
-        with HorizontalScroll():
-            yield Static("", id="journey-strip", markup=False)
-        with HorizontalScroll():
-            yield Static("", id="journey-trail", markup=False)
-        yield RichLog(id="journey-messages", markup=False, highlight=False, wrap=True)
+        yield Static("", id="journey-flow")
+        yield Static("", id="journey-next")
 
     def render_state(self, status, records, workflow):
-        self.query_one("#journey-strip", Static).update(strip(status))
-        self.query_one("#journey-trail", Static).update(trail(records, workflow))
-        log = self.query_one(RichLog)
-        log.clear()
-        for record in records[-150:]:
-            message = record_message(record)
-            if message:
-                log.write(message)
-        if status["current_event"] == "onboard" and not status["columns"].get("target"):
-            log.write("⚠ Target column not chosen yet: select the Choose target card.")
+        self.query_one("#journey-flow", Static).update(render_flow(flow(records)))
+        hint = next_hint(status)
+        self.query_one("#journey-next", Static).update(
+            Text.assemble(("Next: ", "bold #f0c040"), (hint, "#f2f5f8")) if hint else ""
+        )
+        self.scroll_end(animate=False)
