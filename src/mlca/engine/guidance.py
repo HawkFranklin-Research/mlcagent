@@ -78,6 +78,8 @@ def cards(session, options):
                         "id": "human:confirm:" + goal.id,
                         "title": "Approve the study brief"
                         if event.id == "onboard"
+                        else "Approve the chosen model"
+                        if event.id == "validate"
                         else "Approve: " + goal.text,
                         "description": "Check the aim, columns and row meaning; approve in one click",
                         "produces": "Your recorded approval",

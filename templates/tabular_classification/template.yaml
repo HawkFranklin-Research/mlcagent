@@ -1,10 +1,10 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: tabular_classification
-version: 0.2.1
+version: 0.3.0
 title: Tabular Classification
-description: 'Binary or multiclass classification from one table. Baseline: regularised logistic regression; one
-  prespecified alternative (gradient boosting). Primary metric: ROC AUC (macro one-vs-rest if multiclass), chosen
-  on validation, confirmed once on test.'
+description: 'Binary or multiclass classification from one table. Baseline: regularised
+  logistic regression; one prespecified alternative (gradient boosting). Primary metric:
+  ROC AUC (macro one-vs-rest if multiclass), chosen on validation, confirmed once
+  on test.'
 brief_questions:
 - id: aim
   text: 'Aim in one sentence: what is predicted, for whom, and why?'

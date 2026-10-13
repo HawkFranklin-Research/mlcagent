@@ -137,7 +137,8 @@ class Controller:
         s = self.session
         from mlca.engine.guidance import mcp_card
 
-        choices = [mcp_card(o) for o in s.options(guided=True)]
+        turn = s.turn()
+        choices = [mcp_card(o) for o in turn["choices"]]
         record = next(
             r for r in reversed(s.branches.records(s.branch_name)) if r.type.value == "OptionsProposed"
         )
@@ -155,7 +156,13 @@ class Controller:
                         "outputs": [o.model_dump() for o in action.outputs],
                     }
                 )
-        return {"options": choices, "catalog": catalog, "mode": s.mode}
+        return {
+            "options": choices,
+            "catalog": catalog,
+            "mode": s.mode,
+            "situation": turn["situation"],
+            "questions_data": s.questions(),
+        }
 
     def read(self, kind, ref):
         s = self.session

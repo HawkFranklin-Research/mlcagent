@@ -21,6 +21,7 @@ PAYLOAD_FIELDS = {
     "QuestionAsked": ["question_id", "header", "question", "options", "recommended", "asker"],
     "QuestionAnswered": ["question_id", "answer", "by"],
     "DataDecision": ["question_id", "effect", "rule"],
+    "EventColumnSelected": ["column"],
     "OutcomeSelected": ["column", "excluded_columns"],
     "TaskConfigured": ["task"],
     "DataPrepared": ["path", "sha256", "source_sha256", "decision_sha256"],
@@ -182,6 +183,7 @@ class Record(StrictModel):
 
 
 class ProjectState(StrictModel):
+    measurement_arm: str = "worker"
     compare_models: bool = False
     presented_turn: dict | None = None
     outcome_reviewed: bool = False

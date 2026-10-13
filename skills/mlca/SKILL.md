@@ -54,3 +54,7 @@ The human may watch in a second terminal using `mlca -p <project>`; the live TUI
 - Record metrics and file-cited facts through runtime helpers.
 - Brain mode makes no MLCA model calls; your client's inference cost is separate.
 - To try another model, branch from a record before its model step, not after it.
+
+## Pending questions
+
+Read `questions_data` in the menu, or call `mlca_questions`, before choosing. A pending question blocks actions. Use `mlca_answer` only for agent-answerable questions and only within user-authorized autonomy. Sensitive questions require the human CLI/TUI; do not use shell or file tools to answer them yourself. Free-text interpretations require confirmation.

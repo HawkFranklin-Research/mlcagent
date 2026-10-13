@@ -24,6 +24,9 @@ def replay(records: list[Record]) -> ProjectState:
             state.answers[p["question_id"]] = p
             state.pending_options = None
             state.presented_turn = None
+        elif kind == "EventColumnSelected":
+            state.columns["event_column"] = p["column"]
+            state.brief["event_column"] = p["column"]
         elif kind == "OutcomeSelected":
             state.columns["target"] = p["column"]
             state.brief["target"] = p["column"]
@@ -42,6 +45,7 @@ def replay(records: list[Record]) -> ProjectState:
             state.prepared_data = p
         elif kind == "ProjectCreated":
             state.project_id = p["project_id"]
+            state.measurement_arm = p.get("measurement_arm", "worker")
             state.template_id, state.template_version = p["template_id"], p["template_version"]
         elif kind == "DataRegistered":
             state.data[p["name"]] = p
@@ -70,6 +74,7 @@ def replay(records: list[Record]) -> ProjectState:
             state.presented_turn = None
             state.pending_options = None
         elif kind == "OptionsProposed":
+            state.presented_turn = None
             state.pending_options = p["options"]
         elif kind in (
             "OptionChosen",
@@ -112,6 +117,7 @@ def replay(records: list[Record]) -> ProjectState:
             state.split = p
             state.test_unlocked = False
         elif kind == "TestUnlocked":
+            state.presented_turn = None
             state.test_unlocked = bool(state.split and p["split_sha256"] == state.split["sha256"])
         elif kind == "EnvironmentRecorded":
             state.lock_sha256 = p["lock_sha256"]

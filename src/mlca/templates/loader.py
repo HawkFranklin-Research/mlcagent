@@ -80,6 +80,7 @@ def load(path: Path) -> Workflow:
             except re.error as exc:
                 raise MlcaUserError(f"{filename}: custom_scope.deny_patterns: {exc}") from exc
     required_check_fields = {
+        "actions_completed": {"actions"},
         "fact_present": {"key"},
         "metric_present": {"name", "split"},
         "figure_count": {"min"},
@@ -91,6 +92,9 @@ def load(path: Path) -> Workflow:
             missing = required_check_fields.get(subgoal.check.type, set()) - set(data)
             if missing:
                 raise MlcaUserError(f"events/{event.id}.yaml: check fields missing: {sorted(missing)}")
+            if subgoal.check.type == "actions_completed":
+                if not data["actions"] or not set(data["actions"]) <= set(event.actions):
+                    raise MlcaUserError(f"events/{event.id}.yaml: action check references unknown actions")
             if subgoal.check.type == "output_exists":
                 alternatives = data.get("any_of")
                 if alternatives is None:

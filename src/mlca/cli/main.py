@@ -214,7 +214,10 @@ def init_project(
     template: str = typer.Option("tabular_classification", "--template"),
     brief_file: Path | None = typer.Option(None, "--brief-file"),
     primary_data: str | None = typer.Option(None, "--primary-data"),
+    measurement_arm: str = typer.Option("worker", "--measurement-arm"),
 ) -> Any:
+    if measurement_arm not in {"worker", "reference"}:
+        raise MlcaUserError("Measurement arm must be worker or reference")
     from mlca.project.init import initialise, resolve_column
     from mlca.templates.registry import get
     from mlca.tui.banner import print_banner
@@ -245,6 +248,7 @@ def init_project(
                     data,
                     template,
                     brief,
+                    config={"measurement_arm": measurement_arm},
                     column_picker=pick_column if brief_file is None else None,
                     primary_data=primary_data,
                 )

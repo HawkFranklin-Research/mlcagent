@@ -14,7 +14,7 @@ The first run can fetch packages and exceed a client's startup timeout; install 
 `uv tool install mlcagent==0.2.0b1` first. The prepared `npx mlcagent mcp` launcher remains unpublished.
 
 The server speaks MCP on stdout; diagnostics use stderr. The official Python SDK negotiates
-modern or legacy initialization. Doctor starts a real subprocess and lists the 14 tools;
+modern or legacy initialization. Doctor starts a real subprocess and lists the 16 tools;
 client registration queries have five-second timeouts and never print client configuration.
 It does not run a study or call an LLM.
 
@@ -235,10 +235,14 @@ The agent guide is validated and included in the wheel. Guard mutation checks ar
 | Original anemia study | data not supplied on this machine | pending |
 | Native macOS/Windows installation and execution | not run | pending |
 
-For each client, record the version/date, 14-tool discovery, requested/approved decisions,
+For each client, record the version/date, 16-tool discovery, requested/approved decisions,
 step IDs, artifact reads, attribution, observed errors and any workaround. Do not substitute
 SDK tests for these manual client results. No client was registered during implementation.
 
 ## Guided MCP alignment (unpublished source)
 
 Cards include actor and a human `how` request route. Human choices return human_decision, not stale-option errors. study_fields proposals require a user decision and support CLI --edit or a prefilled TUI form. A parallel `mlca -p <project>` TUI polls the log each second without calling a model; connected brain mode and active-step phases are shown. Status includes bounded journey/messages_data; step_status exposes canonical phase. Notifications are request-scoped and client-dependent, so polling is the guaranteed path. No model calls or publication are needed for this source workflow.
+
+## Guided questions
+
+`mlca_options` returns the situation and `questions_data` with the cards. `mlca_questions` lists pending questions; `mlca_answer` selects a zero-based answer index or maps free text through an explicitly confirmed choice. Human-only questions remain refused for agent principals. See [guided studies](GUIDED_STUDIES.md).

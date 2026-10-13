@@ -69,7 +69,16 @@ def evaluate(
         return all(already_run(a, state) for a in spec["actions"]), "Prespecified models completed"
     if kind == "metric_present":
         return any(
-            m["name"] == spec["name"] and m["split"] == spec["split"]
+            m["name"]
+            == (
+                state.task.get(
+                    "primary_metric",
+                    "roc_auc" if state.template_id == "tabular_classification" else "c_index",
+                )
+                if spec["name"] == "primary"
+                else spec["name"]
+            )
+            and m["split"] == spec["split"]
             for s in state.steps
             if s["status"] == "completed"
             for m in s.get("metrics", [])

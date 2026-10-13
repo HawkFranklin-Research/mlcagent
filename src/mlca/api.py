@@ -75,7 +75,12 @@ class Session:
         self.progress_callback = None
         self.timing_context = None
         self.client = Client(self.root, self.config, self.emit)
-        self.client.disabled = mode == "brain"
+        self.measurement_arm = created.payload.get("measurement_arm", "worker")
+        if self.config.measurement_arm != self.measurement_arm:
+            raise IntegrityError("Measurement arm differs from the immutable project record")
+        if self.measurement_arm == "reference" and mode == "brain":
+            raise MlcaUserError("Reference comparisons run in driver mode only")
+        self.client.disabled = mode == "brain" or self.measurement_arm == "reference"
         self.client.principal = principal
         self.client_name = client
         self.closed = False
@@ -271,7 +276,7 @@ class Session:
                 )
             self.config = config
             self.client = Client(self.root, config, self.emit)
-            self.client.disabled = self.mode == "brain"
+            self.client.disabled = self.mode == "brain" or self.measurement_arm == "reference"
             self.client.principal = self.principal
             return {"changed": len(differences)}
 
@@ -390,7 +395,7 @@ class Session:
                 source, request_id = "fallback", None
                 if state.event_statuses.get(state.current_event) == "done":
                     options = fallback(state, self.workflow)
-                elif self.mode != "brain" and "navigator" in self.config.roles:
+                elif not self.client.disabled and self.mode != "brain" and "navigator" in self.config.roles:
                     from mlca.roles.navigator import Navigator
 
                     try:

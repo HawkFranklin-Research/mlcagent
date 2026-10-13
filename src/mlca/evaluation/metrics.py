@@ -162,6 +162,8 @@ def build(session, branch=None):
         counts = interventions[r.actor]
         mapping = {
             "OptionChosen": "option_choices",
+            "QuestionAnswered": "question_answers",
+            "DataDecision": "data_decisions",
             "CustomInstructionSubmitted": "custom_instructions",
             "UserConfirmed": "confirmations",
             "StudyFieldsResolved": "study_resolutions",
@@ -211,7 +213,14 @@ def build(session, branch=None):
     timing = [
         r
         for r in records
-        if r.type.value in {"OptionChosen", "CustomInstructionSubmitted", "UserConfirmed", "ApprovalResolved"}
+        if r.type.value
+        in {
+            "OptionChosen",
+            "CustomInstructionSubmitted",
+            "UserConfirmed",
+            "ApprovalResolved",
+            "QuestionAnswered",
+        }
     ]
     # Requested confirmations already have ApprovalResolved timing; don't double-count their UserConfirmed.
     requested_goals = {
@@ -302,7 +311,9 @@ def build(session, branch=None):
             else 0
         )
     denominator = len(artefacts) + len(metrics)
-    primary_metric = "roc_auc" if state.template_id == "tabular_classification" else "c_index"
+    primary_metric = state.task.get(
+        "primary_metric", "roc_auc" if state.template_id == "tabular_classification" else "c_index"
+    )
     results = {}
     for split in ("val", "test"):
         selected = next(
@@ -313,6 +324,11 @@ def build(session, branch=None):
             "value": measured(selected["value"], "exact") if selected else measured(None),
             "ci": measured(selected.get("ci"), "exact") if selected else measured(None),
         }
+    chosen_metric = state.facts.get(
+        "best_val_roc_auc" if state.template_id == "tabular_classification" else "best_val_c_index", {}
+    ).get("value")
+    if chosen_metric is not None:
+        results["val"]["value"] = measured(chosen_metric, "exact")
     results["selected_model"] = measured(state.facts.get("best_model", {}).get("value"), "exact")
     approval_requests = [
         r for r in records if r.type.value == "ApprovalRequested" and r.actor.startswith("agent:")
@@ -351,6 +367,7 @@ def build(session, branch=None):
     )
     proposal_decisions = {r.payload["request_id"]: r for r in records if r.type.value == "ApprovalResolved"}
     return {
+        "measurement_arm": state.measurement_arm,
         "schema_version": "1",
         "measurement_kind": "agent_run",
         "run": {

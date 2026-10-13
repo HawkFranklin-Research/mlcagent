@@ -1,4 +1,3 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: validate
 title: Validate
 goal: Compare candidates on validation rows; freeze one model and its threshold.
@@ -15,7 +14,7 @@ subgoals:
   text: Primary metric (roc_auc) recorded on validation
   check:
     type: metric_present
-    name: roc_auc
+    name: primary
     split: val
 - id: model_selected
   text: Author freezes model and threshold before test

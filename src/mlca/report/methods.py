@@ -9,9 +9,22 @@ def build(state: Any, workflow: Any) -> Any:
         "Agent file access: unknown (outside MLCA).",
         "",
         f"Workflow: {workflow.spec.id} {workflow.spec.version}",
+        f"Measurement arm: {state.measurement_arm}",
+        f"Task: {state.task or 'legacy template defaults'}",
+        f"Resolved columns: {state.columns}",
         f"Environment lock: {state.lock_sha256}",
         "",
     ]
+    if state.measurement_arm == "reference":
+        lines.extend(
+            [
+                "No-AI reference comparison: frozen engine-owned scripts; no model inference.",
+                "Cox encoding omits the first category level; constant design columns are removed before fitting."
+                if state.template_id == "survival"
+                else "Classification families and validation selection are prespecified.",
+                "",
+            ]
+        )
     lines.extend(["Recorded packages:", *state.environment_packages, ""])
     if state.split:
         lines.extend(

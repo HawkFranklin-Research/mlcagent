@@ -54,6 +54,11 @@ def verify(session: Any) -> Any:
                     source = Path(data["original_path"])
                     if sha256(source) != data["sha256"]:
                         raise IntegrityError("Original input changed")
+                    prepared = step["inputs"].get(state.primary_data)
+                    if prepared:
+                        source = Path(prepared["path"])
+                        if sha256(source) != prepared["sha256"]:
+                            raise IntegrityError("Historical prepared input changed")
                     frame = read_table(source).reset_index(drop=True)
                     assigned = partitions(frame, split["parameters"], column_for(state))
                     import pandas as pd

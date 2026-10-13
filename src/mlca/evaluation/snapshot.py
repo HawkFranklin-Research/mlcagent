@@ -60,6 +60,7 @@ def capture(session):
         sandbox = "unavailable (execution refused)"
     return {
         "mlca_version": __version__,
+        "measurement_arm": session.measurement_arm,
         "git_commit": command(["git", "-C", str(checkout), "rev-parse", "HEAD"])
         if (checkout / ".git").exists()
         else None,

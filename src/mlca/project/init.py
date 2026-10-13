@@ -161,6 +161,7 @@ def _build_initialisation(
         "ProjectCreated",
         {
             "project_id": project_id,
+            "measurement_arm": validated_config.measurement_arm,
             "mlca_version": __version__,
             "template_id": workflow.spec.id,
             "template_version": workflow.spec.version,

@@ -1,10 +1,9 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: survival
-version: 0.2.1
+version: 0.3.0
 title: Survival
-description: 'Time-to-event analysis from one table with a duration and an event indicator. Baseline: Cox proportional
-  hazards; one prespecified alternative (penalised Cox). Primary metric: Harrell''s C-index, chosen on validation,
-  confirmed once on test.'
+description: 'Time-to-event analysis from one table with a duration and an event indicator.
+  Baseline: Cox proportional hazards; one prespecified alternative (penalised Cox).
+  Primary metric: Harrell''s C-index, chosen on validation, confirmed once on test.'
 brief_questions:
 - id: aim
   text: 'Aim in one sentence: which outcome, in whom, and why?'
@@ -13,7 +12,8 @@ brief_questions:
 - id: unit
   text: What is one row (patient, sample)? Can a subject have several rows?
 - id: event_column
-  text: Whether the event happened (1) or was censored (0); leave blank to decide later.
+  text: Whether the event happened (1) or was censored (0); leave blank to decide
+    later.
 events:
 - onboard
 - data

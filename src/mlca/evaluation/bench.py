@@ -29,6 +29,8 @@ class ApprovalPolicy(BaseModel):
 
 class TaskCard(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    measurement_arm: str = "worker"
+    guided: bool = False
     data: list[str]
     primary_data: str | None = None
     brief: dict[str, str]
@@ -43,6 +45,8 @@ class TaskCard(BaseModel):
 
 
 def drive(session, card, rng, seed):
+    if card.guided:
+        return drive_guided(session, card)
     customs = set()
     installed = set()
     for _ in range(card.max_turns):
@@ -170,7 +174,9 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
         raise MlcaUserError("Choose a fresh empty benchmark output directory")
     out.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256(raw).hexdigest()
-    config = card.config.copy()
+    if card.measurement_arm not in {"worker", "reference"}:
+        raise MlcaUserError("Unknown measurement arm")
+    config = {**card.config, "measurement_arm": card.measurement_arm}
     for provider in config.get("providers", {}).values():
         if provider.get("script"):
             provider["script"] = str((path.parent / provider["script"]).resolve())
@@ -178,14 +184,15 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
     data = [(path.parent / p).resolve() for p in card.data]
     manifest = {
         "schema_version": "1",
-        "kind": "independent_agent_runs",
+        "kind": "independent_agent_runs" if card.measurement_arm == "worker" else "no_ai_reference_runs",
+        "measurement_arm": card.measurement_arm,
         "task_card_sha256": digest,
         "models_locked": lock_models,
         "policy_principal": "user:policy/" + digest[:12],
         "runs": [],
     }
-    manifest["model_catalog"] = catalog_record(config, out)
-    manifest["structured_outputs"] = structured_record(config)
+    manifest["model_catalog"] = catalog_record(config, out) if card.measurement_arm == "worker" else None
+    manifest["structured_outputs"] = structured_record(config) if card.measurement_arm == "worker" else {}
     atomic_json(out / "bench.json", manifest)
     total = 0.0
     for index in range(runs):
@@ -223,7 +230,9 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
                     "task_card_sha256": digest,
                     "policy_seed": seed + index,
                     "split_seed": seed,
-                    "measurement_kind": "agent_run",
+                    "measurement_kind": "agent_run"
+                    if card.measurement_arm == "worker"
+                    else "no_ai_reference",
                 },
                 actor="user",
             )
@@ -305,7 +314,8 @@ def summarize(out):
         for split in ("val", "test")
     }
     summary = {
-        "kind": "independent_agent_runs",
+        "kind": manifest.get("kind", "independent_agent_runs"),
+        "measurement_arm": manifest.get("measurement_arm", "worker"),
         "runs": manifest["runs"],
         "run_count": measured(count),
         "completed": measured(completed),
@@ -442,3 +452,26 @@ def summarize(out):
     lines.extend(f"| {r['project']} | {r['status']} |" for r in manifest["runs"])
     (out / "bench_summary.md").write_text("\n".join(lines) + "\n")
     return summary
+
+
+def drive_guided(session, card):
+    for _ in range(card.max_turns):
+        result = session.autopilot(card.max_turns)
+        if result["reason"] == "completed":
+            return
+        if result["reason"] == "question":
+            for q in session.questions():
+                session.answer_question(q["question_id"], q["recommended"])
+        elif result["reason"] == "approval":
+            for choice in result["turn"]:
+                if choice["id"].startswith("human:confirm:"):
+                    if not card.approval_policy.confirm_subgoals:
+                        raise MlcaUserError("Task card does not authorize confirmation")
+                    session.confirm(choice["id"].split(":", 2)[2], card.approval_policy.note)
+                elif choice["id"] == "human:unlock":
+                    if not card.approval_policy.unlock_test:
+                        raise MlcaUserError("Task card does not authorize test unlock")
+                    session.unlock_test("UNLOCK TEST", card.approval_policy.note)
+        else:
+            raise MlcaUserError("Guided run stopped: " + result["reason"])
+    raise MlcaUserError("Guided task-card turn limit reached")

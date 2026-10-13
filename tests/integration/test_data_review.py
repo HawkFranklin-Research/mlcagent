@@ -98,3 +98,28 @@ def test_multiple_outcomes_offer_an_explicit_choice():
         if q["key"] == "outcome_choice"
     )
     assert q["explicit"] and q["options"][1]["effect"]["column"] == "diagnosis"
+
+
+def test_no_observed_events_require_column_choice_not_feature_exclusions():
+    frame = pd.DataFrame(
+        {"time": range(1, 21), "event": [0] * 20, "status": [0, 1] * 10, "age": range(30, 50)}
+    )
+    qs = findings(frame, {"target": "time", "duration": "time", "event_column": "event"}, "survival", "no")
+    choice = next(q for q in qs if q["key"] == "event_choice")
+    assert choice["explicit"] and choice["human_only"]
+    assert choice["options"][0]["effect"]["column"] == "status"
+    assert not any(q["key"] == "leakage:age" for q in qs)
+
+
+def test_merge_numeric_rare_labels_and_recompute_task():
+    from types import SimpleNamespace
+
+    from mlca.engine.data_review import task_for
+
+    f = pd.DataFrame({"target": [1, 2, 3, 3]})
+    changed, _, _, _ = apply(
+        f, [{"effect": {"kind": "merge_rare", "column": "target", "values": ["1", "2"]}}]
+    )
+    assert "other" in changed.target.tolist()
+    state = SimpleNamespace(columns={"target": "target"}, template_id="tabular_classification")
+    assert task_for(changed, state, "multiclass")["type"] == "binary"

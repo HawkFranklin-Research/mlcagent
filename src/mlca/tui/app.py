@@ -83,7 +83,9 @@ class MlcaApp(App):
         attached = clients(self.session)
         self.external_client = attached[-1] if attached else None
         self.session.mode = self.external_client["mode"] if self.external_client else "driver"
-        self.session.client.disabled = self.session.mode == "brain"
+        self.session.client.disabled = (
+            self.session.mode == "brain" or self.session.measurement_arm == "reference"
+        )
 
     @work(thread=True, exclusive=True, group="external-poll")
     def poll_external(self):
@@ -172,6 +174,7 @@ class MlcaApp(App):
         from mlca.tui.widgets.questions import Questions
 
         self.screen.query_one(Questions).show_questions(self.session.questions())
+        self.screen.query_one(StatusBar).display = not bool(self.session.questions())
         status = self.decorated_status()
         count = len(status["approvals"])
         self.screen.query_one("#approvals-banner", Static).update(
@@ -652,6 +655,19 @@ class MlcaApp(App):
 
     def approval_summary(self, event, goal):
         state = self.session.state
+        if event.id == "validate":
+            metrics = [
+                m
+                for st in state.steps
+                if st["event_id"] == "validate" and st["status"] == "completed"
+                for m in st.get("metrics", [])
+            ]
+            return (
+                "[b]Approve the chosen model[/b]\nModel: "
+                + str(state.facts.get("best_model", {}).get("value", "See validation outputs"))
+                + "\n"
+                + "\n".join(f"{m['name']}: {m['value']:.4g}" for m in metrics[:12])
+            )
         if event.id != "onboard":
             return "[b]Approve[/b]\n" + goal.text
         brief = state.brief

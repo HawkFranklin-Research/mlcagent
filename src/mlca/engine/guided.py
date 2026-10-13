@@ -5,7 +5,7 @@ import re
 from pydantic import Field
 
 from mlca.engine import checks, questions
-from mlca.engine.options import Option, fallback, parameters, validate
+from mlca.engine.options import Option, fallback, validate
 from mlca.errors import IntegrityError, MlcaUserError
 from mlca.llm.structured import decode
 from mlca.log.schema import StrictModel
@@ -40,6 +40,14 @@ def validate_effect(session, effect):
             and 0 <= effect["index"] < len(q["options"])
         ):
             return
+    if kind == "set_brief" and set(effect) == {"kind", "field", "value"}:
+        if (
+            session.state.current_event == "onboard"
+            and effect["field"] in {"aim", "unit", "repeated_subjects"}
+            and isinstance(effect["value"], str)
+            and 0 < len(effect["value"]) <= 600
+        ):
+            return
     if kind == "exclude_column" and set(effect) == {"kind", "column"}:
         if (
             session.state.current_event == "data"
@@ -55,14 +63,29 @@ def validate_effect(session, effect):
     if kind == "choose_action" and set(effect) == {"kind", "action_id", "params"}:
         action = session.workflow.actions.get(effect["action_id"])
         if action and action.id in session.workflow.events[session.state.current_event].actions:
-            parameters(action, effect["params"], session.state)
+            validate(
+                [
+                    Option(
+                        id="1",
+                        action_id=action.id,
+                        params=effect["params"],
+                        title="Requested action",
+                        why_now="Recorded answer",
+                    )
+                ],
+                session.state,
+                session.workflow,
+            )
             return
     raise MlcaUserError("Question effect is not an allowed current action", category="invalid_request")
 
 
 def apply_effect(session, effect):
     validate_effect(session, effect)
-    if effect["kind"] == "answer_question":
+    if effect["kind"] == "set_brief":
+        session._require_human()
+        session.resolve_study({**session.state.brief, effect["field"]: effect["value"]})
+    elif effect["kind"] == "answer_question":
         questions.answer(session, effect["question_id"], effect["index"])
     elif effect["kind"] == "pause":
         session.pause_autopilot()
@@ -101,6 +124,8 @@ def _model_scene(session, legal):
                     "subgoals": session.state.subgoals,
                     "facts": session.state.facts,
                     "task": session.state.task,
+                    "brief": session.state.brief,
+                    "columns": session.state.columns,
                 },
                 catalog=legal,
                 schema=Scene.model_json_schema(),
@@ -138,7 +163,7 @@ def _model_scene(session, legal):
             if scene.question:
                 for option in scene.question.options:
                     validate_effect(session, option.effect)
-                if any(o.effect["kind"] == "exclude_column" for o in scene.question.options):
+                if any(o.effect["kind"] in {"exclude_column", "set_brief"} for o in scene.question.options):
                     scene.question.explicit = True
                     scene.question.human_only = True
             return scene, parsed, response.request_id
@@ -169,7 +194,20 @@ def present(session):
         }
     if state.presented_turn and state.pending_options is not None:
         return {**state.presented_turn, "questions": []}
-    legal = fallback(state, session.workflow)
+    legal = (
+        list(state.pending_options)
+        if state.pending_options is not None
+        else fallback(state, session.workflow)
+    )
+    if state.current_event == "onboard":
+        from mlca.project.init import study_ready
+
+        if not study_ready(state)[0]:
+            legal = []
+    if state.current_event == "features" and state.split and state.inventory:
+        main = next((i for i in state.inventory if i["name"] == state.primary_data), state.inventory[0])
+        if len(main["columns"]) > state.split["counts"]["train"]:
+            legal.sort(key=lambda o: o.get("action_id") != "select_features")
     scene, source, request_id = None, "fallback", None
     # Human decisions and navigation are computed by the engine, never invented by a model.
     if (
@@ -215,6 +253,7 @@ def present(session):
         ready = next((c for c in choices if not c.get("disabled") and c["id"] != "custom"), None)
         if ready:
             ready["recommended"] = True
+    choices.sort(key=lambda c: not c.get("recommended", False))
     situation = scene.situation if scene else session.workflow.events[state.current_event].goal
     session.emit("TurnPresented", {"situation": situation, "choices": choices})
     return {"situation": situation, "choices": choices, "questions": []}
@@ -300,9 +339,6 @@ def drive(session, max_steps=100):
             if last.get("status") == "awaiting_script":
                 reason = "awaiting_script"
                 break
-            if last.get("status") == "completed":
-                with session.mutation():
-                    narrate(session, last)
         except IntegrityError:
             raise
         except Exception as exc:

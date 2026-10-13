@@ -46,7 +46,24 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
     result = []
 
     def add(rule, header, question, effect, alternatives=(), sensitive=False):
-        options = [{"label": "Use recommendation", "description": question, "effect": effect}]
+        labels_by_effect = {
+            "merge_labels": "Merge labels",
+            "exclude_column": "Exclude column",
+            "set_outcome": "Use this outcome",
+            "drop_duplicates": "Remove duplicate rows",
+            "drop_missing": "Exclude missing outcomes",
+            "set_task": "Predict all groups",
+            "set_group": "Keep subjects together",
+            "positive_times": "Exclude invalid times",
+            "encode_event": "Use this coding",
+        }
+        options = [
+            {
+                "label": labels_by_effect.get(effect["kind"], "Use recommendation"),
+                "description": question,
+                "effect": effect,
+            }
+        ]
         options.extend(alternatives)
         result.append(
             {
@@ -157,6 +174,29 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
             [keep],
             True,
         )
+    if template == "survival":
+        event = columns.get("event_column")
+        if frame[event].dropna().eq(0).all():
+            candidates = [c for c in frame if c not in {target, event} and frame[c].dropna().nunique() == 2]
+            candidates.sort(key=lambda c: not bool(re.search(r"event|status|cens|observed|death", c, re.I)))
+            if candidates:
+                add(
+                    "event_choice",
+                    "Event status",
+                    "The selected event indicator contains no observed events. Which column records the event? Confirm its meaning.",
+                    {"kind": "set_event_column", "column": candidates[0]},
+                    [
+                        {
+                            "label": f"Column {i + 2}",
+                            "description": c,
+                            "effect": {"kind": "set_event_column", "column": c},
+                        }
+                        for i, c in enumerate(candidates[1:4])
+                    ],
+                    True,
+                )
+                result[-1]["options"][0]["label"] = "Use " + candidates[0].split()[0][:40]
+                result[-1]["options"][0]["description"] = candidates[0]
     protected = {target, columns.get("duration"), columns.get("event_column")}
     for column in frame:
         if column in protected or column in excluded:
@@ -180,7 +220,11 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
             complete = frame[[column, outcome]].dropna().copy()
             if template != "survival":
                 complete[outcome] = complete[outcome].map(normalized)
-            if len(complete) and 1 < distinct <= min(50, max(2, len(frame) // 5)):
+            if (
+                len(complete)
+                and complete[outcome].nunique() > 1
+                and 1 < distinct <= min(50, max(2, len(frame) // 5))
+            ):
                 probable |= complete.groupby(column, observed=True)[outcome].nunique().max() == 1
             if template != "survival" and len(labels) == 2 and pd.api.types.is_numeric_dtype(values):
                 intervals = complete.groupby(outcome, observed=True)[column].agg(["min", "max"])
@@ -295,6 +339,7 @@ def apply(frame, decisions):
                 lambda v: effect["mapping"].get(str(v), v) if pd.notna(v) else v
             )
         elif kind == "merge_rare":
+            frame[column] = frame[column].astype(object)
             frame.loc[frame[column].astype(str).isin(effect["values"]), column] = "other"
         elif kind == "drop_classes":
             frame = frame.loc[~frame[column].astype(str).isin(effect["values"])]
@@ -322,11 +367,18 @@ def task_for(frame, state, mode=None):
     target = state.columns["target"]
     n = int(frame[target].nunique())
     if state.template_id == "survival":
+        event = state.columns["event_column"]
+        codes = set(frame[event].dropna().unique())
+        if not codes <= {0, 1} or not frame[event].eq(1).any():
+            raise MlcaUserError(
+                "Survival requires an explicitly coded event indicator with observed events",
+                category="gate_blocked",
+            )
         return {"type": "survival", "n_classes": None, "primary_metric": "c_index"}
     if n < 2:
         raise MlcaUserError("At least two outcome classes are required", category="gate_blocked")
     return {
-        "type": mode or ("binary" if n == 2 else "multiclass"),
+        "type": "binary" if n == 2 else "multiclass",
         "n_classes": n,
         "primary_metric": "roc_auc" if n == 2 else "roc_auc_ovr",
     }
@@ -346,14 +398,18 @@ def prepared(session):
     digest = hashlib.sha256(
         canonical({"source": context_key(state), "decisions": state.data_decisions}).encode()
     ).hexdigest()
-    path = session.root / ".mlca/data/prepared" / (digest + ".parquet")
+    suffix = Path(state.data[primary_for(state)]["original_path"]).suffix.lower()
+    path = session.root / ".mlca/data/prepared" / (digest + suffix)
     if state.prepared_data:
         path = session.root / state.prepared_data["path"]
         if sha256(path) != state.prepared_data["sha256"]:
             raise IntegrityError("Prepared input changed")
         return path
     path.parent.mkdir(parents=True, exist_ok=True)
-    frame.to_parquet(path, index=False)
+    if suffix == ".parquet":
+        frame.to_parquet(path, index=False)
+    else:
+        frame.to_csv(path, index=False, sep="\t" if suffix == ".tsv" else ",")
     session.emit("TaskConfigured", {"task": task, "excluded_columns": excluded, "group_column": group})
     session.emit(
         "DataPrepared",
@@ -372,6 +428,7 @@ def protocol_input(session):
     if not state.guided_enabled:
         return None
     data = {
+        "primary_data": state.primary_data,
         "columns": state.columns,
         "task": state.task,
         "excluded_columns": state.excluded_columns,

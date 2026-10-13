@@ -68,6 +68,7 @@ class CatalogConfig(ConfigModel):
 
 
 class Config(ConfigModel):
+    measurement_arm: Literal["worker", "reference"] = "worker"
     catalog: CatalogConfig = Field(default_factory=CatalogConfig)
     chatgpt_auth: ChatGPTAuth = Field(default_factory=ChatGPTAuth)
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)

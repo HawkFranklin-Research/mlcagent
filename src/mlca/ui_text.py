@@ -82,6 +82,12 @@ def text(key: str) -> str:
 def record_message(record):
     """One presentation map; raw protocol records remain separately accessible."""
     p, kind = record.payload, record.type.value
+    if kind == "ResultSummary":
+        return p["text"]
+    if kind == "QuestionAsked":
+        return "⚠ " + p["question"]
+    if kind == "QuestionAnswered":
+        return "✓ Answer recorded"
     if kind == "InventoryRecorded":
         return "\n".join(
             f"✓ Registered table {f['name']} ({f['rows']:,} rows, {len(f['columns'])} columns)"

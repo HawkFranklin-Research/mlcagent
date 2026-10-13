@@ -238,3 +238,7 @@ Row and column counts were checked on the files (columns include the target). Wh
 | [docs/m7-vm-brain-mode.md](docs/m7-vm-brain-mode.md) | Manual end-to-end test on a fresh VM with Claude Code in brain mode |
 | [docs/testing.md](docs/testing.md) | Running the offline tests (prime the uv cache once: `uv run python scripts/prime_test_cache.py`) |
 | [docs/DECISIONS.md](docs/DECISIONS.md), [CHANGELOG.md](CHANGELOG.md) | Decisions and history |
+
+## Guided studies (unreleased)
+
+Run/resume with `a`, pause with Space, answer docked questions, and approve the brief, chosen model and final test. Worker code remains the default. An explicit `--measurement-arm reference` creates a separate no-AI comparison study. See [guided studies and acceptance](docs/GUIDED_STUDIES.md). No new beta has been published.

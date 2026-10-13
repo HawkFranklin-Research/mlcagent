@@ -84,7 +84,7 @@ def finish(session, action, observation):
             step_id=observation["step_id"],
             actor="engine" if session.mode == "brain" else "navigator",
         )
-    if session.mode != "brain" and "inspector" in session.config.roles:
+    if not session.client.disabled and session.mode != "brain" and "inspector" in session.config.roles:
         from mlca.roles.inspector import Inspector
 
         for figure in observation["figures"]:
@@ -104,9 +104,15 @@ def finish(session, action, observation):
     checks.run_all(session.state, session.workflow, session.root, session.emit)
     edits = materialise(session.root, session.state, session.emit)
     session.progress("completed")
-    return {
+    result = {
         "step_id": observation["step_id"],
         "status": "completed",
         "observation": observation,
         "view_edits": edits,
     }
+
+    if session.state.guided_enabled:
+        from mlca.engine.guided import narrate
+
+        result["summary"] = narrate(session, result)
+    return result

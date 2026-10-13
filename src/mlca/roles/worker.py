@@ -50,11 +50,19 @@ def render_order(session, action, params, inputs, state):
     rendered = action.prompt
     for key, value in params.items():
         rendered = rendered.replace("{" + key + "}", str(value))
+    if state.guided_enabled:
+        rendered += "\nRead the declared _protocol JSON: use its task, primary_metric, outcome columns and exclusions. Binary threshold selection is validation-only; multiclass uses macro one-vs-rest ROC AUC without a binary threshold. Never fit after test exposure."
     names = {k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()}
     if action.reads_test:
         names["test"] = {"name": "test.parquet", "format": ".parquet"}
     outputs = [o.model_dump() for o in action.outputs]
-    brief = {"answers": state.brief, "columns": state.columns, "primary_data": state.primary_data}
+    brief = {
+        "answers": state.brief,
+        "columns": state.columns,
+        "primary_data": state.primary_data,
+        "task": state.task,
+        "excluded_columns": state.excluded_columns,
+    }
     return {
         "event": action.event,
         "action": action.id,

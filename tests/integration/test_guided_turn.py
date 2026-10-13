@@ -55,6 +55,7 @@ def test_nondata_effect_rejected_before_answer_is_recorded(opened_project):
 
 def test_invalid_scene_repairs_then_falls_back(opened_project, monkeypatch):
     from types import SimpleNamespace
+
     from mlca.config import RoleConfig
 
     s = opened_project
@@ -77,6 +78,7 @@ def test_invalid_scene_repairs_then_falls_back(opened_project, monkeypatch):
 
 def test_free_text_mapping_requires_confirmed_existing_answer(opened_project, monkeypatch):
     from types import SimpleNamespace
+
     from mlca.config import RoleConfig
     from mlca.engine.questions import ask
 
@@ -99,3 +101,29 @@ def test_free_text_mapping_requires_confirmed_existing_answer(opened_project, mo
     assert confirmation["explicit"]
     s.answer_question(confirmation["question_id"], 0)
     assert qid in s.state.answers and s._autopilot_pause
+
+
+def test_worker_failure_never_selects_reference(opened_project, monkeypatch):
+    from tests.helpers import choose_action
+
+    s = opened_project
+    choose_action(s, "confirm_brief")
+    s.confirm("brief_confirmed", "Reviewed")
+    s.next()
+
+    def failure(*a, **kw):
+        raise MlcaUserError("Worker fixture failure", category="provider_error")
+
+    monkeypatch.setattr(s.client, "complete", failure)
+    monkeypatch.setattr(
+        "mlca.runner.reference.ReferenceSource.script",
+        lambda *a, **kw: (_ for _ in ()).throw(AssertionError("reference substitution")),
+    )
+    result = s.autopilot()
+    assert result["reason"] == "failure"
+    assert s.state.steps[-1]["status"] == "failed"
+    assert s.measurement_arm == "worker"
+    q = s.questions()[0]
+    assert q["key"] == "recovery"
+    s.answer_question(q["question_id"], 0)
+    assert s._autopilot_pause

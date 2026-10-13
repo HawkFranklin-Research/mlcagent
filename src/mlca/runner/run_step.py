@@ -111,6 +111,7 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
         {
             "step_id": step_id,
             "mode": session.mode,
+            "measurement_arm": session.measurement_arm,
             "action_id": action.id,
             "params": params,
             "inputs": {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()},
@@ -280,7 +281,7 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
             "sha256": script_hash,
             "path": str(script.relative_to(session.root)),
             "worker_request_id": request_id,
-            "source": session.principal if session.mode == "brain" else "worker",
+            "source": session.principal if session.mode == "brain" else session.measurement_arm,
         },
         step_id=step_id,
         actor=session.principal if session.mode == "brain" else "worker",
@@ -363,9 +364,15 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
 def _worker(session, action, params, step_id, step, state, inputs):
     from .sources import ExternalSource, WorkerSource
 
-    source = ExternalSource() if session.mode == "brain" else WorkerSource(session)
+    if session.measurement_arm == "reference":
+        from .reference import ReferenceSource
+
+        source = ReferenceSource()
+    else:
+        source = ExternalSource() if session.mode == "brain" else WorkerSource(session)
     previous, error = "", None
-    for attempt in range(1, session.config.budgets.worker_max_attempts + 1):
+    attempts = 1 if session.measurement_arm == "reference" else session.config.budgets.worker_max_attempts
+    for attempt in range(1, attempts + 1):
         if session.mode != "brain":
             session.progress(
                 "Writing the script" if not error else "Repairing the script",
@@ -389,7 +396,13 @@ def _worker(session, action, params, step_id, step, state, inputs):
     failures = [r for r in session.store.read() if r.step_id == step_id and r.payload.get("category")]
     category = failures[-1].payload["category"] if failures else "provider_error"
     raise MlcaUserError(
-        "Worker exhausted its attempt budget: " + (error or "No valid script"), category=category
+        (
+            "Reference step failed: "
+            if session.measurement_arm == "reference"
+            else "Worker exhausted its attempt budget: "
+        )
+        + (error or "No valid script"),
+        category=category,
     )
 
 

@@ -17,7 +17,10 @@ def _step() -> Path:
 def inputs() -> dict[str, Path]:
     return {
         name: Path(value["path"])
-        for name, value in json.loads((_step() / "inputs.json").read_text(encoding="utf-8")).items()
+        for name, value in sorted(
+            json.loads((_step() / "inputs.json").read_text(encoding="utf-8")).items(),
+            key=lambda item: item[0] == "_protocol",
+        )
     }
 
 

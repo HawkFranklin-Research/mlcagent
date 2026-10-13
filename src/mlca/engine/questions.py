@@ -85,6 +85,7 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
     if default and q.get("explicit"):
         raise MlcaUserError("This decision requires an explicit answer", category="human_decision")
     if default:
+        free_text = None
         index = q["recommended"]
     effect = None
     if free_text:
@@ -107,6 +108,7 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
     data_kinds = {
         "keep",
         "set_outcome",
+        "set_event_column",
         "merge_labels",
         "encode_event",
         "merge_rare",
@@ -123,11 +125,24 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
     if effect["kind"] in data_kinds:
         if state.split or session._ever_unlocked():
             raise MlcaUserError("Data decisions are closed after split freezing", category="test_lock")
-        if effect["kind"] != "choose_positive":
+        if effect["kind"] == "set_event_column":
+            session._require_human()
+            if (
+                state.template_id != "survival"
+                or effect["column"] not in data_review.source_frame(state)
+                or effect["column"] == state.columns["target"]
+            ):
+                raise MlcaUserError("Choose a real event-status column", category="invalid_request")
+        elif effect["kind"] != "choose_positive":
             candidate, _, _, mode = data_review.apply(
                 data_review.source_frame(state), state.data_decisions + [{"effect": effect}]
             )
-            data_review.task_for(candidate, state, mode)
+            if state.template_id != "survival" or len(pending(session)) == 1:
+                data_review.task_for(candidate, state, mode)
+            elif candidate.empty:
+                raise MlcaUserError("A data decision cannot remove every row", category="invalid_request")
+    if effect["kind"] == "set_brief":
+        session._require_human()
     if effect["kind"] not in data_kinds:
         from .guided import validate_effect
 
@@ -153,6 +168,9 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
         },
         actor="user",
     )
+    if effect["kind"] == "set_event_column":
+        session.emit("EventColumnSelected", {"column": effect["column"]}, actor="user")
+        return review(session)
     if effect["kind"] == "set_outcome" and effect["column"] != state.columns["target"]:
         session.emit(
             "OutcomeSelected",
