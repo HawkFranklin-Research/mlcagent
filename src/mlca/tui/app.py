@@ -105,14 +105,20 @@ class MlcaApp(App):
                 locked,
             )
             if key != self._external_head:
-                self._external_head = key
                 options = self.session.guided_view()
                 active = self.session.active_step()
                 if active or locked:
                     options = [{**o, "disabled": not o["id"].startswith("human:")} for o in options]
-                self.call_from_thread(self.refresh_project, options)
+                self.call_from_thread(self.refresh_external, options, key)
         except Exception as exc:
             self.call_from_thread(self.notify, str(exc), severity="error")
+
+    async def refresh_external(self, options, key):
+        # Publish the observer head only after its cards are actually mounted.
+        self.refresh_project(options, schedule_options=False)
+        if isinstance(self.screen, MainScreen):
+            await self.screen.query_one(Options).render_options(self.with_connect_card(options))
+            self._external_head = key
 
     def decorated_status(self) -> dict:
         """Session status plus the presentation facts every panel needs."""
@@ -144,7 +150,12 @@ class MlcaApp(App):
 
     def with_connect_card(self, options):
         """Driver mode without any model: offer connecting as the first card."""
-        if self.external_client or self.session.config.roles or any(o["id"] == "ui:connect" for o in options):
+        if (
+            self.session.measurement_arm == "reference"
+            or self.external_client
+            or self.session.config.roles
+            or any(o["id"] == "ui:connect" for o in options)
+        ):
             return options
         card = {
             "id": "ui:connect",
@@ -168,7 +179,7 @@ class MlcaApp(App):
     def on_questions_answer(self, message):
         self.run_session_action("answer_question", *message.arguments)
 
-    def refresh_project(self, options: Any = None) -> Any:
+    def refresh_project(self, options: Any = None, schedule_options=True) -> Any:
         if not self.session or not isinstance(self.screen, MainScreen):
             return
         from mlca.tui.widgets.questions import Questions
@@ -194,7 +205,8 @@ class MlcaApp(App):
             records = self.session.branches.records()
             anchor = next((r.id for r in reversed(records) if r.type.value == "OptionsProposed"), None)
             self.activity.begin(anchor)
-            self.call_later(self.screen.query_one(Options).render_options, options)
+            if schedule_options:
+                self.call_later(self.screen.query_one(Options).render_options, options)
         else:
             self.run_session_action("turn", refresh_only=True)
 

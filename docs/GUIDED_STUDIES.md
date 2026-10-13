@@ -4,7 +4,7 @@ New studies use template version 0.3.0. Existing studies retain their frozen tem
 
 ## Guided controls
 
-Open a project with `mlca -p <project>`. `a` runs or resumes autopilot; Space pauses after the current step. Autopilot stops for questions, the brief approval, validation-model approval, test authorization, failures or budget exhaustion. Numbered cards and custom instructions remain available in step mode. `p` opens pending approval requests.
+Open a project with `mlca -p <project>`. `a` runs or resumes autopilot; Space pauses after the current step. Autopilot stops for questions, the brief approval, validation-model approval, test authorization, failures or budget exhaustion. Numbered cards and custom instructions remain available in step mode. Start autopilot before leaving Model to compare both candidates; a later first activation is refused rather than changing an already selected protocol. `p` opens pending approval requests.
 
 Questions dock in the main screen. Left/right select a question or Review; choose an answer and press Answer. Esc uses the recommendation only for non-sensitive questions. Leakage, outcome selection and label merging require explicit answers. Free text is mapped to a listed answer and requires a separate confirmation. Without a model, select a listed answer directly.
 
@@ -37,7 +37,7 @@ mlca init <new-project> --data <table.csv> --brief-file <brief.yaml> \
 mlca -p <new-project>
 ```
 
-For survival use `--template survival` and specify duration/event columns in the brief. The reference arm is driver-only. It makes no model calls, even if global model roles are configured. Its immutable project record, step scripts, snapshots, benchmark manifests and metrics name `measurement_arm: reference`. Changing an existing study's arm is refused. Reference code is included in the frozen runtime and runs through the same sandbox, hashes, manifests and fit checks. Level A remains the default; level B requires explicit opt-in.
+For survival use `--template survival` and specify duration/event columns in the brief. The reference arm is driver-only. It makes no model calls, even if global model roles are configured. Its immutable project record, step scripts, snapshots, benchmark manifests and metrics name `measurement_arm: reference`. Changing an existing study's arm is refused. Worker study runtimes exclude the reference module. Reference code is included only in the comparison runtime and runs through the same sandbox, hashes, manifests and fit checks. Level A remains the default; level B requires explicit opt-in.
 
 Reference primary steps audit schema, summarise distributions, fit imputation/encoding/scaling, retain or filter features, fit both prespecified models, select on validation, test once with 1,000 bootstrap resamples, and calculate validation permutation importance. Logistic regression and class-balanced histogram gradient boosting cover binary/multiclass classification; Cox and penalised Cox cover survival. Cox proportional-hazards diagnostics use training rows. Fits/convergence failures remain failures; no alternate family is silently substituted. The reference arm supports primary catalogue actions, not arbitrary custom code or optional supporting actions.
 

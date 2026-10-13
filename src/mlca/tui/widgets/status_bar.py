@@ -13,6 +13,10 @@ class StatusBar(Static):
         rendered = Text(
             f"{status['branch']} | {status['current_event']} | requests {usage['model_requests']} | known USD {cost_label} | unknown costs {usage['unknown_cost_requests']}"
         )
+        if status.get("measurement_arm") == "reference":
+            rendered.append("\n● No-AI reference comparison · no model calls")
+            self.update(rendered)
+            return
         client = status.get("external_client")
         if client and client["mode"] == "brain":
             rendered.append(f"\n● Brain mode · driven by {client['actor']} · MLCA makes no model calls")

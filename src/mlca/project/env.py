@@ -20,7 +20,11 @@ def command(args: list[str], root: Path) -> str:
 
 
 def create(
-    root: Path, packages: list[str], frozen: Path | None = None, runtime_source: Path | None = None
+    root: Path,
+    packages: list[str],
+    frozen: Path | None = None,
+    runtime_source: Path | None = None,
+    measurement_arm: str = "worker",
 ) -> dict:
     uv = shutil.which("uv")
     if not uv:
@@ -36,7 +40,10 @@ def create(
     shutil.copytree(
         runtime_source or Path(mlca_runtime.__file__).parent,
         runtime / "mlca_runtime",
-        ignore=shutil.ignore_patterns("__pycache__"),
+        ignore=shutil.ignore_patterns(
+            "__pycache__",
+            *(["reference.py"] if runtime_source is None and measurement_arm != "reference" else []),
+        ),
     )
     (runtime / "pyproject.toml").write_text(
         '[build-system]\nrequires=["hatchling"]\nbuild-backend="hatchling.build"\n'

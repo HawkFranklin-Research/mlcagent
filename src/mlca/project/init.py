@@ -177,7 +177,9 @@ def _build_initialisation(
         {"answers": redact_value(brief, validated_config), "columns": columns, "primary_data": primary_data},
         actor=principal,
     )
-    lock_data = create(root, workflow.spec.default_runtime_packages)
+    lock_data = create(
+        root, workflow.spec.default_runtime_packages, measurement_arm=validated_config.measurement_arm
+    )
     store.append("EnvironmentRecorded", lock_data)
     store.append(
         "EventEntered",

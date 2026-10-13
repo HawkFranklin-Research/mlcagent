@@ -69,13 +69,21 @@ def verify(session: Any) -> Any:
                     )
                     ok = sha256(reproduced) == split["sha256"]
                 elif builtin == "inventory":
+                    from mlca.log.replay import replay
+
+                    before = next(
+                        i
+                        for i, r in enumerate(records)
+                        if r.type.value == "StepStarted" and r.step_id == step["step_id"]
+                    )
+                    initial = replay(records[:before])
                     saved = json.loads(
                         (historical / "outputs" / step["outputs"][0]["name"]).read_text(encoding="utf-8")
                     )
                     ok = saved == {
-                        "brief": state.brief,
-                        "inventory": state.inventory,
-                        **({"columns": state.columns} if state.columns else {}),
+                        "brief": initial.brief,
+                        "inventory": initial.inventory,
+                        **({"columns": initial.columns} if initial.columns else {}),
                     }
                 else:
                     # Report contents are deterministic projections; integrity plus regenerate comparison.

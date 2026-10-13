@@ -127,3 +127,13 @@ def test_worker_failure_never_selects_reference(opened_project, monkeypatch):
     assert q["key"] == "recovery"
     s.answer_question(q["question_id"], 0)
     assert s._autopilot_pause
+
+
+def test_late_autopilot_does_not_claim_unrun_comparison(opened_project):
+    from tests.helpers import advance_to
+
+    s = opened_project
+    advance_to(s, "validate")
+    with pytest.raises(MlcaUserError, match="before leaving Model"):
+        s.autopilot()
+    assert not s.state.compare_models

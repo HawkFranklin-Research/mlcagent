@@ -312,6 +312,12 @@ def drive(session, max_steps=100):
     with session.mutation():
         session._ensure_idle()
         if not session.state.compare_models and not session._ever_unlocked():
+            ids = session.workflow.spec.events
+            if ids.index(session.state.current_event) > ids.index("model"):
+                raise MlcaUserError(
+                    "Start autopilot before leaving Model to compare both candidates; branch before Model or continue this protocol in step mode",
+                    category="gate_blocked",
+                )
             session.emit("ComparisonRequested", {})
             checks.run_all(session.state, session.workflow, session.root, session.emit)
     reason, last = "step_limit", None

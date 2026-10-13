@@ -13,6 +13,7 @@ def test_reference_is_explicit_and_cannot_be_switched(project_factory):
     root = project_factory()
     with Session(root) as s:
         assert s.measurement_arm == "worker"
+        assert not (root / ".mlca/runtime/mlca_runtime/reference.py").exists()
     path = root / ".mlca/project.yaml"
     settings = yaml.safe_load(path.read_text())
     settings["config"]["measurement_arm"] = "reference"
@@ -60,6 +61,7 @@ def test_reference_full_path_no_models(tmp_path, task):
     )
     with Session(root, client="bench", principal="user:policy/012345abcdef", policy=True) as s:
         assert s.client.disabled
+        assert (root / ".mlca/runtime/mlca_runtime/reference.py").is_file()
         with pytest.raises(MlcaUserError, match="driver"):
             Session(root, mode="brain")
         card = TaskCard(
