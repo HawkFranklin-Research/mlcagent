@@ -22,6 +22,9 @@ class ProviderConfig(ConfigModel):
     structured_outputs: bool | None = None
     timeout_s: float = Field(default=90, gt=0)
     request_cost_bound_usd: float | None = Field(default=None, ge=0)
+    # Requests per minute across all processes. None: 16 for OpenRouter free models (their
+    # account limit is 20/min), otherwise unpaced.
+    requests_per_minute: float | None = Field(default=None, gt=0)
 
 
 class RoleConfig(ConfigModel):

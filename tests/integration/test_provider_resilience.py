@@ -82,3 +82,41 @@ def test_rate_limits_wait_without_spending_attempts(opened_project, monkeypatch)
     with pytest.raises(MlcaUserError) as raised:
         call(opened_project)
     assert raised.value.category == "provider_error" and len(sleeps) == 4
+
+
+def test_free_models_are_paced_per_minute_across_processes(isolated_user):
+    from mlca.llm.client import pace
+
+    clock = [1000.0]
+    sleeps = []
+
+    def sleep(seconds):
+        sleeps.append(seconds)
+        clock[0] += seconds
+
+    free = ProviderConfig(kind="openrouter")
+    waits = [pace(free, "vendor/model:free", now=lambda: clock[0], sleep=sleep) for _ in range(17)]
+    assert waits[:16] == [0.0] * 16 and 59 < waits[16] <= 60
+    assert pace(free, "vendor/paid-model", now=lambda: clock[0], sleep=sleep) == 0.0
+    fixed = ProviderConfig(kind="openrouter", requests_per_minute=1, api_key_env="OTHER")
+    assert pace(fixed, "vendor/paid-model", now=lambda: clock[0], sleep=sleep) == 0.0
+    assert pace(fixed, "vendor/paid-model", now=lambda: clock[0], sleep=sleep) == 60.0
+
+
+def test_bench_cools_down_and_retries_after_provider_failure(monkeypatch):
+    from mlca.evaluation import bench
+
+    calls, answered, slept = [], [], []
+    session = NS(
+        autopilot=lambda limit: calls.append(1) or {"reason": "failure" if len(calls) == 1 else "completed"},
+        questions=lambda: [
+            {"question_id": "q", "options": [{"effect": {"kind": "pause"}}, {"effect": {"kind": "retry"}}]}
+        ],
+        answer_question=lambda qid, index: answered.append((qid, index)),
+        mutation=lambda: __import__("contextlib").nullcontext(),
+        emit=lambda *a, **k: None,
+    )
+    monkeypatch.setattr(bench, "provider_stopped", lambda s: True)
+    card = NS(max_turns=5, max_cooldowns=2, cooldown_s=600, approval_policy=None)
+    bench.drive_guided(session, card, sleep=slept.append)
+    assert slept == [600] and answered == [("q", 1)] and len(calls) == 2

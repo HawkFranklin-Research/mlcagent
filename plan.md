@@ -1789,3 +1789,57 @@ P10.1–P10.7 are implemented. Final full offline suite: **137 passed, 1 skipped
 ## 2026-10-07 — Published-beta verification
 
 [PyPI release](https://pypi.org/project/mlcagent/0.2.0b1/). Fresh PyPI verification used an empty temporary HOME/XDG and uv cache: `uv tool install mlcagent==0.2.0b1`, `mlca --version` (0.2.0b1), `mlca doctor --json` (level A capability; execution must confirm isolation), and `mlca mcp doctor` (14 tools) all passed. Published wheel/sdist SHA256 hashes match the scanned release artifacts. Local tag `v0.2.0b1` points to release source `16bcc72`; no push. P10 is complete, while M7, real providers/data, and native macOS/Windows remain pending. The beta description contains an overlooked historical README Status paragraph; it is corrected in source for the next release, with no second upload. Token rotation to a project-scoped token and removal of the account-wide file remain an author account step; the file was read only by the publish command.
+
+### P17: bench pacing (done) and `mlca bio-bench` for the paper's own case studies
+
+**Done 2026-10-14 (Claude, uncommitted).** These protect `mlca bench` against provider limits:
+- **Pacing.** `ProviderConfig.requests_per_minute` paces every request (default 16/min for OpenRouter free models, whose account limit is 20/min). The window is shared by all MLCA processes.
+- **Rate limits.** A 429 waits for `Retry-After`, or 5/15/30/60 s, without spending an attempt.
+- **Provider errors.** A provider error ends a Worker step as `provider_error`, never as a code repair.
+- **No JSON-capable provider.** A 404 for that reason retries once without JSON mode, and remembers that for the session.
+- **Cooldown.** Guided bench runs wait `cooldown_s` (default 600) and retry the step, up to `max_cooldowns` (3) times.
+- **Accounting.** All waiting is reported as `time.provider_wait_s`, never as model or engine time.
+- **Tests:** `tests/integration/test_provider_resilience.py`.
+
+**Why `bio-bench`.** `mlca bench` runs one generic table through the `tabular_classification` or `survival` template. The paper's case studies are multi-stage protocols: unsupervised discovery, labels derived from it, supervised models with repeated splits, then an external cohort and survival analysis. They also need custom instructions beside the template steps. `bio-bench` measures MLCA on those.
+
+**Case study 1 (HNSCC), from the legacy script** `mlca_experiments/jun16_copilot_agent_results_case_study1.py`:
+
+| # | Legacy step | Legacy detail |
+|---|---|---|
+| 1 | Load | TCGA expression `tcga.survival.fcptac.csv` (415 patients) + `survival_tcga.csv`; CPTAC `cptac.survival.fcptac.csv` (102) + `survival_cptac.csv`; in `mlca_experiments/hnscc_mlca/data/Case-Study-HNSCC-ML-Copilot-Agent/processed_data/` |
+| 2 | Discover | KMeans, agglomerative (ward) and GMM × k = 2–10 on **all** TCGA patients; silhouette, Calinski–Harabasz, Davies–Bouldin, inertia |
+| 3 | Select | the configuration with the **lowest survival log-rank p-value** |
+| 4 | Label | the two largest clusters → 0/1 |
+| 5 | Classify | `RUNS` random train/test splits; SelectKBest(f_classif) fitted on train; 5 classifiers (LR, RF, SVM, KNN, GB) × feature sizes |
+| 6 | External | predict CPTAC labels; Kaplan–Meier / log-rank on the predicted groups |
+| 7 | Report | metric distributions, ROC curves, KM plots |
+
+The file holds two versions: k 2–10, 100 runs, sizes {2…15}; and k 2–8, 50 runs, sizes {2…20}. The paper reports "100 runs". `hnscc_mlca/mlca_conversations/` holds seven short JSON logs (30 Aug 2025). They were written by a coding agent porting the Colab notebook "with MLCA-style logging"; they are **not** ML Copilot v1 logs (corrected 2026-10-14).
+
+**Integrity points the legacy protocol has (R2-4):**
+- Steps 2 and 3 use all TCGA patients, including those later used as test rows (transductive labels).
+- Step 3 selects the clustering by the survival outcome that is reported afterwards, which makes the survival separation optimistic.
+- Neither invalidates a re-run; both must be stated, and the revised protocol must choose (D17-1, D17-2).
+
+**Design (generic, not HNSCC-specific).**
+1. **Template `subtype_discovery`.** Events: onboard → data (two registered tables with roles `discovery` and `external`) → split (patient-level, discovery cohort only) → discover → label → features → model → validate (repeated splits) → external (sealed like `test`; one exposure) → report.
+   - Engine additions: table roles; an `external` partition locked like `test`; an action that runs N repeated splits and records the distribution; unsupervised actions that need no target at onboard (survival columns only).
+2. **`mlca bio-bench <card>`.** The same driver as bench (pacing, cooldowns, metrics, arms). The card adds:
+   - the case-study protocol (k range, methods, selection rule, N, feature sizes, classifiers);
+   - an ordered list of custom instructions for steps outside the template;
+   - a legacy-comparison file mapping each reported legacy number to its source, so the run reports agreement or difference per number.
+3. **Arms.** `worker` (the AI writes the code) and `reference` (engine scripts), labelled separately as in P14.2.
+
+**Order.** CS1 (HNSCC) end to end first. Then decide whether CS2 (LUAD transfer), CS3 (BRCA receptors) and CS4 (anemia) follow, or stay legacy-described in the paper.
+
+**Decisions for the author:**
+- **D17-1 selection rule:** **(a)** replicate the legacy rule (lowest survival p) for comparability; **(b)** internal metrics only (e.g. best silhouette), prespecified; **(c)** both as labelled variants.
+- **D17-2 discovery data:** **(a)** all TCGA patients as in the legacy run; **(b)** training patients only, assigning held-out and CPTAC patients with the fitted model.
+- **D17-3 repeats:** 100 (as the paper states) or 50 (the second legacy version).
+- **D17-4 scope:** CS1 only before resubmission, or more case studies.
+
+**P17 layout update (2026-10-14).**
+- Bench tables moved into this repository: `benchmarks/datasets/`.
+- Bench cards and runs, and the bio-bench protocols (S1–S4, `STUDY.md`), moved to `../mlcagent-experiments/`. Full private planning versions there are `*.local.md` and are never pushed.
+- The paper repository keeps only curated results and figure scripts.

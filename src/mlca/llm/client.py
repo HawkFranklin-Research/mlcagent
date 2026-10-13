@@ -43,6 +43,51 @@ class LLMResult(BaseModel):
 
 
 RATE_LIMIT_WAITS_S = (5, 15, 30, 60)
+FREE_REQUESTS_PER_MINUTE = 16
+
+
+def pace(provider_config, model, now=time.time, sleep=time.sleep):
+    """Space requests so a run stays under the provider's per-minute limit; returns seconds waited.
+
+    The window is shared by every MLCA process on this machine (TUI, bench, MCP)."""
+    rpm = provider_config.requests_per_minute
+    if (
+        rpm is None
+        and provider_config.kind == "openrouter"
+        and (model.endswith(":free") or model == "openrouter/free")
+    ):
+        rpm = FREE_REQUESTS_PER_MINUTE
+    if not rpm:
+        return 0.0
+    import hashlib
+    import json
+
+    from filelock import FileLock
+
+    from mlca.paths import user_config_dir
+
+    key = hashlib.sha256(
+        (
+            provider_config.kind + (provider_config.base_url or "") + (provider_config.api_key_env or "")
+        ).encode()
+    ).hexdigest()[:24]
+    path = user_config_dir() / "rate" / (key + ".json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    waited = 0.0
+    with FileLock(str(path) + ".lock"):
+        try:
+            stamps = json.loads(path.read_text())
+        except (OSError, ValueError):
+            stamps = []
+        current = now()
+        stamps = [t for t in stamps if current - t < 60]
+        if len(stamps) >= rpm:
+            waited = max(0.0, 60 - (current - stamps[-int(rpm)]))
+            sleep(waited)
+            current = now()
+        stamps.append(current)
+        path.write_text(json.dumps(stamps[-int(rpm) * 2 :]))
+    return waited
 
 
 def retry_after(error, index):
@@ -216,6 +261,7 @@ class Client:
                 result = None
                 error = None
                 try:
+                    record["pacing_wait_s"] = pace(provider_config, selected.model)
                     if isinstance(provider, FakeProvider):
                         index = sum(r["role"] == role for r in usage.read(self.root)) - 1
                         result = provider.complete(payload, context, index)
@@ -272,7 +318,10 @@ class Client:
                     continue
                 if status == 429 and rate_waits < len(RATE_LIMIT_WAITS_S):
                     # Rate limits are infrastructure, not model behaviour: wait, do not spend an attempt.
-                    time.sleep(retry_after(error, rate_waits))
+                    wait = retry_after(error, rate_waits)
+                    record["rate_limit_wait_s"] = wait
+                    usage.persist(self.root, record, entry)
+                    time.sleep(wait)
                     rate_waits, attempt = rate_waits + 1, attempt - 1
                     continue
                 if attempt < max_attempts and isinstance(status, int) and status >= 500:

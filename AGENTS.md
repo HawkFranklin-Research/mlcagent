@@ -12,3 +12,5 @@ Keep CHANGELOG.md and docs/DECISIONS.md current. Draft workflow content requires
 Future validation commands: uv run pytest; uv run ruff check; uv run mlca doctor.
 
 Never place caches or virtual environments other than `.venv/` inside the repository.
+
+Benchmark tables live in `benchmarks/datasets/`. Evaluation runs, cards and study protocols live in `../mlcagent-experiments/` (read its AGENTS.md). Material about the original analyses behind the submitted manuscript must not enter this repository before the paper is accepted.

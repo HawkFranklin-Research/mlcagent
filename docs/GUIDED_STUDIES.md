@@ -49,7 +49,7 @@ Reference primary steps audit schema, summarise distributions, fit imputation/en
 
 ```bash
 uv run python scripts/acceptance_run.py \
-  --data ../benchmark_datasets \
+  --data benchmarks/datasets \
   --out /absolute/path/to/new-acceptance-directory
 ```
 

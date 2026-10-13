@@ -24,7 +24,7 @@ from mlca.tui.app import MlcaApp
 from mlca.tui.screens.main import MainScreen
 from mlca.tui.widgets.questions import Questions
 
-# Task-card metadata from benchmark_datasets/README.md, never engine rules.
+# Task-card metadata from benchmarks/README.md, never engine rules.
 CARDS = {
     "breast_cancer_diagnostic_uci.csv": ("tabular_classification", "Diagnosis", None),
     "heart_disease_cleveland_uci.csv": ("tabular_classification", "heart_disease_binary", None),

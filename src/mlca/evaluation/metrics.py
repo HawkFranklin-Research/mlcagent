@@ -264,7 +264,11 @@ def build(session, branch=None):
     human_wait = sum_known(r.payload.get("decision_wait_s", r.payload.get("wait_s")) for r in human_timing)
     active = sum_known(r.payload.get("active_s") for r in human_timing) if human_timing else measured(None)
     agent_s = sum_known(r.payload.get("decision_wait_s", r.payload.get("wait_s")) for r in agent_timing)
-    others = [llm_s["value"], compute, human_wait["value"], agent_s["value"]]
+    # Pacing, rate-limit waits and bench cooldowns: infrastructure time, not model or engine time.
+    provider_wait = sum((r.get("pacing_wait_s") or 0) + (r.get("rate_limit_wait_s") or 0) for r in llm) + sum(
+        r.payload.get("cooldown_s", 0) for r in records if r.type.value == "Note"
+    )
+    others = [llm_s["value"], compute, human_wait["value"], agent_s["value"], provider_wait]
     overhead = wall - sum(others) if all(v is not None for v in others) else None
     envelopes = []
     for r in requests:
@@ -433,6 +437,7 @@ def build(session, branch=None):
             "human_wait_s": human_wait,
             "human_active_s": active,
             "agent_decision_s": agent_s,
+            "provider_wait_s": measured(provider_wait),
             "engine_overhead_s": measured(
                 overhead,
                 approximate=True,

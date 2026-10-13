@@ -4,6 +4,7 @@ import hashlib
 import json
 import random
 import statistics
+import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -41,6 +42,9 @@ class TaskCard(BaseModel):
     per_run_budget_usd: float = Field(default=10, gt=0)
     total_budget_usd: float = Field(default=30, gt=0)
     max_turns: int = Field(default=100, gt=0)
+    # When the provider keeps refusing (rate limits, outage): wait, then retry the step.
+    cooldown_s: int = Field(default=600, ge=0)
+    max_cooldowns: int = Field(default=3, ge=0)
     config: dict = Field(default_factory=dict)
 
 
@@ -454,11 +458,42 @@ def summarize(out):
     return summary
 
 
-def drive_guided(session, card):
+def provider_stopped(session):
+    """True when the last categorised record of the run is a provider failure."""
+    categorised = [r for r in session.store.read() if r.payload.get("category")]
+    return bool(categorised) and categorised[-1].payload["category"] == "provider_error"
+
+
+def drive_guided(session, card, sleep=time.sleep):
+    cooldowns = 0
     for _ in range(card.max_turns):
         result = session.autopilot(card.max_turns)
         if result["reason"] == "completed":
             return
+        if result["reason"] == "failure" and provider_stopped(session) and cooldowns < card.max_cooldowns:
+            cooldowns += 1
+            with session.mutation():
+                session.emit(
+                    "Note",
+                    {
+                        "text": "Provider unavailable; waiting before retrying the step",
+                        "cooldown_s": card.cooldown_s,
+                    },
+                    actor="user",
+                )
+            sleep(card.cooldown_s)
+            for q in session.questions():
+                retry = next(
+                    (
+                        i
+                        for i, o in enumerate(q.get("options", []))
+                        if o.get("effect", {}).get("kind") == "retry"
+                    ),
+                    None,
+                )
+                if retry is not None:
+                    session.answer_question(q["question_id"], retry)
+            continue
         if result["reason"] == "question":
             for q in session.questions():
                 session.answer_question(q["question_id"], q["recommended"])
