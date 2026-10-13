@@ -523,3 +523,7 @@ wording tests pass in 4.15 s; a fresh full run follows.
 ## Publication verification notes
 
 PyPI accepted beta 2; fresh-index install and 14-tool checks passed. An initial isolated verification completed all commands but encountered a temporary-directory cleanup race during client detection. The verification was repeated successfully with cleanup errors kept separate from command results. No published artifact was changed. Beta 1 was yanked through the authenticated management page, then confirmed via public JSON.
+
+## MX1 — MCP human card contract
+
+Guided MCP cards expose actor/how, preserve colon-containing IDs and refuse human choices with a logged human_decision and request route. Deferred onboarding emits an engine-only empty menu without model calls. Focused card, guidance and click-only pilot tests pass.

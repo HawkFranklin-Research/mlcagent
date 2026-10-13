@@ -372,7 +372,97 @@ Reviewer reproduction: suite 96 passed, 1 skipped; live stdio, brain mode.
 4. **Tests:** the reproductions above (renamed, rounded) are refused; a `describe()` summary, a class-count table and a metrics table still read normally.
 5. **Docs** (README, `docs/mcp.md`): the guard catches accidental and simple copies, not a deliberate agent. The agent writes the code, so it can always encode data in outputs (noise, strings, figures). For confidential data, use driver mode with a local model; brain mode sends derived results to the agent's provider by design.
 
+## 13. Aligning MCP with the guided TUI (P11), before M7 (2026-10-13)
+
+P11 (`plan.md`) changed what an option *is*:
+- the engine now appends human-decision cards (`engine/guidance.py: cards`);
+- study fields can be deferred ("I'll decide later") and set only by a human (`api.py: resolve_study`, human-only);
+- models can change between steps (`change_models`, human-only, `ModelChanged`);
+- progress has phases, and records have a plain-language message map (`ui_text.py: record_message`).
+
+The MCP server predates this. The reviewer checked the code at `757c936` and found these gaps for the M7 brain-mode run:
+
+| # | Gap | Effect in brain mode |
+|---|---|---|
+| G1 | `mlca_options` returns human cards with ids like `opt:<rec>:human:confirm:brief_confirmed`. `mlca_choose` splits the token on every `:` and expects exactly 3 parts | Choosing a human card fails with **"Option is stale"**, which is wrong and confusing. Nothing tells the agent that the card is the human's |
+| G2 | Deferred study fields: `resolve_study` is human-only, and `request_approval` supports only `confirm`, `unlock_test`, `package` | If the target was deferred, the agent **cannot ask** for it to be set. The study is stuck in `onboard` unless the user knows to open the TUI's Study details |
+| G3 | The TUI refreshes only on in-process record callbacks (`session.subscribe`) | With Claude driving through `mlca mcp`, a TUI opened in a second terminal **does not update** when the MCP process writes records |
+| G4 | `mlca_status` has no journey and no plain-language activity; `mlca_step_status` has no phase; one progress notification per call | The agent cannot tell the user, in their chat, where the study is or what just happened in the words the TUI uses |
+| G5 | Server instructions and `skills/mlca/SKILL.md` describe only the pre-P11 loop | The agent does not know about human cards, deferred fields or the guided card style |
+| G6 | The model status line assumes driver mode | In brain mode the TUI would show "not connected: press m" while Claude is the brain |
+
+Driver mode over MCP is also affected by G1, G3, G4 and G5.
+
+### MX1 · Human cards over MCP (G1)
+
+**Implemented:** typed guided cards, bounded token parsing and human-decision refusals; focused offline tests pass.
+- Parse option tokens as `opt:<record_id>:<rest>` (split at most twice), so human card ids survive intact.
+- In `mlca_options`, every card carries `actor: "agent" | "human" | "engine"`. Human cards also carry `how`: the exact call that requests them, e.g. `{"tool": "mlca_request_approval", "kind": "confirm", "target": "brief_confirmed"}`, `{"kind": "unlock_test", "target": "test"}`, or `{"kind": "study_fields"}` (MX2).
+- `mlca_choose` on a human card returns a clear refusal with that same `how` ("This decision is yours to request, not to make: call mlca_request_approval(…)"). It is logged as a `Refusal` with category `human_decision`. It never says "stale".
+- The navigation card `next` and loop cards stay choosable by the agent, as today. Gates still apply.
+- **Tests:** an MCP client sees `actor` and `how` on each human card; choosing one gets the specific refusal; the token parser accepts ids containing `:`.
+
+### MX2 · Study fields as an approval request (G2)
+- Add `study_fields` to `request_approval` kinds. The agent may attach **proposed** values with a reason: `{target, duration, event_column, unit, repeated_subjects, primary_data}`. They are validated against the inventory's columns, but nothing is applied.
+- **Human side:**
+  - `mlca approvals approve <id>` applies the proposed values through `resolve_study` as the user, after showing them;
+  - `--edit` lets the human change them first;
+  - the TUI approval dialog pre-fills the Study details form with the proposal.
+
+  The record states both the proposer (agent) and the decider (user).
+- `mlca_init` from an agent keeps working. If it leaves fields deferred, its result says so and names MX2's request as the next step.
+- **Tests:** agent proposes → human approves → `StudyFieldsResolved` with actor `user`, proposer `agent:…`; a decline leaves the state unchanged; invalid column names are refused at request time.
+
+### MX3 · A live TUI next to an MCP session (G3, G6)
+- The TUI also polls the event log (about every 1 s, using the incremental `Store` read) and refreshes cards, sub-goals, facts, the journey and the status when another process wrote records.
+- **While another principal holds an active step or the project lock:**
+  - the cards are greyed out, with "Claude (agent:…) is working on step <id>: <phase>";
+  - human cards and approvals stay usable (resolving an approval does not need the step lock, or it waits briefly and retries).
+- **Model status in brain mode:** `● Brain mode · driven by agent:<client>/<version> · MLCA makes no model calls`, instead of "not connected". `m` still opens Models, for later driver use.
+- **Tests:** Textual pilot with a second `Session` writing records from another thread or process → the TUI updates within 2 s; human-card approval works while the agent's step is waiting for a script.
+
+### MX4 · Journey, messages and phases for the agent (G4)
+- **`mlca_status` adds:**
+  - `journey`: the events with states `done | current | locked | ahead`, and the current branch's action trail (last 12 steps and human decisions, each with its actor);
+  - `messages_data`: the last 10 plain-language lines from `record_message`, as untrusted data.
+
+  The agent can paste these to the user.
+- **`mlca_step_status` adds** `phase`:
+  - brain mode: `awaiting_script | checking | running (attempt n/max) | collecting | checking_subgoals | completed | failed`;
+  - driver mode: `writing` as well.
+
+  Progress notifications are sent at each phase change, where the client supports them; polling stays the guaranteed path.
+- **Privacy:** these fields pass through the same serializer, egress logging and row guard as other results. The messages carry no data rows.
+- **Tests:** status contains journey and messages after a step; phases move in order in brain and driver modes; egress is logged once per call.
+
+### MX5 · Instructions, skill and the guided card style (G5)
+- **Server `INSTRUCTIONS`** (still at most 15 lines) add:
+  - cards have an `actor`; human cards are requested, never chosen;
+  - deferred study fields go through `request_approval(kind="study_fields")`;
+  - read `journey` and `messages_data` to keep the user informed.
+- **`skills/mlca/SKILL.md`** adds a **guided style** as the default: before each choice, show the user the current cards as a short numbered list (title, one line, actor), and ask which one, unless the user has said "choose yourself". Restate the journey in one line after each step. Autonomous style stays available.
+- **`docs/m7-vm-brain-mode.md`:**
+  - second terminal: open `mlca -p .` (the live TUI from MX3) to watch and approve, or use `mlca approvals`;
+  - the Claude prompt updated to the guided style;
+  - the deferred-target path covered.
+
+### MX6 · Accounting and reports
+- **Decisions by principal** also count: human cards requested by the agent; study-field proposals (proposed by agent, decided by user); and refusals with category `human_decision`.
+- **`mlca metrics`** reports, for brain-mode runs: the number of agent-requested approvals, the human approval wait time (already timed in P10.2), and the share of steps whose script came from the agent.
+- **Tests:** a synthetic brain-mode run → metrics show those counts.
+
+**Order:** MX1 → MX2 → MX3 → MX4 → MX5 → MX6. Commit locally per sub-phase (`MX<n>: …`); keep the full suite green. Refresh the installed `mlca` after MX5, and publish **0.2.0b3** only when the author says so. No live model calls.
+
+**Done when:** in a synthetic MCP brain-mode run, the agent:
+- sees human cards with `how`, gets the specific refusal when choosing one, and proposes a deferred target via `study_fields`;
+- is unblocked after the human approves in the CLI or TUI;
+- reports journey and messages to the user.
+
+Meanwhile, a TUI open in a second terminal updates live, shows "driven by agent", and resolves the approvals. All tests green.
+
 ## Status
+
+- **2026-10-13 review:** P11 changed options, study fields and models; MCP alignment MX1–MX6 planned (section 13). Needed before the M7 brain-mode run.
 
 ## Beta 2 published and beta 1 yanked — 2026-10-13
 

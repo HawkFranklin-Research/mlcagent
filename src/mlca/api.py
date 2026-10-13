@@ -270,6 +270,8 @@ class Session:
                 if not study_ready(state)[0]:
                     from mlca.engine.guidance import cards
 
+                    if state.pending_options is None:
+                        self.emit("OptionsProposed", {"options": [], "source": "engine"})
                     return cards(self, [{"id": "custom", "title": "Custom instruction"}])
             if state.pending_options is None:
                 source, request_id = "fallback", None

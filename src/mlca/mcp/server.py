@@ -120,7 +120,9 @@ class Controller:
 
     def options(self):
         s = self.session
-        choices = s.options()
+        from mlca.engine.guidance import mcp_card
+
+        choices = [mcp_card(o) for o in s.options(guided=True)]
         record = next(
             r for r in reversed(s.branches.records(s.branch_name)) if r.type.value == "OptionsProposed"
         )
@@ -302,7 +304,7 @@ class Controller:
                 (r for r in reversed(s.branches.records(s.branch_name)) if r.type.value == "OptionsProposed"),
                 None,
             )
-            parts = token.split(":")
+            parts = token.split(":", 2)
             if (
                 len(parts) != 3
                 or parts[0] != "opt"
@@ -311,6 +313,30 @@ class Controller:
                 or s.state.pending_options is None
             ):
                 raise MlcaUserError("Option is stale; request current options")
+            if parts[2].startswith("human:"):
+                from mlca.engine.guidance import cards, mcp_card
+
+                human = next((mcp_card(o) for o in cards(s, []) if o["id"] == parts[2]), None)
+                if human is None:
+                    raise MlcaUserError("Option is stale; request current options")
+                error = MlcaUserError(
+                    "This decision is yours to request, not to make: call mlca_request_approval with the supplied how and a reason.",
+                    category="human_decision",
+                )
+                error.how = human["how"]
+                with s.mutation():
+                    s.emit(
+                        "Refusal",
+                        {
+                            "category": "human_decision",
+                            "operation": "mlca_choose",
+                            "how": error.how,
+                            "option_id": parts[2],
+                        },
+                        actor=actor,
+                    )
+                error.recorded_refusal = True
+                raise error
             return self.step_result(s.choose(parts[2]))
         if tool == "mlca_custom":
             return self.step_result(s.custom(arguments["text"]))
@@ -383,6 +409,7 @@ class Controller:
                     {
                         "error_data": diagnostic,
                         "category": getattr(exc, "category", "runtime_error:" + type(exc).__name__),
+                        **({"how": exc.how} if hasattr(exc, "how") else {}),
                     },
                     self.session.config if self.session else Config(),
                     "MLCA request refused.",

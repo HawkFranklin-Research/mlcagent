@@ -287,3 +287,7 @@ Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailabl
 Published [mlcagent 0.2.0b2](https://pypi.org/project/mlcagent/0.2.0b2/) using the authorized upload token; both public artifact hashes match. Fresh isolated HOME/XDG PyPI install, version, doctor and 14-tool MCP verification pass. Beta 1 is yanked (both files), verified in release management and public PyPI JSON. Local tag v0.2.0b2 records release source bdc2f376ef2b9b2848d5f5ed5b272ee9aad2a311; global mlca was refreshed to 0.2.0b2. No GitHub/npm push or publication occurred. Master and uncommitted browser plans remain untouched.
 
 Final suite: 193 passed, 1 skipped in 647.09 s; lint/format, metadata, wrappers, Twine, wheel resources and isolated synthetic init/permission-preview pass. Real OAuth/model/data validation and OpenAI registration remain pending. The token was read only by the publish command and never displayed, copied or committed.
+
+## MX1 — MCP human card contract
+
+Guided MCP cards expose actor/how, preserve colon-containing IDs and refuse human choices with a logged human_decision and request route. Deferred onboarding emits an engine-only empty menu without model calls. Focused card, guidance and click-only pilot tests pass.

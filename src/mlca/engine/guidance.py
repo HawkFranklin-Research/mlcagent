@@ -85,3 +85,24 @@ def cards(session, options):
     )
     result.append(custom)
     return result
+
+
+def mcp_card(option):
+    """Attach the decision owner and the supported human-request route."""
+    item = dict(option)
+    identifier = item["id"]
+    item["actor"] = (
+        "human"
+        if identifier.startswith("human:")
+        else ("engine" if identifier == "next" or identifier.startswith("loop:") else "agent")
+    )
+    if item["actor"] == "human":
+        how = {"tool": "mlca_request_approval"}
+        if identifier == "human:study":
+            how.update(kind="study_fields", target="onboard")
+        elif identifier == "human:unlock":
+            how.update(kind="unlock_test", target="test")
+        else:
+            how.update(kind="confirm", target=identifier.removeprefix("human:confirm:"))
+        item["how"] = how
+    return item

@@ -17,6 +17,7 @@ CATEGORIES = {
     "budget_stop",
     "privacy_refusal",
     "abandoned",
+    "human_decision",
 }
 
 
