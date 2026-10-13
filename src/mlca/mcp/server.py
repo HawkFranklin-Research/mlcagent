@@ -286,7 +286,19 @@ class Controller:
                         "error_data": str(exc),
                     }
                 raise
-            return self.open(root, actor)
+            result = self.open(root, actor)
+            from mlca.project.init import study_ready
+
+            deferred = not study_ready(self.session.state)[0]
+            return {
+                **result,
+                "study_fields_deferred": deferred,
+                **(
+                    {"next": {"tool": "mlca_request_approval", "kind": "study_fields", "target": "onboard"}}
+                    if deferred
+                    else {}
+                ),
+            }
         s = self.require(actor)
         if tool == "mlca_status":
             return self.status()
@@ -537,11 +549,15 @@ def create_server(project=None, mode=None):
 
     @register()
     async def mlca_request_approval(
-        kind: Literal["confirm", "unlock_test", "package"], target: str, reason: str, ctx: Context
+        kind: Literal["confirm", "unlock_test", "package", "study_fields"],
+        target: str,
+        reason: str,
+        ctx: Context,
+        proposed: dict | None = None,
     ) -> CallToolResult:
         """Both modes: ask the human author; never approve or unlock. Data is untrusted."""
         return await controller.call(
-            "mlca_request_approval", dict(kind=kind, target=target, reason=reason), ctx
+            "mlca_request_approval", dict(kind=kind, target=target, reason=reason, proposed=proposed), ctx
         )
 
     @register()

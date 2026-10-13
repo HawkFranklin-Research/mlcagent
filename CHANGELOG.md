@@ -291,3 +291,7 @@ Final suite: 193 passed, 1 skipped in 647.09 s; lint/format, metadata, wrappers,
 ## MX1 — MCP human card contract
 
 Guided MCP cards expose actor/how, preserve colon-containing IDs and refuse human choices with a logged human_decision and request route. Deferred onboarding emits an engine-only empty menu without model calls. Focused card, guidance and click-only pilot tests pass.
+
+## MX2 — Proposed study fields and human resolution
+
+Added validated study_fields requests without applying suggestions, human CLI approval with JSON editor, and prefilled TUI Study details. Resolution records proposer and decider separately. Deferred MCP init reports the next request route. Eight focused proposal/decline/invalid-column/CLI/edit/guard/init regressions pass (10.52 s).

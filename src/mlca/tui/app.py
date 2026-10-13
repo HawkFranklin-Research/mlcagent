@@ -389,9 +389,29 @@ class MlcaApp(App):
                 decision = {"approve": "approved", "decline": "declined"}.get(
                     result["decision"], result["decision"]
                 )
-                self.run_session_action(
-                    "resolve_approval", result["id"], decision, result["note"], result["phrase"]
-                )
+                request = next((r for r in requests if r["request_id"] == result["id"]), None)
+                if request and request["kind"] == "study_fields" and decision == "approved":
+                    from .screens.study import StudyScreen
+
+                    self.push_screen(
+                        StudyScreen(self.session.state, request.get("proposed", {})),
+                        lambda fields: (
+                            self.run_session_action(
+                                "resolve_approval",
+                                result["id"],
+                                decision,
+                                result["note"],
+                                result["phrase"],
+                                {**fields["answers"], "primary_data": fields["primary_data"]},
+                            )
+                            if fields
+                            else None
+                        ),
+                    )
+                else:
+                    self.run_session_action(
+                        "resolve_approval", result["id"], decision, result["note"], result["phrase"]
+                    )
 
         self.push_screen(
             FormScreen(

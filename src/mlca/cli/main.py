@@ -8,6 +8,7 @@ from typing import Any
 
 import typer
 import yaml
+from click import edit as edit_text
 from rich import print as rich_print
 
 from mlca import __version__
@@ -490,13 +491,27 @@ def approval_list(ctx: typer.Context):
 
 @approvals_app.command("approve")
 def approval_approve(
-    ctx: typer.Context, request_id: str, note: str = typer.Option(""), phrase: str = typer.Option("")
+    ctx: typer.Context,
+    request_id: str,
+    note: str = typer.Option(""),
+    phrase: str = typer.Option(""),
+    edit: bool = typer.Option(False, "--edit"),
 ):
     with Session.open(_path(ctx)) as session:
         request = next((r for r in session.approvals() if r["request_id"] == request_id), None)
         if request and request["kind"] == "unlock_test" and not phrase:
             phrase = typer.prompt(text("unlock_phrase"))
-        output(session.resolve_approval(request_id, "approved", note, phrase))
+        proposed = None
+        if request and request["kind"] == "study_fields":
+            output({"proposed_by": request["requested_by"], "proposed": request.get("proposed", {})})
+            if edit:
+                edited = edit_text(json.dumps(request.get("proposed", {}), indent=2))
+                if edited is None:
+                    raise MlcaUserError("Study-field approval cancelled")
+                proposed = json.loads(edited)
+        elif edit:
+            raise MlcaUserError("--edit applies to study_fields approvals only")
+        output(session.resolve_approval(request_id, "approved", note, phrase, proposed))
 
 
 @approvals_app.command("decline")

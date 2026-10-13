@@ -1753,6 +1753,7 @@ wheels = [
 name = "mlcagent"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "cryptography" },
     { name = "filelock" },
     { name = "keyring" },
@@ -1791,6 +1792,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8" },
     { name = "cryptography" },
     { name = "filelock" },
     { name = "keyring", specifier = ">=25" },

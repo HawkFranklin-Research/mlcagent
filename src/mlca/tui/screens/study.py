@@ -9,9 +9,19 @@ class StudyScreen(ModalScreen[dict | None]):
     #study-form { width: 90%; max-width: 120; height: 90%; overflow-y: auto; border: round $accent; padding: 1 2; }
     #study-buttons { height: 3; } Input, Select { margin-bottom: 1; }"""
 
-    def __init__(self, state):
+    def __init__(self, state, proposed=None):
         super().__init__()
-        self.state = state
+        self.state = state.model_copy(deep=True)
+        if proposed:
+            self.state.brief.update({k: v for k, v in proposed.items() if k != "primary_data"})
+            self.state.primary_data = proposed.get("primary_data", state.primary_data)
+            from mlca.project.init import resolve_columns
+
+            self.state.columns = resolve_columns(
+                self.state.brief,
+                [i for i in state.inventory if i["name"] == self.state.primary_data],
+                state.template_id,
+            )
 
     def compose(self) -> ComposeResult:
         with Vertical(id="study-form"):

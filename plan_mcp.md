@@ -403,6 +403,8 @@ Driver mode over MCP is also affected by G1, G3, G4 and G5.
 - **Tests:** an MCP client sees `actor` and `how` on each human card; choosing one gets the specific refusal; the token parser accepts ids containing `:`.
 
 ### MX2 · Study fields as an approval request (G2)
+
+**Implemented:** validated proposals, user-only resolution, CLI --edit and prefilled TUI form; focused offline tests pass.
 - Add `study_fields` to `request_approval` kinds. The agent may attach **proposed** values with a reason: `{target, duration, event_column, unit, repeated_subjects, primary_data}`. They are validated against the inventory's columns, but nothing is applied.
 - **Human side:**
   - `mlca approvals approve <id>` applies the proposed values through `resolve_study` as the user, after showing them;

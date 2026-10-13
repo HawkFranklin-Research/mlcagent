@@ -500,7 +500,27 @@ class Session:
                 raise MlcaUserError("Transition is not declared by the workflow template")
             return self._enter(event, "goto")
 
-    def resolve_study(self, answers: dict, primary_data: str | None = None) -> Any:
+    def validate_study(self, answers, primary_data=None):
+        if not isinstance(answers, dict) or any(not isinstance(v, str) for v in answers.values()):
+            raise MlcaUserError("Study fields must be text values")
+        state = self.state
+        if state.split or state.current_event != "onboard":
+            raise MlcaUserError("Resolve study fields during Onboard; branch before split to change them")
+        allowed = {"aim", "target", "duration", "event_column", "unit", "repeated_subjects"}
+        if set(answers) - allowed:
+            raise MlcaUserError("Unknown study field")
+        name = primary_data or state.primary_data
+        if name is None and len(state.data) == 1:
+            name = next(iter(state.data))
+        if name not in state.data:
+            raise MlcaUserError("Choose a registered main table")
+        from mlca.project.init import resolve_columns
+
+        brief = {**state.brief, **answers}
+        columns = resolve_columns(brief, [i for i in state.inventory if i["name"] == name], state.template_id)
+        return brief, columns, name
+
+    def resolve_study(self, answers: dict, primary_data: str | None = None, proposer=None) -> Any:
         """Human study definition; suggestions are not automatic column decisions."""
         self._require_human()
         with self.mutation():
@@ -508,23 +528,16 @@ class Session:
             state = self.state
             if state.split or state.current_event != "onboard":
                 raise MlcaUserError("Resolve study fields during Onboard; branch before split to change them")
-            allowed = {"aim", "target", "duration", "event_column", "unit", "repeated_subjects"}
-            if set(answers) - allowed:
-                raise MlcaUserError("Unknown study field")
-            name = primary_data or state.primary_data
-            if name is None and len(state.data) == 1:
-                name = next(iter(state.data))
-            if name not in state.data:
-                raise MlcaUserError("Choose a registered main table")
-            from mlca.project.init import resolve_columns
-
-            brief = {**state.brief, **answers}
-            columns = resolve_columns(
-                brief, [i for i in state.inventory if i["name"] == name], state.template_id
-            )
+            brief, columns, name = self.validate_study(answers, primary_data)
             self.emit(
                 "StudyFieldsResolved",
-                {"answers": brief, "columns": columns, "primary_data": name},
+                {
+                    "answers": brief,
+                    "columns": columns,
+                    "primary_data": name,
+                    "proposer": proposer,
+                    "decider": self.principal,
+                },
                 actor="user",
             )
             self.emit(
@@ -727,9 +740,9 @@ class Session:
             freeze(self.root / ".mlca/steps" / step_id)
             return self.step_status(step_id)
 
-    def request_approval(self, kind, target, reason):
+    def request_approval(self, kind, target, reason, proposed=None):
         with self.mutation():
-            if kind not in {"confirm", "unlock_test", "package"} or not reason.strip():
+            if kind not in {"confirm", "unlock_test", "package", "study_fields"} or not reason.strip():
                 raise MlcaUserError("An approval needs a supported kind and reason")
             state = self.state
             event = self.workflow.events[state.current_event]
@@ -739,6 +752,22 @@ class Session:
                 raise MlcaUserError("Request a current user-confirmation sub-goal")
             if kind == "unlock_test" and (event.id != "test" or target != "test"):
                 raise MlcaUserError("Request test unlock in the test event")
+            if kind == "study_fields":
+                proposed = proposed or {}
+                if set(proposed) - {
+                    "target",
+                    "duration",
+                    "event_column",
+                    "unit",
+                    "repeated_subjects",
+                    "primary_data",
+                }:
+                    raise MlcaUserError("Unknown proposed study field")
+                self.validate_study(
+                    {k: v for k, v in proposed.items() if k != "primary_data"}, proposed.get("primary_data")
+                )
+            elif proposed is not None:
+                raise MlcaUserError("Proposed values are only valid for study_fields")
             record = self.emit(
                 "ApprovalRequested",
                 {
@@ -746,6 +775,7 @@ class Session:
                     "target": target,
                     "reason": reason,
                     "requested_by": self.principal,
+                    **({"proposed": proposed} if kind == "study_fields" else {}),
                     "event": event.id,
                     "generation": state.generations.get(event.id),
                     "split_sha256": state.split["sha256"] if state.split else None,
@@ -766,7 +796,7 @@ class Session:
             if r.type.value == "ApprovalRequested" and r.id not in resolved
         ]
 
-    def resolve_approval(self, request_id, decision, note="", phrase=""):
+    def resolve_approval(self, request_id, decision, note="", phrase="", proposed=None):
         self._require_human()
         with self.mutation():
             request = next((r for r in self.approvals() if r["request_id"] == request_id), None)
@@ -783,7 +813,14 @@ class Session:
                         "Approval request is stale; request a new decision in the current event"
                     )
                 self._ensure_idle()
-                if request["kind"] == "confirm":
+                if request["kind"] == "study_fields":
+                    values = request.get("proposed", {}) if proposed is None else proposed
+                    self.resolve_study(
+                        {k: v for k, v in values.items() if k != "primary_data"},
+                        values.get("primary_data"),
+                        proposer=request["requested_by"],
+                    )
+                elif request["kind"] == "confirm":
                     self.confirm(request["target"], note or request["reason"])
                 elif request["kind"] == "unlock_test":
                     if request["split_sha256"] != (state.split or {}).get("sha256"):
@@ -793,7 +830,13 @@ class Session:
                     self.package(request["target"], True, note or request["reason"])
             self.emit(
                 "ApprovalResolved",
-                {"request_id": request_id, "decision": decision, "note": note},
+                {
+                    "request_id": request_id,
+                    "decision": decision,
+                    "note": note,
+                    "requested_by": request["requested_by"],
+                    "decider": self.principal,
+                },
                 actor="user",
             )
             return {"request_id": request_id, "decision": decision}
