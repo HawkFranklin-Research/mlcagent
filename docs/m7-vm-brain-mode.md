@@ -16,6 +16,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh     # installs uv; open a new sh
 
 ## 2. Install the MLCA beta
 
+**MX development walkthrough:** the guided MCP alignment is not yet published. For MX1–MX6, transfer the current source checkout to the VM and install it with `uv tool install /path/to/mlca-revized --force`. The local package version remains 0.2.0b2; record its Git commit. The public beta command below tests the published beta, which does not include the MX changes. Beta 3 publication requires the author's separate instruction.
+
 Install the explicitly versioned beta below. For local validation instead, transfer `dist/mlcagent-0.2.0b2-py3-none-any.whl` to the VM and run `uv tool install /path/to/mlcagent-0.2.0b2-py3-none-any.whl`. The command remains `mlca`.
 
 ```sh
@@ -80,12 +82,14 @@ claude          # then type /mcp → "mlca" connected, 14 tools
 
 Give Claude this prompt:
 
-> Use the mlca MCP tools to run this study in brain mode. Loop: `mlca_status` → `mlca_options` → `mlca_choose` → write the script exactly as the work order says → `mlca_submit_script` → poll `mlca_step_status` until it completes → `mlca_move` when the event is done. Do not read project files directly. When a confirmation, the test unlock or a package is needed, call `mlca_request_approval` and wait for me. After each step, tell me in one line what was done and the key number. Use `mlca_read` to look at figures.
+> Use the mlca MCP tools in brain mode, in guided style. Before choosing, show the current cards as a short numbered list: title, one line, actor; ask me which one. Human cards are requested using their `how`, never chosen. If study fields are deferred, propose actual columns with `mlca_request_approval(kind="study_fields", target="onboard")` and wait for my approval. Loop status → options → choose → submit the exact work-order script → poll step_status → move when checks pass. Use journey and messages_data for a one-line update after each step, and cite indexed outputs for numbers. Do not use file/shell tools or approve anything yourself. Switch to autonomous choices only if I say "choose yourself".
 
 In a **second terminal**, act as the human author:
 
 ```sh
 cd ~/studies/s1
+mlca -p .                            # live TUI: watch the journey and approve using human cards/Approvals (a)
+# Alternatively, use the CLI in this terminal:
 mlca -p . approvals                                                 # list requests
 mlca -p . approvals approve <request-id> --note "Checked: ..."      # brief, model selection
 mlca -p . approvals approve <request-id> --note "Final evaluation" --phrase "UNLOCK TEST"   # test event only
@@ -154,3 +158,7 @@ Choose target → Record brief → Confirm brief → Continue to data. No d/f/n 
 Models (m) opens settings: OpenRouter sign-in or your API/local provider; Test connection uses requests.
 Study choices and model switches are recorded. Do not interpret fixture screenshots or offline test
 results as this manual client/provider run. This optional pilot is separate from the brain-mode study.
+
+## Deferred-target check (MX source build)
+
+At initialization leave the target/duration/event fields undecided. The first MCP menu must show a human study card with a study_fields request route. Ask the agent for a proposal, verify that the column has not changed, then review/edit it in the live Study details approval form or `mlca -p . approvals approve <id> --edit`. After approval, status must show the resolved column and the log must name the agent proposer and user decider. A decline must leave the fields unchanged.

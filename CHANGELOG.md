@@ -303,3 +303,7 @@ Added transient MCP client presence and one-second incremental log polling. Obse
 ## MX4 — Bounded journey and phase projections
 
 Added actor-labelled last-12 action trails, last-10 plain messages and canonical per-step phases. StepProgress persists controlled metadata for cross-process readers; terminal status is authoritative. Progress notifications use only a current request and unsent phase history on polling. One response envelope per call remains; prepared progress metadata is hashed/countable separately and delivery is explicitly client-dependent. Failure messages expose safe categories rather than raw errors. Phase order, privacy, callback and TUI regressions pass offline.
+
+## MX5 — Guided agent instructions and VM workflow
+
+Server instructions remain 15 lines, explain actor/how and deferred study-field requests, and default to numbered user choices unless autonomy was requested. The packaged skill and VM guide cover live TUI watching, approvals, deferred targets and request-scoped notifications. The guide distinguishes unpublished MX source from public beta 2. Seven focused instruction/protocol/card/proposal/live-TUI tests pass (10.99 s). No live model or browser calls.

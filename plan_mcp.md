@@ -442,6 +442,8 @@ Driver mode over MCP is also affected by G1, G3, G4 and G5.
 - **Tests:** status contains journey and messages after a step; phases move in order in brain and driver modes; egress is logged once per call.
 
 ### MX5 · Instructions, skill and the guided card style (G5)
+
+**Implemented:** 15-line instructions, guided default skill and source-aware VM walkthrough; focused offline tests pass. Installed source refresh follows this phase.
 - **Server `INSTRUCTIONS`** (still at most 15 lines) add:
   - cards have an `actor`; human cards are requested, never chosen;
   - deferred study fields go through `request_approval(kind="study_fields")`;
