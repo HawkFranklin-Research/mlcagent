@@ -88,7 +88,7 @@ def record_message(record):
         "UserConfirmed": lambda: "✓ Your confirmation recorded: " + p["subgoal_id"],
         "EventEntered": lambda: "→ Continue to " + p["event_id"],
         "StepCompleted": lambda: "✓ Step completed; outputs recorded",
-        "StepFailed": lambda: "⚠ Step failed: " + p["last_error"][:180],
+        "StepFailed": lambda: "⚠ Step failed: " + p.get("category", "runtime failure").replace("_", " "),
         "StaticCheckFailed": lambda: "⚠ Script checks refused this attempt",
         "GateBlocked": lambda: "⚠ Complete the current requirements before moving on",
         "TestUnlocked": lambda: "✓ Planned test evaluation approved by you",

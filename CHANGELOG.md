@@ -299,3 +299,7 @@ Added validated study_fields requests without applying suggestions, human CLI ap
 ## MX3 — Live TUI observer
 
 Added transient MCP client presence and one-second incremental log polling. Observer cards refresh without invoking models; agent work greys nonhuman cards while human approvals remain accessible. Brain mode identifies its driver instead of requesting provider setup. Confirmation approvals may resolve while a script is awaited; running mutations wait briefly on the existing lock. Study-field changes still require an idle step because they invalidate its work order. Textual second-session/thread and waiting-script approval tests pass (four focused tests, 9.84 s). Presence files are presentation hints, never authorization or immutable evidence.
+
+## MX4 — Bounded journey and phase projections
+
+Added actor-labelled last-12 action trails, last-10 plain messages and canonical per-step phases. StepProgress persists controlled metadata for cross-process readers; terminal status is authoritative. Progress notifications use only a current request and unsent phase history on polling. One response envelope per call remains; prepared progress metadata is hashed/countable separately and delivery is explicitly client-dependent. Failure messages expose safe categories rather than raw errors. Phase order, privacy, callback and TUI regressions pass offline.

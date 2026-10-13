@@ -426,6 +426,8 @@ Driver mode over MCP is also affected by G1, G3, G4 and G5.
 - **Tests:** Textual pilot with a second `Session` writing records from another thread or process → the TUI updates within 2 s; human-card approval works while the agent's step is waiting for a script.
 
 ### MX4 · Journey, messages and phases for the agent (G4)
+
+**Implemented:** bounded branch projection, durable controlled phases, SDK progress callbacks and single-call accounting; brain/driver phase and privacy tests pass.
 - **`mlca_status` adds:**
   - `journey`: the events with states `done | current | locked | ahead`, and the current branch's action trail (last 12 steps and human decisions, each with its actor);
   - `messages_data`: the last 10 plain-language lines from `record_message`, as untrusted data.

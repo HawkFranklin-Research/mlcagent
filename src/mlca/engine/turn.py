@@ -102,6 +102,7 @@ def finish(session, action, observation):
     session.progress("Checking sub-goals")
     checks.run_all(session.state, session.workflow, session.root, session.emit)
     edits = materialise(session.root, session.state, session.emit)
+    session.progress("completed")
     return {
         "step_id": observation["step_id"],
         "status": "completed",

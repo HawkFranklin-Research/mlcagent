@@ -31,6 +31,7 @@ PAYLOAD_FIELDS = {
     "OptionChosen": ["option_id"],
     "CustomInstructionSubmitted": ["text"],
     "ScopeDecision": ["layer", "decision", "reason"],
+    "StepProgress": ["phase"],
     "StepStarted": ["step_id", "action_id", "params", "inputs", "outputs", "number"],
     "ScriptRequested": ["attempt", "work_order", "sha256"],
     "ApprovalRequested": ["kind", "target", "reason", "requested_by"],

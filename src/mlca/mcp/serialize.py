@@ -14,7 +14,8 @@ def work_order(order):
 
 
 def step(saved):
-    result = {k: saved[k] for k in ("step_id", "status", "attempt", "poll_after_s") if k in saved}
+    result = {k: saved[k] for k in ("step_id", "status", "phase", "attempt", "poll_after_s") if k in saved}
+    result.setdefault("phase", saved.get("status", "starting"))
     if saved.get("work_order") and saved["status"] == "awaiting_script":
         result["work_order"] = work_order(saved["work_order"])
         result["attempts_left"] = max(0, saved["work_order"]["max_attempts"] - saved["attempt"] + 1)

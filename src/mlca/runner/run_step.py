@@ -212,6 +212,10 @@ def work_order(session, action, params, step_id, inputs, attempt, error=None):
     from mlca.config import redact_value
 
     order = redact_value(order, session.config)
+    if session.mode == "brain":
+        session.progress(
+            "awaiting_script", attempt=attempt, max_attempts=session.config.budgets.worker_max_attempts
+        )
     session.emit(
         "ScriptRequested",
         {
@@ -350,12 +354,13 @@ def _worker(session, action, params, step_id, step, state, inputs):
     source = ExternalSource() if session.mode == "brain" else WorkerSource(session)
     previous, error = "", None
     for attempt in range(1, session.config.budgets.worker_max_attempts + 1):
-        session.progress(
-            "Writing the script" if not error else "Repairing the script",
-            attempt=attempt,
-            max_attempts=session.config.budgets.worker_max_attempts,
-            reason=error or "",
-        )
+        if session.mode != "brain":
+            session.progress(
+                "Writing the script" if not error else "Repairing the script",
+                attempt=attempt,
+                max_attempts=session.config.budgets.worker_max_attempts,
+                reason=error or "",
+            )
         order = work_order(session, action, params, step_id, inputs, attempt, error)
         if isinstance(source, ExternalSource):
             return {"step_id": step_id, "status": "awaiting_script", "work_order": order}

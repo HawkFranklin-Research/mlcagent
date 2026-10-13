@@ -9,7 +9,12 @@ def cards(session, options):
     record = next(
         (r for r in reversed(session.branches.records()) if r.type.value == "OptionsProposed"), None
     )
-    origin = "agent" if record and record.payload["source"] == "navigator" else "template"
+    origin = (
+        "agent"
+        if record
+        and (record.payload["source"] == "navigator" or record.payload["source"].startswith("agent:"))
+        else "template"
+    )
     result = []
     for option in options:
         if option["id"] == "custom":

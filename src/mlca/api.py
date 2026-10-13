@@ -110,8 +110,48 @@ class Session:
         return guard(self.root, self.state)
 
     def progress(self, phase, **details):
+        names = {
+            "Writing the script": "writing",
+            "Repairing the script": "writing",
+            "Checking the script": "checking",
+            "Running in the sandbox": "running",
+            "Collecting outputs": "collecting",
+            "Checking sub-goals": "checking_subgoals",
+        }
+        normalized = names.get(phase, phase)
+        record_id = None
+        if (
+            normalized
+            in {
+                "writing",
+                "checking",
+                "running",
+                "collecting",
+                "checking_subgoals",
+                "awaiting_script",
+                "completed",
+                "failed",
+            }
+            and self.state.steps
+        ):
+            step_id = self.state.steps[-1]["step_id"]
+            record_id = self.emit(
+                "StepProgress",
+                {
+                    "phase": normalized,
+                    **{k: v for k, v in details.items() if k in {"attempt", "max_attempts"}},
+                },
+                step_id=step_id,
+            ).id
         if self.progress_callback:
-            self.progress_callback({"phase": phase, **redact_value(details, self.config)})
+            self.progress_callback(
+                {
+                    "phase": phase,
+                    "phase_code": normalized,
+                    "record_id": record_id,
+                    **redact_value(details, self.config),
+                }
+            )
 
     def emit(
         self, kind: Any, payload: Any, *, step_id: Any = None, actor: Any = "engine", event_id: Any = None
@@ -161,6 +201,7 @@ class Session:
             "SessionStarted",
             {
                 "client": self.client_name,
+                "mode": self.mode,
                 "mlca_version": __version__,
                 "config_hash": hashlib.sha256(
                     canonical(self.config.model_dump(mode="json")).encode()
@@ -675,9 +716,20 @@ class Session:
             )
 
     def active_step(self):
-        return next(
+        step = next(
             (s for s in reversed(self.state.steps) if s["status"] in {"running", "awaiting_script"}), None
         )
+        if step:
+            phase = next(
+                (
+                    r.payload["phase"]
+                    for r in reversed(self.branches.records())
+                    if r.type.value == "StepProgress" and r.step_id == step["step_id"]
+                ),
+                step["status"],
+            )
+            return {**step, "phase": phase}
+        return None
 
     def _ensure_idle(self):
         active = self.active_step()
@@ -714,7 +766,18 @@ class Session:
         active_job = next(
             (j for j in self._jobs.values() if j.get("step_id") == step_id and j["thread"].is_alive()), None
         )
-        return {**step, "status": "running" if active_job else step["status"], "poll_after_s": 2}
+        phase = next(
+            (
+                r.payload["phase"]
+                for r in reversed(self.branches.records())
+                if r.type.value == "StepProgress" and r.step_id == step_id
+            ),
+            step["status"],
+        )
+        status = "running" if active_job else step["status"]
+        if status in {"completed", "failed", "awaiting_script"}:
+            phase = status
+        return {**step, "status": status, "phase": phase, "poll_after_s": 2}
 
     def submit_script(self, step_id, code):
         if self.mode != "brain":

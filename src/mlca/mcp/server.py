@@ -59,6 +59,7 @@ class Controller:
         self.principal = None
         self.lock = asyncio.Lock()
         self.protocol_versions = set()
+        self.sent_progress = set()
         self.server_ledger = user_data_dir() / "mcp" / str(ULID())
 
     def open(self, path, actor):
@@ -100,7 +101,15 @@ class Controller:
         s = self.session
         state = s.state
         event = s.workflow.events[state.current_event]
+        from mlca.engine.journey import project
+
+        view = project(state, s.workflow, s.branches.records())
+        if not s.config.privacy.allow_sample_rows and s.row_guard.contains_full_row(view):
+            raise MlcaUserError(
+                "Journey view refused: contains registered data rows", category="privacy_refusal"
+            )
         return {
+            **view,
             **self.overview(),
             "goal": event.goal,
             "subgoals": [
@@ -116,6 +125,9 @@ class Controller:
             "approvals_data": s.approvals(),
             "budget": {"limits": s.config.budgets.model_dump(), "usage": s.status()["usage"]},
             "columns_data": state.columns,
+            "available_columns_data": [
+                {"name": item["name"], "columns": item["columns"]} for item in state.inventory
+            ],
         }
 
     def options(self):
@@ -378,6 +390,8 @@ class Controller:
             if k
             in {"step_id", "status", "poll_after_s", "decision", "reason", "entered", "event", "complete"}
         }
+        if value.get("step_id"):
+            result["phase"] = self.session.step_status(value["step_id"]).get("phase", value.get("status"))
         if "work_order" in value:
             result["work_order"] = serialize.work_order(value["work_order"])
         if "observation" in value:
@@ -390,13 +404,53 @@ class Controller:
             started = time.monotonic()
             actor = principal(ctx)
             error = None
+            progress = asyncio.Queue()
+            loop = asyncio.get_running_loop()
+
+            def phase(payload):
+                loop.call_soon_threadsafe(progress.put_nowait, payload)
+
+            previous_callback = self.session.progress_callback if self.session else None
+            if self.session:
+                self.session.progress_callback = phase
+            count = 0
+            notifications = []
+
+            async def notify(payload):
+                nonlocal count
+                record_id = payload.get("record_id")
+                if record_id and record_id in self.sent_progress:
+                    return
+                if record_id:
+                    self.sent_progress.add(record_id)
+                code = payload.get("phase_code", payload["phase"])
+                count += 1
+                notifications.append({"phase": code})
+                await ctx.report_progress(count, message="MLCA phase: " + code)
+
             try:
                 if self.principal is None:
                     self.principal = actor
                 elif actor != self.principal:
                     raise MlcaUserError("Client identity changed; reconnect")
                 self.protocol_versions.add(ctx.protocol_version)
-                value = await asyncio.to_thread(self.handle, tool, arguments, actor)
+                operation = asyncio.create_task(asyncio.to_thread(self.handle, tool, arguments, actor))
+                while not operation.done():
+                    try:
+                        payload = await asyncio.wait_for(progress.get(), timeout=0.05)
+                    except TimeoutError:
+                        continue
+                    await notify(payload)
+                value = await operation
+                while not progress.empty():
+                    await notify(progress.get_nowait())
+                requested_step = arguments.get("step_id") or (
+                    value.get("step_id") if isinstance(value, dict) else None
+                )
+                if requested_step and self.session:
+                    for record in self.session.branches.records():
+                        if record.type.value == "StepProgress" and record.step_id == requested_step:
+                            await notify({**record.payload, "record_id": record.id})
                 if isinstance(value, ImageContent):
                     response = CallToolResult(
                         content=[
@@ -431,6 +485,8 @@ class Controller:
                     structured_content=result,
                     is_error=True,
                 )
+            if self.session:
+                self.session.progress_callback = previous_callback
             if error and self.session:
                 try:
                     with self.session.mutation():
@@ -450,11 +506,23 @@ class Controller:
                     pass  # Busy projects still have the refusal in the independent request ledger.
             root = self.session.root if self.session else self.server_ledger
             await asyncio.to_thread(
-                accounting.record, root, self.session, tool, arguments, actor, response, started
+                accounting.record,
+                root,
+                self.session,
+                tool,
+                arguments,
+                actor,
+                response,
+                started,
+                notifications,
             )
             if tool in {"mlca_choose", "mlca_submit_script", "mlca_step_status"}:
                 await ctx.report_progress(
-                    1, 1, "MLCA request processed; poll step_status for long operations"
+                    count + 1,
+                    message="MLCA phase: "
+                    + str(
+                        (response.structured_content or {}).get("data", {}).get("phase", "request_processed")
+                    ),
                 )
             return response
 

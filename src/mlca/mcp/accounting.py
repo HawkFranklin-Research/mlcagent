@@ -30,7 +30,7 @@ def categories(tool, arguments, response):
     return ["inventory_summary", "facts"]
 
 
-def record(root, session, tool, arguments, actor, response, started):
+def record(root, session, tool, arguments, actor, response, started, notifications=None):
     request_id = str(ULID())
     payload = canonical(response.model_dump(mode="json", by_alias=True, exclude_none=True)).encode()
     ts = datetime.now(timezone.utc).isoformat()
@@ -70,4 +70,8 @@ def record(root, session, tool, arguments, actor, response, started):
         else None,
     }
     (root / ".mlca").mkdir(parents=True, exist_ok=True)
+    encoded_notifications = canonical(notifications or []).encode()
+    entry["progress_metadata_bytes"] = len(encoded_notifications) if notifications else 0
+    entry["progress_metadata_sha256"] = hashlib.sha256(encoded_notifications).hexdigest()
+    entry["progress_delivery"] = "client-dependent"
     persist(root, usage, entry)

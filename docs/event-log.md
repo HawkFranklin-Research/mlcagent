@@ -38,3 +38,7 @@ persisted with immutable step evidence and retained in replay/report projections
 salted row index is a derived local store, rebuilt for legacy projects only from registered sources
 whose hashes still match. It is not an MCP resource or a generated public view. Full-row runtime
 fact refusals log only key/source metadata, not the rejected value.
+
+## MCP alignment: durable phases
+
+StepProgress records contain a controlled phase and optional attempt/max_attempts. They are engine evidence for cross-process progress, not sub-goal completion. Record replay tolerates this additive type; updating clients is required to read newly written records. Terminal status still comes from StepCompleted/StepFailed. No stdout, stderr, keys or rows enter phase metadata.
