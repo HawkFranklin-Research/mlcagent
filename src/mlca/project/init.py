@@ -178,7 +178,9 @@ def _build_initialisation(
         actor=principal,
     )
     lock_data = create(
-        root, workflow.spec.default_runtime_packages, measurement_arm=validated_config.measurement_arm
+        root,
+        workflow.spec.default_runtime_packages,
+        **({"measurement_arm": "reference"} if validated_config.measurement_arm == "reference" else {}),
     )
     store.append("EnvironmentRecorded", lock_data)
     store.append(

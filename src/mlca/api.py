@@ -517,6 +517,24 @@ class Session:
             values = parameters(action, choice["params"], state)
             if action.builtin == "split" and state.group_column:
                 values.update(method="group", group_column=state.group_column)
+            if action.builtin == "split" and state.guided_enabled and values["method"] == "stratified":
+                from mlca.engine.data_review import source_frame, split_parameters
+                from mlca.project.inventory import read_table
+
+                frame = (
+                    read_table(self.root / state.prepared_data["path"])
+                    if state.prepared_data
+                    else source_frame(state)
+                )
+                adjusted = split_parameters(frame, values, state.columns["target"])
+                if adjusted["method"] != values["method"]:
+                    self.emit(
+                        "Note",
+                        {
+                            "text": "A class is too small for three stratified partitions; using the prespecified random split"
+                        },
+                    )
+                values = adjusted
             self.emit("OptionChosen", {"option_id": choice["id"]}, actor="user")
             return execute(self, action, values)
 

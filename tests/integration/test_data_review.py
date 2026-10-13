@@ -123,3 +123,16 @@ def test_merge_numeric_rare_labels_and_recompute_task():
     assert "other" in changed.target.tolist()
     state = SimpleNamespace(columns={"target": "target"}, template_id="tabular_classification")
     assert task_for(changed, state, "multiclass")["type"] == "binary"
+
+
+def test_split_policy_is_derived_from_class_sizes():
+    from mlca.engine.data_review import split_parameters
+
+    params = {"method": "stratified", "train_fraction": 0.6, "val_fraction": 0.2, "seed": 42}
+    f = pd.DataFrame({"outcome": [0] * 10 + [1] * 2})
+    assert split_parameters(f, params, "outcome")["method"] == "random"
+    assert (
+        split_parameters(pd.DataFrame({"outcome": [0] * 10 + [1] * 10}), params, "outcome")["method"]
+        == "stratified"
+    )
+    assert params["method"] == "stratified"

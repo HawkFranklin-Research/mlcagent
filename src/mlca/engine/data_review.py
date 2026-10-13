@@ -448,3 +448,15 @@ def protocol_input(session):
         if json.loads(path.read_text()) != data:
             raise IntegrityError("Protocol snapshot changed")
     return path
+
+
+def split_parameters(frame, params, target):
+    """Keep stratification only when each class can enter all three partitions."""
+    if params["method"] != "stratified":
+        return params
+    counts = frame[target].value_counts(dropna=False)
+    train = (counts * params["train_fraction"]).astype(int)
+    val = (counts * params["val_fraction"]).astype(int)
+    if ((train < 1) | (val < 1) | ((counts - train - val) < 1)).any():
+        return {**params, "method": "random"}
+    return params
