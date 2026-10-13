@@ -17,6 +17,15 @@ class RecapResponse(StrictModel):
     text: str
 
 
+class BriefDraft(StrictModel):
+    aim: str
+    target: str = ""
+    duration: str = ""
+    event_column: str = ""
+    unit: str = ""
+    repeated: str = "Not sure yet"
+
+
 class Navigator(Role):
     name = "navigator"
 
@@ -90,6 +99,27 @@ class Navigator(Role):
             ScopeDecision,
             self.context("scope"),
             ["template_spec", "user_text"],
+        )
+        return response.parsed
+
+    def draft_brief(self, summary: Any, template_id: Any) -> Any:
+        response = complete(
+            self.session.client,
+            self.name,
+            [
+                {
+                    "role": "user",
+                    "content": prompt(
+                        "navigator_brief.md",
+                        summary=summary,
+                        template=template_id,
+                        schema=BriefDraft.model_json_schema(),
+                    ),
+                }
+            ],
+            BriefDraft,
+            self.context("brief"),
+            ["inventory_summary", "template_spec"],
         )
         return response.parsed
 

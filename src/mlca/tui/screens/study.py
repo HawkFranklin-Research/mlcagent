@@ -1,3 +1,4 @@
+from textual import work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
@@ -8,10 +9,12 @@ class StudyScreen(ModalScreen[dict | None]):
     CSS = """StudyScreen { align: center middle; }
     #study-form { width: 90%; max-width: 120; height: 90%; overflow-y: auto; border: round $accent; padding: 1 2; }
     #study-buttons { height: 3; } Input, Select { margin-bottom: 1; }
-    .study-why { color: $text-muted; margin-bottom: 1; } #study-error { color: $error; height: auto; }"""
+    .study-why { color: $text-muted; margin-bottom: 1; } #study-error { color: $error; height: auto; }
+    #study-draft { color: $accent; height: auto; margin-bottom: 1; }"""
 
-    def __init__(self, state, proposed=None):
+    def __init__(self, state, proposed=None, drafter=None):
         super().__init__()
+        self.drafter = drafter
         self.confirm_partial = False
         self.suggestions = {}
         self.state = state.model_copy(deep=True)
@@ -28,7 +31,8 @@ class StudyScreen(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="study-form"):
-            yield Static("[b]Study details[/b] · MLCA suggests, you decide")
+            yield Static("[b]Study details[/b] · MLCA drafts, you save")
+            yield Static("", id="study-draft")
             yield Label("Main study table")
             yield Select(
                 [(n, n) for n in self.state.data],
@@ -64,6 +68,57 @@ class StudyScreen(ModalScreen[dict | None]):
 
     def on_mount(self):
         self.update_columns()
+        if self.drafter:
+            self.query_one("#study-draft", Static).update(
+                "✦ AI is drafting the brief from the column summary…"
+            )
+            self.request_draft(self.query_one("#study-primary", Select).value)
+
+    def snapshot(self):
+        values = {f: self.query_one("#study-" + f, Input).value for f in ["aim", "unit"]}
+        values.update({s.id.removeprefix("study-"): s.value for s in self.query(Select)})
+        return values
+
+    @work(thread=True, exclusive=True)
+    def request_draft(self, primary):
+        before = self.app.call_from_thread(self.snapshot)
+        try:
+            draft, error = self.drafter(primary), None
+        except Exception as exc:
+            draft, error = None, str(exc)
+        self.app.call_from_thread(self.apply_draft, draft, error, before)
+
+    def apply_draft(self, draft, error, before):
+        if not self.is_mounted:
+            return
+        note = self.query_one("#study-draft", Static)
+        if not draft:
+            note.update(
+                "AI draft unavailable"
+                + (": " + error[:120] if error else "")
+                + ". Column suggestions use local rules."
+            )
+            return
+        now = self.snapshot()
+        filled = []
+        for field in ["aim", "unit"]:
+            if draft.get(field) and now[field] == before[field]:
+                self.query_one("#study-" + field, Input).value = draft[field]
+                filled.append(field)
+        for field in ["target", "duration", "event_column"]:
+            if draft.get(field) and field in now and now[field] == before[field]:
+                select = self.query_one("#study-" + field, Select)
+                select.value = draft[field]
+                self.query_one("#study-why-" + field, Static).update("✦ AI draft: " + draft[field])
+                filled.append(field)
+        repeated = {"yes": "yes", "no": "no"}.get(str(draft.get("repeated", "")).lower())
+        if repeated and now.get("repeated_subjects") == before.get("repeated_subjects"):
+            self.query_one("#study-repeated_subjects", Select).value = repeated
+        note.update(
+            "✦ Drafted by AI: check it, edit anything wrong, then Save."
+            if filled
+            else "AI draft added nothing new."
+        )
 
     def on_select_changed(self, event):
         if event.select.id == "study-primary":

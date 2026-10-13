@@ -46,13 +46,19 @@ def test_agent_proposal_human_cli_edit_and_attribution(project_factory, monkeypa
         assert record.actor == "user"
         assert record.payload["proposer"] == "agent:proposer/1"
         assert record.payload["decider"] == "user"
+        resolved = next(r for r in human.store.read() if r.type.value == "ApprovalResolved")
+        assert resolved.payload["kind"] == "study_fields"
+        from mlca.ui_text import record_message
+
+        assert record_message(resolved) == "✓ You approved: study fields"
 
 
 def test_decline_and_invalid_proposal_do_not_apply(project_factory):
     root = project_factory(brief={"target": "", "unit": "", "aim": "Predict"})
     with Session.open(root, principal="agent:test/1", mode="brain") as agent:
-        with pytest.raises(MlcaUserError, match="Unresolved"):
+        with pytest.raises(MlcaUserError, match="Unresolved") as invalid:
             agent.request_approval("study_fields", "onboard", "Choose", {"target": "invented"})
+        assert invalid.value.category == "invalid_request"
         assert agent.approvals() == []
         request = agent.request_approval("study_fields", "onboard", "Choose", {"target": "y"})
     with Session.open(root) as human:
@@ -60,3 +66,13 @@ def test_decline_and_invalid_proposal_do_not_apply(project_factory):
         human.resolve_approval(request["request_id"], "declined")
         assert human.state.columns == before
         assert human.approvals() == []
+
+
+@pytest.mark.parametrize("proposed", [{"unknown": "y"}, {"target": 2}, []])
+def test_invalid_study_request_category(project_factory, proposed):
+    root = project_factory(brief={"target": "", "unit": "", "aim": "Predict"})
+    with Session.open(root, principal="agent:test/1", mode="brain") as agent:
+        with pytest.raises(MlcaUserError) as invalid:
+            agent.request_approval("study_fields", "onboard", "Choose", proposed)
+        assert invalid.value.category == "invalid_request"
+        assert agent.approvals() == []

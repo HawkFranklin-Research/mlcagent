@@ -30,6 +30,27 @@ def actor_kind(actor):
     )
 
 
+def navigator_use(records):
+    """How often the Navigator's own choices were used, versus built-in cards after a failure.
+
+    A run that completes on built-in cards measures the engine, not the model; report both."""
+    proposals = sum(
+        r.type.value == "OptionsProposed" and r.payload.get("source") == "navigator" for r in records
+    )
+    failures = [
+        r for r in records if r.type.value == "Refusal" and r.payload.get("operation") == "navigator_options"
+    ]
+    budget = sum(r.payload.get("category") == "budget_stop" for r in failures)
+    fallbacks = len(failures) - budget
+    asked = proposals + fallbacks
+    return {
+        "proposals_used": measured(proposals),
+        "fallbacks": measured(fallbacks),
+        "budget_stops": measured(budget),
+        "fallback_rate": measured(fallbacks / asked if asked else None),
+    }
+
+
 def build(session, branch=None):
     branch = branch or session.branch_name
     records = session.branches.records(branch)
@@ -356,6 +377,7 @@ def build(session, branch=None):
             for key in ("with_failures", "automatic", "after_human", "unrecovered")
         },
         "failures": {key: measured(value) for key, value in failure_counts.items()},
+        "navigator": navigator_use(records),
         "interventions": interventions,
         "brain_mode": {
             "agent_requested_approvals": measured(len(approval_requests), "exact"),

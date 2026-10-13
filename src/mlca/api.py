@@ -239,6 +239,7 @@ class Session:
                                 "category": exc.category,
                                 "operation": "session",
                                 "error_type": type(exc).__name__,
+                                "reason": str(exc)[:200],
                             },
                             actor=self.principal,
                         )
@@ -523,6 +524,39 @@ class Session:
                     result["gate"] = gates.check(decision.target_event, state, self.workflow, self.root)
                 return result
             return execute(self, action, {})
+
+    def draft_brief(self, primary: Any = None) -> Any:
+        """Navigator draft of the study fields. A suggestion only: nothing is recorded until the author saves."""
+        from mlca.engine.suggest import recommendations
+        from mlca.project.init import primary_for
+        from mlca.project.inventory import read_table
+        from mlca.roles.navigator import Navigator
+
+        with self.mutation():
+            state = self.state
+            name = primary or primary_for(state)
+            columns = next(i["columns"] for i in state.inventory if i["name"] == name)
+            frame = read_table(Path(state.data[name]["original_path"]))
+            summary = {
+                "table": name,
+                "rows": len(frame),
+                "columns": [
+                    {"name": c, "type": str(frame[c].dtype), "distinct": int(frame[c].nunique())}
+                    for c in columns
+                ],
+                "rule_ranking": {
+                    f: [r[0] for r in v[:3]] for f, v in recommendations(frame, state.template_id).items()
+                },
+            }
+            self.turn_id = str(ULID())
+            try:
+                draft = Navigator(self).draft_brief(summary, state.template_id).model_dump()
+            finally:
+                self.turn_id = None
+            for field in ["target", "duration", "event_column"]:
+                if draft.get(field) not in columns:
+                    draft[field] = ""
+            return draft
 
     def _ever_unlocked(self) -> Any:
         return any(r.type.value == "TestUnlocked" for r in self.store.read())
@@ -854,19 +888,29 @@ class Session:
             if kind == "unlock_test" and (event.id != "test" or target != "test"):
                 raise MlcaUserError("Request test unlock in the test event")
             if kind == "study_fields":
-                proposed = proposed or {}
-                if set(proposed) - {
-                    "target",
-                    "duration",
-                    "event_column",
-                    "unit",
-                    "repeated_subjects",
-                    "primary_data",
-                }:
-                    raise MlcaUserError("Unknown proposed study field")
-                self.validate_study(
-                    {k: v for k, v in proposed.items() if k != "primary_data"}, proposed.get("primary_data")
-                )
+                try:
+                    proposed = {} if proposed is None else proposed
+                    if not isinstance(proposed, dict):
+                        raise MlcaUserError("Proposed study fields must be an object")
+                    if any(not isinstance(value, str) for value in proposed.values()):
+                        raise MlcaUserError("Proposed study fields must be text values")
+                    if set(proposed) - {
+                        "target",
+                        "duration",
+                        "event_column",
+                        "unit",
+                        "repeated_subjects",
+                        "primary_data",
+                    }:
+                        raise MlcaUserError("Unknown proposed study field")
+                    self.validate_study(
+                        {k: v for k, v in proposed.items() if k != "primary_data"},
+                        proposed.get("primary_data"),
+                    )
+                except MlcaUserError as exc:
+                    if type(exc) is not MlcaUserError:
+                        raise
+                    raise MlcaUserError(str(exc), category="invalid_request") from exc
             elif proposed is not None:
                 raise MlcaUserError("Proposed values are only valid for study_fields")
             record = self.emit(
@@ -937,6 +981,7 @@ class Session:
                 "ApprovalResolved",
                 {
                     "request_id": request_id,
+                    "kind": request["kind"],
                     "decision": decision,
                     "note": note,
                     "requested_by": request["requested_by"],

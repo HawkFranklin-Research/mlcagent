@@ -108,6 +108,42 @@ def drive(session, card, rng, seed):
     raise MlcaUserError("Task-card turn limit reached", category="budget_stop")
 
 
+def catalog_record(card_config, out):
+    """Keep the model list each run was chosen from (OpenRouter only): file name and SHA-256."""
+    from mlca.config import load, merge
+    from mlca.llm.catalog import snapshot
+
+    try:
+        config = Config.model_validate(merge(load().model_dump(mode="json"), card_config))
+        provider = next((p for p in config.providers.values() if p.kind == "openrouter"), None)
+        if provider is None:
+            return None
+        path, missing = snapshot(provider, config.catalog.selected, out)
+        return {
+            "file": path.name,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "missing": missing,
+        }
+    except Exception as error:
+        return {"error": type(error).__name__}
+
+
+def structured_record(card_config):
+    """Per role: whether requests use JSON-schema output, and why (after the catalogue refresh above)."""
+    from mlca.config import load, merge
+    from mlca.llm.client import structured_setting
+
+    try:
+        config = Config.model_validate(merge(load().model_dump(mode="json"), card_config))
+    except Exception as error:
+        return {"error": type(error).__name__}
+    result = {}
+    for role, selected in config.roles.items():
+        enabled, source = structured_setting(config.providers[selected.provider], selected.model)
+        result[role] = {"model": selected.model, "enabled": enabled, "source": source}
+    return result
+
+
 def charged(root):
     return sum(
         max(r.get("cost_usd") or 0, r.get("reserved_cost_usd") or 0)
@@ -148,6 +184,8 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
         "policy_principal": "user:policy/" + digest[:12],
         "runs": [],
     }
+    manifest["model_catalog"] = catalog_record(config, out)
+    manifest["structured_outputs"] = structured_record(config)
     atomic_json(out / "bench.json", manifest)
     total = 0.0
     for index in range(runs):
@@ -272,6 +310,25 @@ def summarize(out):
         "run_count": measured(count),
         "completed": measured(completed),
         "completion_rate": measured(completed / count if count else None),
+        # Completions on built-in cards after Navigator failures measure the engine, not the model.
+        "navigator_fallback_rate": distribution(
+            m["navigator"]["fallback_rate"]["value"] if m and "navigator" in m else None for m in loaded
+        ),
+        "navigator_fallbacks": measured(
+            sum(m["navigator"]["fallbacks"]["value"] for m in loaded if m and "navigator" in m)
+        ),
+        "navigator_budget_stops": measured(
+            sum(m["navigator"]["budget_stops"]["value"] for m in loaded if m and "navigator" in m)
+        ),
+        "completed_without_navigator_fallback": measured(
+            sum(
+                bool(m["run"]["completed"]["value"])
+                and "navigator" in m
+                and m["navigator"]["fallbacks"]["value"] == 0
+                for m in loaded
+                if m
+            )
+        ),
         "failures": {k: measured(v) for k, v in failures.items()},
         "steps_per_run": distribution(values("steps", "count")),
         "first_try_success_rate": distribution(

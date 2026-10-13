@@ -13,7 +13,13 @@ Written 2026-10-06. When the code is done, it will be reviewed against section 1
 
 ---
 
-## Current status — 2026-10-13
+## Revision cut implemented — 2026-10-13
+
+P16.1–P16.4 plus metadata backfill and P14.6 template-option recovery are implemented.
+Full offline working-tree suite: **245 passed, 1 skipped in 678.51 s** (PowerShell unavailable). Ruff lint and formatting pass. The isolated selective P16/P14.6 candidate passed 34 tests, independently of the other uncommitted work.
+Pending: Activity reconciliation (real CSV required), explicitly authorized live smoke, and post-freeze P14/P15 product work. No publishing, push, tag, version bump or installed-tool refresh. Other uncommitted changes are preserved.
+
+## Earlier beta-2 status — 2026-10-13
 
 P11.1–P11.7 implemented on native-onboarding, master untouched. Full offline suite: **193 passed, 1 skipped in 647.09 s** (PowerShell unavailable). Ruff lint/format, release metadata and wrapper checks pass. Rebuilt wheel/sdist pass Twine and the 206-entry wheel check. Isolated HOME/XDG install, version/doctor, synthetic initialization and 14-tool MCP discovery pass; Claude registration/skill preview writes no configuration. No live models, real OAuth authorization or original-data study was run.
 
@@ -99,6 +105,7 @@ Work orders: `docs/prompts/01_functional_fixes.prompt.md`, `docs/prompts/02_dist
     primary proposals remain refused, and out-of-scope custom instructions still fail.
 - **P10 evaluation instrumentation:** implemented in local sub-phase commits (section 8, P10); targeted tests pass. Full release-suite validation passed: 137 passed, 1 skipped. Original-data and live-provider measurements remain pending.
 - **P11 guided TUI and provider switching** (implemented 2026-10-13; live authorization pending): option cards, engine-appended human-decision cards, visible agent progress, left-to-right journey strip, model status and switching at any time, OpenAI sign-in through the official program (section 8, P11).
+- **P12 no dead ends + AI-assisted setup + card design** (planned 2026-10-13, from the second hands-on run): visible model connection, refusal reasons on screen, missing fields named, target recommendations (model or rules), readable cards, "Project setup" naming (section 8, P12).
 - **Browser edition (driver mode in WebAssembly):** planned separately in [`plan_web.md`](plan_web.md) (2026-10-12); branch `web-edition`, after the paper's code freeze. Brain mode stays native; its browser follow-up `mlcagent-web-mcp` is mapped in [`plan_web_mcp.md`](plan_web_mcp.md).
 - **P9 remainder:** general frontend RPC, Ink/Electron clients (the stdio MCP server is implemented), Illustrator, ChatGPT-account login, opencode free models.
 
@@ -1179,6 +1186,497 @@ Files: `tui/widgets/log_stream.py` → `tui/widgets/journey.py`; `event_graph.py
 - **Docs:** README screenshots; `docs/providers.md` (switching, sign-ins, free tier); the first-run part of `docs/m7-vm-brain-mode.md`.
 
 **Done when:** a new user can init a study, see 2–4 clear cards, follow the journey strip, see which model is connected, switch provider mid-study, and reach `data` without knowing any footer hotkey. All tests green; local commits `P11.<n>: …`; nothing published.
+
+### P12: no dead ends, AI-assisted project setup, and a readable card design
+
+> **Status:** ⬜ planned 2026-10-13, from the author's second hands-on run (`benchmark_datasets/study-002`, dry bean data, 0.2.0b2).
+
+**What the event log of that run shows** (the engine worked; the screen hid it):
+
+| Seen by the author | What actually happened (log) |
+|---|---|
+| No idea which model or provider is connected | **None is.** No `~/.config/mlca/config.yaml`, no roles, project config `{}`; status `requests 0`. Every card came from the template; no AI ran at all. Nothing on screen said so |
+| "Submit" in Custom instruction does nothing | Both instructions ("Execute and train whatever model you like…") were **rejected by scope layer 1** in `onboard` (`ScopeDecision reject: Instruction conflicts with the current event scope`). The reason was never shown. Without a Worker model, an accepted instruction would also have failed |
+| Stuck in a loop on "Complete the study details" | Study details were saved with the target `Extent` but **without "what one row represents"**. `study_ready` stays false ("Explain what one row represents…"). That message existed only in the log; meanwhile the scripted card "Record brief and data inventory" was hidden, and `next` said only "gate blocked" |
+| No help choosing the target | The dialog says "no automatic target selection". `Extent` (a numeric feature) was chosen; the dataset's real outcome is `Class` (7 categories) |
+
+#### P12.1 Always say what is connected, and what that means
+- **First screen, and the status line**, when no model is configured: `○ No AI model connected: cards come from the built-in workflow, custom instructions and scripted steps cannot run. Press m to connect (free with OpenRouter).` Make it a **card** too ("Connect an AI model"), not only a footer hint.
+- **When connected:** `● OpenRouter · Navigator: openrouter/free · Worker: openrouter/free · last answer: <model> · 3/50 today`. Show it in the header of the main screen, not only the status bar.
+- **A session-only key** (no keyring) says so: "signed in for this session only".
+- **Driver-mode actions that need a model** (a scripted step, custom instruction, AI suggestions) show **"needs an AI model"** on their card and open Models when chosen without one.
+- **Brain mode:** "Driven by <agent>" (MX3) instead.
+
+#### P12.2 Never fail silently
+- **Every refusal is shown where the user acted,** in plain words with the way forward, inside the dialog or as a sticky banner (not a toast that vanishes):
+  - layer-1 scope: "This belongs to a later step: model training starts in **Model**. Here you can ask about the brief and the files";
+  - layer-2 scope;
+  - gate: "Can't continue yet: still missing **what one row represents**";
+  - static checks, budget, provider errors.
+- **The Custom instruction dialog** shows the current event's scope above the text box ("In Project setup you can: …") and keeps the text after a rejection.
+- **Test:** a pilot test submits an out-of-scope instruction, and the reason is visible on screen.
+
+#### P12.3 No dead ends in Project setup
+- **The study details dialog validates on Save.** Missing required fields are highlighted inline ("Required: what one row represents"). Saving a partial draft is allowed, but the card then names what is missing: "Complete the study details: still missing *row meaning*".
+- **Show the path, even before it is open:** "Record brief and data inventory" stays visible, disabled, with "available after study details".
+- **Plain-language sub-goals:**
+  - human text without ids;
+  - coloured state: ✓ green done, ● yellow current or pending, ✗ red failed;
+  - the *detail* of a failing check shown under the line ("Explain what one row represents").
+- **A "Next:" line** in the activity panel, always generated from the first unmet sub-goal: "Next: tell MLCA what one row represents (card 1)".
+- **Test:** saving without the row meaning leads to the card naming it; after it's filled, the scripted card becomes active; no state exists where no enabled card advances an unmet sub-goal.
+
+#### P12.4 AI-assisted study setup (suggests; you decide)
+- **New Navigator purpose `suggest_study_fields`**, run once after registration and again on request ("Suggest again").
+  - **Input:** the inventory summary (column names, types, unique counts, missing share; example values only if `allow_sample_rows`) and the aim.
+  - **Output** (structured, validated against the real columns):
+    - ranked target candidates with reasons;
+    - task type (binary, multiclass, regression, survival with duration and event);
+    - a suggested row meaning;
+    - repeated-subjects guess;
+    - an aim draft.
+- **Built-in rules** when no model is connected, in brain mode, or when the quota is out (labelled "suggested by rules"). Score by:
+  - outcome-like names (`class`, `label`, `target`, `outcome`, `diagnosis`, `result`, `status`, `y`, `event`, `death`, `survival`, `time`);
+  - 2–20 distinct values for classification;
+  - last column;
+  - not ID-like (unique ratio near 1, or names like `id`);
+  - not a high-cardinality continuous measurement.
+
+  For dry bean this ranks `Class` first.
+- **The dialog:**
+  - the dropdown opens with **"★ Recommended: Class: 7 categories · named like an outcome · last column"** at the top, then the other candidates with their reason, then all columns;
+  - aim and row meaning are pre-filled as editable suggestions (e.g. "one bean, measured from an image");
+  - the header changes to "MLCA suggests, you decide";
+  - "I'll decide later" stays.
+- **Saving is still the human decision** (`StudyFieldsResolved`, actor user), now with `suggested_by` (model id or `rules`) and `accepted | changed` per field, counted in metrics.
+- **MCP:** `mlca_status` adds `study_suggestions_data` (the rules version), so a brain-mode agent can base its `study_fields` proposal on it.
+- **Tests:** the rules rank `Class` first on `dry_bean_uci.csv` and the outcome first on the other benchmark tables; model suggestions validated, with an invalid column dropped; `suggested_by` and `accepted` recorded.
+
+#### P12.5 A card design that reads at a glance
+A terminal cannot change font size per widget. Clarity comes from layout, weight, colour and space:
+- **Left-aligned cards** (the current text is centred), in a two-column grid when the window is wide.
+- Each card has:
+  - a **large number badge** (3-line block digit), and the title in **bold bright** text, ≤ 6 words;
+  - one plain sentence of what happens;
+  - **"• Produces:" bullets** listing the outputs (e.g. "• inventory of 1 table · 13,611 rows", "• brief.json");
+  - a small origin mark only: ✦ for AI-suggested, with the model name on focus; nothing for built-in steps; and **no "you decide" label**.
+- **States:** focused = bright border and lifted background; disabled = dim with its reason; needs model = amber mark.
+- **The colour system,** used everywhere (cards, sub-goals, journey strip, left event list): green done, yellow current, red error, grey locked or ahead.
+- **Spacing:** one blank line between title and bullets, and between cards; the activity panel kept to 5 lines, with a "More" toggle.
+- **Larger fonts** exist in the browser edition (`plan_web.md`). Until then, `mlca web` lets the browser zoom the same TUI.
+- **Test:** Textual snapshot tests of the main screen in four states (no model; setup missing a field; ready; step running).
+
+#### P12.6 Names
+- Event `onboard` displays as **"Project setup"** in both templates. The event id stays `onboard`, so logs and reports stay compatible; bump the template version (0.2.1). Existing studies keep their snapshot.
+- **"Onboarding"** now means only the first-run configuration: models, OpenRouter/OpenAI sign-in, sandbox check. Rename the welcome flow's "Configure models" accordingly.
+
+**Done when:** on `dry_bean_uci.csv` with no model connected, a new user:
+- sees "No AI model connected" and can connect from a card;
+- sees `Class` recommended;
+- is told exactly which field is missing;
+- sees every refusal reason on screen;
+- reaches `data` without help.
+
+With OpenRouter connected, the status names the model that answered. All tests green; local commits `P12.<n>: …`; nothing published.
+
+#### P12.7 Models panel: easy to find, one action to connect, minimal text
+**Found in the author's run (2026-10-13 08:00):**
+- the panel was hard to find (only `m` in the footer);
+- OpenRouter browser sign-in **succeeded** ("Authorization received"; the panel showed "OpenRouter connected");
+- but afterwards **nothing was persisted**: no `~/.config/mlca/config.yaml`, no roles, and `mlca auth status` → `{}`. The Navigator and Worker stayed unset until a Save button below the fold was pressed;
+- the panel shows about 15 controls and long explanatory lines at once.
+
+**Changes:**
+- **Finding it:** the "Connect an AI model" card (P12.1); the model status in the header opens Models on Enter or click. On first launch with no model configured, Models opens automatically once.
+- **One action connects:** a successful "Start free with OpenRouter" immediately does three things:
+  1. stores the key (keyring, or the session with a visible "this session only" note);
+  2. **saves** the Navigator and Worker as `openrouter/free` in the user config;
+  3. returns to the main screen with `● Connected: OpenRouter · openrouter/free`.
+
+  No separate Save step. The same goes for a pasted OpenAI key or a detected local Ollama: choose it → connected → saved.
+- **Layout: the first view has only:**
+  - the connection status line;
+  - three large buttons: **Start free with OpenRouter** · **Use an OpenAI API key** · **Use a local model**;
+  - one dim line: "Sign in with ChatGPT: coming soon";
+  - **Change model** (opens the model browser).
+
+  Everything else sits under a collapsed **Advanced**: separate Worker model, environment variable name, endpoint URL, keyring toggle, sign-out buttons.
+- **Text rule (applies to all MLCA screens and dialogs):**
+  - one short label per control (≤ 6 words);
+  - at most one helper line per section (≤ 12 words);
+  - longer explanations behind a `?` toggle or in `docs/`;
+  - no implementation terms on screen (e.g. "environment variable", "session keys", "secure OS keyring" become "Advanced").
+
+  The same rule holds for the AI role prompts (`roles/prompts/*.md`): keep them minimal and directive. The shared Worker preamble and output contract stay; the event and action text stays in the templates.
+- **Model browser, found empty in the same run.**
+  - **Cause:** the picker shows only the cached catalogue, and on first use there is no cache. It also says "Cached catalogue may be stale" even when nothing is cached. A direct `catalog.fetch` against OpenRouter on 2026-10-13 returned 459 models, 19 free, including `openrouter/free`.
+  - **Fix:**
+    - **load the catalogue automatically** when the picker opens with no or stale cache (spinner "Loading models…");
+    - on failure, show the error and keep manual ID entry;
+    - say "No models loaded yet" rather than "stale" when the cache is empty;
+    - pin **`openrouter/free` ("Free models router: picks a free model for each request")** at the top;
+    - filter per role: the Navigator and Worker list only text-output models. The free list currently includes music and image models (e.g. `google/lyria-3-*`), which cannot write Python. Other models are shown dimmed with the reason.
+- **Tests:**
+  - picker opened with an empty cache → fetch runs (mocked) and the list fills, with `openrouter/free` first; non-text models are dimmed for Worker and Navigator;
+  - a pilot sign-in with mocked OpenRouter endpoints → config written, roles set, main screen shows connected, no Save needed;
+  - first launch without config → Models opens once;
+  - snapshot of the simplified panel;
+  - a lint test that fails when a TUI label exceeds the text rule (strings in `ui_text.py`).
+
+### P13: the AI drafts, the author saves (2026-10-13 run, adult census)
+
+What went wrong: the author did not know what one row represents; the confirm form asked for an internal sub-goal ID; "just complete the setup" was rejected as out of scope; the brief aim was the author's placeholder "Train AI model".
+
+- **P13.1 AI-drafted brief.** The study dialog asks the Navigator for a draft (aim, target or duration/event, unit, repeated subjects) from the inventory summary (column names, types, counts; no rows). Fields fill as soon as it answers; without a model, the local rules fill the columns. The author edits or presses Save.
+- **P13.2 One-click approval.** "Approve the brief" shows the recorded brief; no sub-goal IDs, note optional (default "Approved as shown").
+- **P13.3 "Do it for me" works.** Instructions like "complete the setup" or "continue" open or run the first card instead of a scope rejection.
+- **P13.4 Ready-made prompts.** The custom dialog always lists suggestions: "Complete this step for me" plus the step's actions; one click fills the instruction.
+- **P13.5 Plain failures.** Show the actual reason, not "invalid options" or "runtime error: MlcaUserError".
+- **P13.6 Card focus.** The focused card is outlined, not shown as reversed text blocks.
+- **Tests:** draft parsing and fallback; approval without IDs; proceed intent; suggestion list; message wording.
+- **Status (2026-10-13):** P13.1–P13.6 implemented, uncommitted in `native-onboarding`, installed as `mlca`. P13 is superseded in scope by P14.
+
+### P14: autopilot for users who know no machine learning
+
+**Target user.** A domain expert (clinician, biologist, analyst) who knows their data and question, but not machine learning. MLCA makes every technical decision with a stated, recommended default. It asks only questions the user can answer from domain knowledge, in plain words, each with a recommended answer. The study moves from event to event by itself.
+
+**Revision cut (superseded 2026-10-13 by the author: build P14/P15 now; freeze after them).** The paper revision needs only the measurement path: `mlca bench` (driver) and one brain-mode run completing studies on real models, with pinned model IDs and a frozen version. Before the code freeze, only P14.6 (a weak Navigator never blocks) and fixes found by the smoke runs are in scope. P14.1 and P14.3–P14.5 are product work after submission. P14.2 interacts with what the paper evaluates (D14-1): for the measured runs the Worker writes the code, and its failures are results; reference scripts can only serve as a separate no-LLM baseline arm.
+
+**Generic by construction.** Nothing may depend on a particular dataset, column name, class count or domain. Every rule below reads properties of the registered table (types, distinct values, missingness, relationships between columns) and the brief. The benchmark tables are acceptance inputs only, never sources of rules.
+
+#### P14.0 Audit (2026-10-13): why the real run stopped
+
+Evidence: the author's adult-census project log, the templates, the runner, and checks of the benchmark tables.
+
+1. **The author's real run never left Project setup.**
+   - Every Confirm failed, because the form required a typed internal sub-goal ID.
+   - Both "do it for me" instructions were rejected by scope layer 2.
+   - The Navigator option calls failed after setup (`runtime_error:MlcaUserError`): with only one human step left, the free model returned options the validator refused. The result was a silent fallback.
+   - "I dont know honestly" was accepted as the unit of analysis.
+2. **The main path depends on the Worker model writing Python.**
+   - Only 3 of 20 actions are engine code: `inventory`, `split` and `report`.
+   - The other 17, including schema audit, distributions, preprocessing, feature selection, training, scoring and interpretation, need an LLM to write correct code against `mlca_runtime` (`fit_record`, `record_metric`).
+   - No full run from start to report has been done with a live model (M7 pending). The suite's scripted Worker responses prove the engine, not the product.
+3. **Generic data situations no event handles.**
+   - The same class spelled several ways.
+   - More than two classes, while validation hard-codes binary ROC AUC and a Youden threshold.
+   - A column that is a copy or a source of the outcome (leakage, the circularity the reviewers raised in R2-4/5).
+   - Two outcome-like columns.
+   - Identifier columns kept as features.
+   - Duplicate rows.
+   - Grouped rows (several rows per subject) without a group column.
+
+   All four of the first situations occur in the benchmark tables.
+4. **No way to ask.** The engine can only refuse. There is no mid-run question with a recommended answer.
+5. **Human approvals use internal vocabulary:** sub-goal IDs, "custom scope" and "layer 2".
+
+#### P14.1 Ask: interim questions (pattern from OpenCode's `question` tool)
+
+Reference: `/home/prime/Documents/g3/support-git/opencode` @ `5a4dd5b430`, files `packages/core/src/tool/plugin/question.ts`, `packages/schema/src/question.ts` and `packages/tui/src/routes/session/form.tsx`. The pattern is reimplemented, not copied.
+
+- **Record:** `QuestionAsked {question_id, event_id, asker: engine|navigator|worker, header ≤30 chars, question, options: [{label 1–5 words, description}], recommended: index, multiple, why}`, then `QuestionAnswered {question_id, answer, free_text, by: user|default}`. Both enter the event log, so reports cite every decision and who made it.
+- **Display:**
+  - The question docks in place of the status box, not as a pop-up.
+  - ↑/↓ choose; the recommended option is first and marked "(Recommended)"; Enter answers.
+  - The last row is always "Type your own answer".
+  - Esc means "Use the recommended answer", recorded as `by: default`.
+  - Several questions show as tabs (←/→) with a final Review tab.
+- **Who asks:**
+  - **Engine rules (P14.4):** deterministic triggers, no model needed.
+  - **Navigator:** the options response may carry at most one `ask` instead of options when a choice needs domain knowledge. The engine validates it: options must be ≤4, and the answer must map to a parameter, a brief field or an action.
+  - **Worker:** after a failed repair, it asks rather than failing silently, e.g. "Column X has text in a numeric field: treat as missing (Recommended) / drop rows / stop".
+- **Answers act:** each option names its effect (set a brief field, set an action parameter, choose an action, or exclude a column). The engine applies it; free text goes to the Navigator for mapping, with a confirmation question.
+- **Brain mode:** the MCP tools `mlca_questions` and `mlca_answer` expose the same records to the external agent. Human-only questions (P14.3 approvals) stay human-only.
+
+#### P14.2 Built-in reference steps for the main path
+
+Every event's **primary** action gets an engine-owned, parameterised reference script, run in the same sandbox and logged like any step. Parameters come from the brief, the answers and recorded facts; it is the same code for any table.
+
+| Event | Primary action | Reference behaviour (generic) |
+|---|---|---|
+| Data | `audit_schema` | Per-column type, distinct values, missingness, identifier and constant flags; outcome coding (class counts, spelling variants) |
+| Eda | `describe_distributions` | Numeric and categorical summaries, by outcome class when classes ≤ 20 |
+| Split | `freeze_*` (engine, exists) | Method chosen by P14.4 rules: group if a group column exists, stratified when classes allow, random otherwise |
+| Preprocess | `fit_preprocessing` | Impute, encode and scale by detected type; identifiers and excluded columns dropped; fit on train only |
+| Features | `retain_features` / `select_features` | Keep all by default; filter only when features ≫ rows |
+| Model | `train_logistic` (+ `train_alternative`) | Task-aware: binary, multiclass (multinomial) or survival (Cox), class-balanced |
+| Validate | `score_validation` | Task-aware metrics: binary ROC AUC + threshold; multiclass macro one-vs-rest ROC AUC, no threshold; survival C-index |
+| Test | `score_test` | The same metric set as validation, bootstrap CI, once |
+| Interpret | `explain_model` | Permutation importance on validation rows |
+| Report | `generate_reports` (engine, exists) | Unchanged |
+
+- **The AI's role becomes:**
+  - draft the brief (P13.1);
+  - ask domain questions (P14.1);
+  - explain results in plain words;
+  - propose and run supporting or custom actions;
+  - optionally write the primary code itself ("AI writes the code" mode), with the reference script as the fallback after failed repairs.
+- **Task-awareness:** the metric sub-goals (`metric_present roc_auc`) become `metric_present primary` with the metric chosen by task type, recorded as a fact (`task.type`, `task.n_classes`, `primary_metric`).
+- **Author decision D14-1 (scientific):**
+  - **(a)** reference code is the default and the AI writes code only on request;
+  - **(b)** AI-written code is the default with reference fallback;
+  - **(c)** always run both and compare.
+
+  This determines what the paper may claim as "LLM-executed".
+
+#### P14.3 Autopilot: from event to event without stopping
+
+- **Run (key `a`, or the first card "Run the study"):**
+  1. the engine runs the current event's primary action;
+  2. checks sub-goals;
+  3. runs required supporting actions;
+  4. enters the next event;
+  5. repeats.
+- **It stops only for:**
+  - **(1) a question** (P14.1);
+  - **(2) one of three approvals, shown as plain summaries:**
+    - "Approve the study brief" (setup);
+    - "Approve the chosen model" (validate, shows the metric table);
+    - "Run the final test once" (test unlock: the UNLOCK TEST phrase becomes a confirm button with the consequence stated; the logged phrase stays);
+  - **(3) a failure** after repairs, with a plain reason and recovery options, presented as a question;
+  - **(4) the budget.**
+- **Step mode** (the current card UI) stays available. Space pauses autopilot after the running step.
+- **Progress:** the horizontal activity flow shows each step; the left list turns green event by event.
+- **Gates and invariants are unchanged:** the test stays sealed, fits happen on train only, and every action is still a logged step.
+
+#### P14.4 Generic data rules (engine, no model)
+
+Each rule runs on the registered table after setup and raises a P14.1 question with a recommended answer only when triggered.
+
+| Trigger (generic) | Question (plain words) | Recommended |
+|---|---|---|
+| Outcome values that differ only in case, whitespace or trailing punctuation | "These look like the same outcome written differently: merge them?" | Merge |
+| Outcome with > 2 classes | "Predict all N groups, or one group against the rest?" | All groups |
+| A class under 1% of rows, or fewer than 10 rows | "Group X is very rare: keep it, merge it with 'other', or drop it?" | Keep |
+| A column that determines the outcome (perfect mapping, a deterministic function, or the name contains the outcome name) | "Column X seems to contain the answer; using it would make results meaningless. Exclude it?" | Exclude |
+| Two outcome-like columns | "Which one is the outcome? The other will be excluded." | The higher-ranked one |
+| An identifier column (unique per row, non-float) | "X looks like an ID: exclude it from prediction?" | Exclude |
+| Repeated values of a likely subject column, with brief `repeated_subjects` ≠ no | "Do rows with the same X belong to the same person or unit?" | Yes, use it as the group |
+| Exact duplicate rows > 0 | "N rows are exact copies: remove them?" | Remove |
+| A column > 50% missing | "X is mostly empty: drop it?" | Drop |
+| Survival: negative or zero times; event column not binary | "Some times are ≤ 0: drop those rows?" | Drop |
+
+Answers become recorded decisions (`DataDecision`) that the reference scripts read, and the Methods report lists them.
+
+#### P14.5 Plain language for non-experts
+
+- Every event title gets one line: "What happens here and why it matters" (≤ 15 words), from the template.
+- A glossary is shown on hover or with `?` (split, validation, test, leakage, ROC AUC, C-index). There is no jargon in questions.
+- Results are explained after each scoring step: the Navigator writes two sentences from the recorded metrics. A built-in sentence template is used when no model is connected.
+
+#### P14.6 Robust with weak free models
+
+- The Navigator never blocks progress: on invalid output, use the reference path and record a plain-language note.
+- Responses are short structured JSON with one repair; schema-constrained output is used where the provider supports it.
+- The Models panel shows "Recommended for MLCA" by measured success (P14.7), not by price only.
+
+#### P14.7 Acceptance: real runs, not more unit tests
+
+- `scripts/acceptance_run.py` drives the TUI headless (pilot) through autopilot from `mlca init` to Report, for each table in `benchmark_datasets/`. Configurations: **(a)** no model; **(b)** `openrouter/free`; **(c)** the author's chosen model.
+- **Recorded per run:** each stop (question, approval or failure), the answers used (recommended), time, model calls and tokens, and the final metrics. The output is `acceptance/<date>/summary.csv`.
+- **Pass:** zero failures, and stops limited to triggered questions plus the three approvals, on every table in configuration (a). Configuration (b) may degrade AI text but never blocks.
+- The unit suite is kept as a regression guard only. New work is judged by acceptance runs.
+- This doubles as evidence for R1-1/R1-2/R2-2 (completion, interventions, time and cost) if the author chooses.
+
+#### P14.8 Order of work
+
+1. **P14.2** reference scripts plus task-aware metrics: removes the hard dependency on model-written code.
+2. **P14.4** generic data rules plus `DataDecision`.
+3. **P14.1** Ask records, docked panel, and Navigator and Worker asks.
+4. **P14.3** autopilot with the three approvals.
+5. **P14.5** plain language; **P14.6** robustness.
+6. **P14.7** acceptance runs; then brain-mode parity (MCP questions).
+
+#### P14.9 Decisions for the author
+
+- **D14-1:** reference code versus AI-written code as the default (P14.2).
+- **D14-2:** whether Esc ("use recommended") is allowed for leakage and outcome-merge questions, or those always need an explicit answer.
+- **D14-3:** whether autopilot may run the alternative model by default (it adds time, but gives the comparison).
+
+### P15: the adventure loop (replaces P14.1, P14.3 and P14.5)
+
+**Idea.** A game master describes the scene and offers a few moves; the player picks one; the dice and rules decide what happens. In MLCA:
+
+| Game | MLCA |
+|---|---|
+| The rules | The engine: events, gates, checks, test lock (unchanged) |
+| The game master | The Navigator: one short fixed prompt per turn |
+| The scene | Where the study is, in one line |
+| The moves | 2–4 choices, recommended first, plus "Your own move" (custom) |
+| Rolling the dice | The Worker writes the code; MLCA runs it on this machine and checks it |
+| The narration | Two sentences on what happened, from recorded outputs |
+
+**One turn.**
+1. The engine builds the state view: event, sub-goals, facts, last result.
+2. The Navigator answers one fixed prompt (≤ 25 lines) with a scene JSON: `situation`, `moves[2–4]` (catalogue action, title ≤ 8 words, `what_happens` ≤ 20 words, `recommended`), and an optional `question` (P14.1 format).
+3. The engine validates the scene against the catalogue and gates. If it is invalid, the template defaults are shown at once, and the turn is never blocked (P14.6).
+4. The user picks a move: a number key, or Enter for the recommended one. Autopilot (`a`) picks the recommended move until a question, an approval or a failure.
+5. The step runs: Worker code, the run, the checks.
+6. The Navigator narrates in two sentences; the activity flow shows it.
+
+**Prompts.** These are the only prompts, each short and fixed: scene, question, worker code, repair, narration, brief draft. The event and action text stays in the templates (Do / Save / Record). Prompt text is versioned with the package and recorded per request (already logged), so the measured runs can cite the exact prompts.
+
+**Model access (recommended 2026-10-13, awaiting the author).**
+- Keep the `openai` Python client against OpenRouter's OpenAI-compatible Chat Completions API. The same code serves OpenAI, local models and the ChatGPT plan.
+- Do not adopt the OpenRouter Agent SDK. Its value is a model-driven tool loop, while MLCA's design and the paper's contribution (R2-1) is that the engine owns the loop and the model answers one structured question per turn.
+- **Use these OpenRouter request features through `extra_body`:**
+  - `provider.require_parameters: true` whenever `response_format` is sent, so requests route only to providers that honour structured output;
+  - `response_format` JSON schema switched on automatically when the catalogue says the model supports it (`json_output`);
+  - optional `provider.data_collection: "deny"` / `zdr` in Privacy (R1-6b);
+  - record the `model` and `provider` OpenRouter reports for every response;
+  - no `models` fallback list sent by MLCA (P16.4 rule 5 governs; the `openrouter/free` router remains the user's explicit choice).
+
+**Code execution.** Scripts already run on this machine. Level A wraps them with bubblewrap (no network, only declared files); level B runs them directly with an audit hook. **D15-1 (author):** the default, keeping level A where available (the paper's safeguard claims rely on it, R1-5/R1-6b) or level B everywhere.
+
+**Order.** After the revision cut (`mlca bench` on real models, frozen version). P15 is product work; the measured runs use the version frozen before it.
+
+---
+
+### P16: complete token and cost accounting per project, plus OpenRouter request settings
+
+**For the implementing agent.** This is on the revision path: it must land **before** the code freeze, because the measured runs (R1-4, R2-2) report these numbers.
+- Work in `mlca-revized` on branch `native-onboarding`. Another agent may have uncommitted edits: run `git status` first and touch only the files named here.
+- Do not publish, push or tag.
+- Keep every new field optional: older projects and the scripted `fake` provider must still load and replay.
+- Unknown values stay `null`, never `0`.
+
+**Already present (do not rebuild):**
+- `llm/client.py` writes one record per request to `.mlca/requests/<request_id>.json`; `llm/usage.py` rebuilds `usage.jsonl` / `egress.jsonl` from them.
+- Fields today: `input_tokens`, `output_tokens`, `cached_tokens`, `cost_usd` with `cost_source`, `model_reported`, `latency_ms`, `request_settings`, plus role/event/step/principal from `RequestContext`.
+- `llm/providers/openai_compatible.py` uses the `openai` client and reads `usage.cost`; `provider_request_id` is the response `id` (OpenRouter's generation ID).
+- The CLI has `mlca usage` (session usage), `mlca usage import` (Claude/Codex session files, brain mode) and `mlca metrics`.
+
+#### P16.1 Record the full usage OpenRouter returns
+
+OpenRouter returns usage on every response; `usage: {include: true}` is deprecated and must not be sent (docs: Usage Accounting, checked 2026-10-13).
+
+- In `CompatibleProvider.complete`, also return:
+  - `reasoning_tokens` = `usage.completion_tokens_details.reasoning_tokens` (already counted inside `completion_tokens`; store it separately, never add it twice);
+  - `cache_write_tokens` = `usage.prompt_tokens_details.cache_write_tokens`;
+  - `upstream_cost_usd` = `usage.cost_details.upstream_inference_cost`;
+  - `provider_reported` = the top-level `provider` field of the OpenRouter response body.
+- Check that `response.model_dump()` keeps OpenRouter's extra fields; otherwise read `response.model_extra`. Add a unit test with a recorded response body.
+- In `client.py`, also persist `provider_request_id` (today the adapter returns it but the client drops it; P16.5 backfill depends on it). Then add these four fields to the request record, initialised to `None`, set from `result` like `input_tokens`. Pass `provider_reported` through `redact_value`.
+- Do the same in `openai_chatgpt.py` where the Responses API provides the equivalent fields (`output_tokens_details.reasoning_tokens`); otherwise leave them `None`.
+
+#### P16.2 Project totals, per-model breakdown and export
+
+- In `usage.summary()`, stop turning missing values into `0`. For every token and cost field, report the sum of known values plus `unknown_<field>_requests` (the count of records where it is `null`), and mark a total `partial: true` when that count is above zero. Then add:
+  - `reasoning_tokens`, `cache_write_tokens` and `upstream_cost_usd` to each group;
+  - the axes `model_reported` and `provider_reported` beside `role`, `event_id`, `step_id` and `principal`;
+  - a top-level `totals` block: requests, input, output, reasoning, cached and cache-write tokens, known cost, unknown-cost requests, latency.
+- `mlca usage` prints the totals and one line per reported model. `mlca usage --csv <file>` writes one row per request with every record field (no payloads). The project's `project_id` (from `.mlca/project.yaml`) goes on each row so CSVs from several projects can be merged.
+- `mlca metrics` and `mlca bench summarize` include `reasoning_tokens` and `cache_write_tokens` wherever they report input and output tokens. Reuse `usage.summary()`; do not compute tokens a second way.
+
+#### P16.3 Stable pseudonymous `user` per project
+
+- Send `user` on every OpenRouter chat request: `"mlca-" + sha256(project_id)[:16]`. This isolates provider abuse blocks per project and lets OpenRouter attribute requests (docs: User Tracking).
+- It must contain no name, path or e-mail.
+- Record the value in the request record as `end_user`.
+- Send it only to OpenRouter (`provider_config.kind == "openrouter"`).
+
+#### P16.4 OpenRouter request settings
+
+All go through the `openai` client's `extra_body`, only when `kind == "openrouter"`:
+
+1. **Structured output on automatically.**
+   - Change `ProviderConfig.structured_outputs` from `bool = False` to `bool | None = None`, where `None` means auto.
+   - Auto = on when the cached catalogue lists the model with `json_output` (`catalog.cached(provider)`, P-catalog work of 2026-10-13); otherwise off. An explicit `true`/`false` in config wins.
+2. **Only providers that honour it.** Whenever `response_format` is sent, add `provider: {"require_parameters": true}`.
+3. **Privacy (R1-6b).**
+   - Add `Privacy.provider_data_collection: Literal["allow", "deny"] | None = None` and `Privacy.zero_data_retention: bool = False`.
+   - Map them to `provider.data_collection` and `provider.zdr`.
+   - Show both in the Models panel under "Advanced". Record the settings used in `request_settings`.
+4. **Record what answered:** `model_reported` (exists) and `provider_reported` (P16.1).
+5. **No silent fallbacks.** Never send a `models` fallback list or `provider.allow_fallbacks` changes from MLCA code, so a measured run always reports the model it asked for. The `openrouter/free` router is the user's explicit choice and stays allowed.
+
+#### P16.5 Cross-check against OpenRouter's own records
+
+- `mlca usage backfill`: for records with a `provider_request_id` but a missing `cost_usd` (timeouts, interrupted runs), call `GET /api/v1/generation?id=<id>` with the stored credential. Fill the missing usage fields with `cost_source: "generation_endpoint"`; never overwrite provider-returned values. Rate-limit (1 request/s) and skip records older than 30 days. Requests that failed before a response (no generation ID) cannot be recovered; list them as `unrecoverable` in the output.
+- `mlca usage reconcile <activity.csv>`: the author exports the CSV from openrouter.ai/activity (time period, grouped by Model; docs: Activity Export).
+  - **Ask the author for one real export file before writing the parser.** The column names are not documented.
+  - Compare per model and per day: requests, tokens and spend against the MLCA ledger for the same window.
+  - Print the differences, and write `reconcile.json` beside the CSV.
+  - The Activity page includes all usage on the account, so differences are expected unless the runs used a dedicated API key. Report them; never "fix" the ledger from the export.
+- **Recommendation for measured runs (author action, not code):** create a dedicated OpenRouter API key per measurement batch. The Activity export grouped by API key then gives an independent total for exactly those runs.
+
+#### P16.6 Tests and acceptance
+
+- **Unit tests:**
+  - a recorded OpenRouter response body with reasoning, cache-write and upstream-cost fields → all recorded;
+  - a response without them → `None`, not `0`;
+  - `summary()` totals and the per-model axis;
+  - the `user` hash is stable per project and differs between projects;
+  - `extra_body` contents for each P16.4 combination;
+  - `fake` provider records still validate.
+- **Acceptance (real, free):** run one `mlca bench` smoke run with `openrouter/free` on one generic table. Then:
+  - `mlca usage --csv` lists every request with the reported model and provider;
+  - totals equal the sum of rows;
+  - `mlca usage backfill` makes no changes when nothing is missing.
+
+  Paste the totals into `docs/DECISIONS.md` with the date.
+- **Done when:** the above pass, `ruff check` is clean, and the focused suites pass (`tests/unit`, `tests/integration -k usage or bench or metrics`). The full suite runs once at the end.
+
+#### Answers to the implementing agent (2026-10-13; given by Claude at the author's request, the author may override)
+
+1. **Scope:** ~~the revision cut first; P14 and P15 after the freeze~~ **Superseded 2026-10-13 by the author: P14 (as revised by P15) and P15 are to be built now, before the measurement freeze.** See "Next instructions for the implementing agent" below.
+2. **D14-1, code in measured runs:** the Worker writes the code. A Worker failure is a result: record it, never replace it silently with reference code. Reference scripts, if built later, are a separate, labelled no-AI baseline arm with their own runs, never mixed into a Worker run.
+3. **D15-1, execution:** keep level A (bubblewrap) where available; level B only by explicit opt-in, as now. The paper's safeguard claims (R1-5, R1-6b) depend on it.
+4. **Activity CSV:** the author exports it from openrouter.ai/activity, grouped by Model, for the period of the runs. They save it as `ES/submission2/experiments/10_agent_metrics/openrouter_activity/<YYYY-MM-DD>_by_model.csv` in the paper repository (`/home/prime/Documents/github/v-papers/ml_copilot_paper`). Build the `reconcile` parser only after that file exists. P16.1–P16.4 and backfill do not need it.
+5. **Fallback lists:** P16.4 rule 5 governs (P15 text corrected).
+6. **Names:** the game metaphor is for explanation only. Code, prompts, CLI and documentation use neutral names (turn, situation, choices, result summary).
+7. **Live calls:** none until the author authorises the smoke run.
+
+#### Review of the P16/P14.6 commits and fixes already made (Claude, 2026-10-13)
+
+The commits `8472fb4`, `cb00eec` and `026e203` were reviewed. These issues were fixed directly. They are in the working tree, uncommitted; do not redo them.
+
+1. **Partial totals.** `usage.aggregate` marked every total partial, because providers omit `cache_write_tokens` (no explicit caching) and `upstream_cost_usd` (not BYOK).
+   - Now only `CORE_FIELDS` (input tokens, output tokens, cost) set `partial`.
+   - `OPTIONAL_FIELDS` report the total of what was reported, plus `reported_requests` / `unreported_requests` (`usage.measured_total`).
+2. **Navigator fallbacks hidden in completion rates.**
+   - `metrics.navigator_use()` adds a per-run `navigator` section: `proposals_used`, `fallbacks`, `budget_stops` (counted separately) and `fallback_rate`.
+   - `bench summarize` reports `navigator_fallback_rate` (distribution), `navigator_fallbacks`, `navigator_budget_stops` and `completed_without_navigator_fallback` beside the completion rate.
+3. **Structured output depending on a local file.**
+   - One helper, `client.structured_setting(provider_config, model)`, returns `(enabled, source)` with `source` ∈ `config | catalogue | no_catalogue | default`.
+   - Each request records `structured_outputs_source`.
+   - `bench run` writes `structured_outputs` per role into `bench.json`, after refreshing the catalogue (`model_catalog`).
+4. **Tests:** `tests/unit/test_p16_review_fixes.py`. 59 tests in the usage, metrics, bench and Navigator suites pass.
+
+#### Next instructions for the implementing agent (2026-10-13)
+
+Before you start:
+- Run the full suite once on the current working tree.
+- Commit the uncommitted, tested work as its own commit: P13 TUI changes, `mlca models` / catalogue snapshots, and the review fixes above. Message: "P13 guided TUI, mlca models catalogue snapshots, P16 review fixes".
+- Do not mix it with new work.
+
+Then build, in this order, each with its own commit and tests:
+
+1. **P14.4 generic data rules** and `DataDecision` records. No dataset-specific rule: every trigger reads table properties.
+2. **P15 turn loop**, which replaces P14.1, P14.3 and P14.5:
+   - the situation + choices JSON from one fixed Navigator prompt, validated against the catalogue, with template fallback (P14.6, done);
+   - questions in the P14.1 record format;
+   - autopilot (`a`) that stops only for questions, the three approvals, failures and the budget;
+   - two-sentence result summaries.
+
+   Neutral names in code and documents.
+3. **P14.2 reference scripts as a separate, labelled no-AI baseline arm** (answer 2 stands).
+   - Never substitute them inside a Worker run.
+   - Record `measurement_arm: reference | worker` in bench manifests and metrics.
+4. **P14.7 acceptance runs**, offline configuration (a) only, until the author authorises live calls.
+
+Defaults for the open decisions (Claude's recommendation; the author may override):
+- **D14-2:** leakage and outcome-merge questions need an explicit answer; Esc does not accept them.
+- **D14-3:** autopilot trains the alternative model too (it gives the comparison).
+
+After P14/P15:
+- The measurement freeze, then the authorised smoke run.
+- In that run, verify the `/generation` field names used by `mlca usage backfill` against a real response (review point 5). Fix them if they differ.
+
+
+
+**Implementation update (2026-10-13):** P16.1–P16.4 and P16.5 metadata backfill are implemented with offline regression tests. P16.5 Activity reconciliation waits for the author's real CSV; no parser was guessed. P16.6 live acceptance waits for explicit authorization. P14.6 now offers template choices after Navigator failure (bounded JSON repair, safe failure metadata), while integrity errors still stop and Worker failures remain results. No reference scripts or P15 loop were added. Full offline working-tree suite: **245 passed, 1 skipped in 678.51 s** (PowerShell unavailable). Ruff lint and formatting pass. The isolated selective P16/P14.6 candidate passed 34 tests, independently of the other uncommitted work. Local phase commits: `8472fb4` (P16), `cb00eec` (P14.6). Details are in docs/P16_ACCOUNTING.md and the implementation status.
+
 
 ---
 

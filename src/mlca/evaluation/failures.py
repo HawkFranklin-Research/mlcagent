@@ -13,6 +13,7 @@ CATEGORIES = {
     "scope_layer2",
     "gate_blocked",
     "invalid_options",
+    "invalid_request",
     "provider_error",
     "budget_stop",
     "privacy_refusal",

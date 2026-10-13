@@ -36,11 +36,15 @@ def card_text(number, option):
 
 
 class OptionCard(Button):
-    DEFAULT_CSS = """OptionCard { width: 100%; height: auto; min-height: 3; margin-bottom: 1; padding: 0 2;
-        border: round $primary-darken-2; background: $panel; text-align: left; content-align: left top; }
-    OptionCard:focus { border: round $accent; background: $boost; text-style: none; }
-    OptionCard:hover { border: round $primary; }
-    OptionCard.-disabled { opacity: 70%; border: round $panel-lighten-1; }"""
+    # Selectors repeat Button's '-style-default' class so they outrank its reversed-text focus style.
+    DEFAULT_CSS = """OptionCard, OptionCard.-style-default { width: 100%; height: auto; min-height: 3;
+        margin-bottom: 1; padding: 0 2; border: round $primary-darken-2; background: $panel;
+        text-align: left; content-align: left top; text-style: none; }
+    OptionCard.-style-default:focus { border: round $accent; background: $boost; text-style: none;
+        background-tint: $foreground 0%; }
+    OptionCard.-style-default:hover { border: round $primary; background: $panel; }
+    OptionCard.-style-default.-active { border: round $accent; background: $boost; tint: transparent; }
+    OptionCard.-style-default:disabled { opacity: 70%; border: round $panel-lighten-1; }"""
 
     def __init__(self, number, option):
         self.option_id = option["id"]
@@ -53,6 +57,8 @@ def hint_for(options):
     ids = {o["id"] for o in options}
     if "ui:connect" in ids:
         return "No AI model connected yet. Built-in steps still work."
+    if any(i.startswith("human:confirm:") for i in ids):
+        return "Last step here: approve the brief."
     if "human:study" in ids:
         return "Next, choose what to predict and what one row represents."
     if "next" in ids:

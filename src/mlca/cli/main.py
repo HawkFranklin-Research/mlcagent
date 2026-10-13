@@ -412,6 +412,42 @@ def report(
         output(session.report(kind), json_output)
 
 
+@app.command("models")
+def models_command(
+    select: list[str] = typer.Option([], "--select", help="Add a model ID to the saved shortlist"),
+    unselect: list[str] = typer.Option([], "--unselect", help="Remove a model ID from the shortlist"),
+    out: Path | None = typer.Option(None, help="Also write the snapshot CSV into this folder"),
+    json_output: bool = typer.Option(False, "--json"),
+):
+    """Pull the OpenRouter catalogue: free models plus your shortlist, saved as a dated CSV."""
+    from mlca.config import ProviderConfig, save
+    from mlca.llm.catalog import fetch, snapshot
+
+    config = load()
+    if select or unselect:
+        chosen = [m for m in config.catalog.selected if m not in unselect]
+        chosen += [m for m in select if m not in chosen]
+        config.catalog.selected = chosen
+        save(config)
+    provider = next(
+        (p for p in config.providers.values() if p.kind == "openrouter"), ProviderConfig(kind="openrouter")
+    )
+    models = fetch(provider)
+    path, missing = snapshot(provider, config.catalog.selected, out, models)
+    rows = [m for m in models if m.free or m.id in config.catalog.selected]
+    if json_output:
+        output({"snapshot": str(path), "missing": missing, "models": [m.id for m in rows]}, True)
+        return
+    for m in sorted(rows, key=lambda m: (m.id not in config.catalog.selected, -(m.coding_index or -1))):
+        group = "selected" if m.id in config.catalog.selected else "free"
+        note = " (router)" if m.router else "" if m.text_only else " (not text-only)"
+        coding = f"{m.coding_index:.1f}" if m.coding_index is not None else "-"
+        typer.echo(f"{group:<9} {m.id:<55} coding {coding:>5}  json {'yes' if m.json_output else 'no'}{note}")
+    if missing:
+        typer.echo("Not listed by OpenRouter: " + ", ".join(missing))
+    typer.echo("Snapshot: " + str(path))
+
+
 @bench_app.command("run")
 def bench_run(
     task_card: Path,

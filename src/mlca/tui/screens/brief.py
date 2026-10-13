@@ -16,8 +16,9 @@ class FormScreen(ModalScreen[dict | None]):
 
     CSS = """FormScreen { align: center middle; } #form { width: 80%; height: auto; max-height: 90%; border: round $accent; padding: 1 2; overflow-y: auto; } Input { margin-bottom: 1; }"""
 
-    def __init__(self, title: str, fields: list[tuple[str, str, str]]) -> None:
+    def __init__(self, title: str, fields: list[tuple[str, str, str]], submit: str | None = None) -> None:
         super().__init__()
+        self.submit_label = submit
         self.form_title = title
         self.fields = fields
 
@@ -28,7 +29,7 @@ class FormScreen(ModalScreen[dict | None]):
                 yield Label(label)
                 yield Input(value=value, id=identifier)
             with Horizontal():
-                yield Button(text("submit"), id="submit", variant="primary")
+                yield Button(self.submit_label or text("submit"), id="submit", variant="primary")
                 yield Button(text("cancel"), id="cancel")
 
     def on_button_pressed(self, event: Button.Pressed) -> Any:

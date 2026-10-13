@@ -12,6 +12,10 @@ from mlca.paths import atomic_json, canonical
 
 TOKEN_FIELDS = ("input_tokens", "output_tokens", "reasoning_tokens", "cached_tokens", "cache_write_tokens")
 SUM_FIELDS = (*TOKEN_FIELDS, "cost_usd", "upstream_cost_usd", "latency_ms")
+# Every response should carry these; a missing one makes a total partial.
+CORE_FIELDS = ("input_tokens", "output_tokens", "cost_usd")
+# Providers report these only when they apply (explicit caching, BYOK); absence is not missing data.
+OPTIONAL_FIELDS = ("reasoning_tokens", "cached_tokens", "cache_write_tokens", "upstream_cost_usd")
 
 
 def read(root: Path) -> list[dict]:
@@ -75,7 +79,8 @@ def aggregate(records: list[dict]) -> dict:
         unknown = len(eligible) - len(known)
         result[field] = sum(known) if known or not eligible else None
         result[f"unknown_{field}_requests"] = unknown
-        result["partial"] |= unknown > 0
+        if field in CORE_FIELDS:
+            result["partial"] |= unknown > 0
     result["known_cost_usd"] = result["cost_usd"]
     result["unknown_cost_requests"] = result["unknown_cost_usd_requests"]
     return result
@@ -104,8 +109,18 @@ def summary(records: list[dict]) -> dict:
 
 
 def measured_total(group: dict, field: str, source="exact") -> dict:
-    """Keep evaluation's complete-total contract, also expose its known subtotal."""
+    """Keep evaluation's complete-total contract, also expose its known subtotal.
+
+    Optional fields total what providers reported; requests without them are counted, not unknown."""
     unknown = group[f"unknown_{field}_requests"]
+    if field in OPTIONAL_FIELDS:
+        value = group[field]
+        return {
+            "value": value,
+            "source": source if value is not None else "unavailable",
+            "reported_requests": group["requests"] - unknown,
+            "unreported_requests": unknown,
+        }
     value = None if unknown else group[field]
     if not unknown:
         return {"value": value, "source": source if value is not None else "unavailable"}

@@ -17,6 +17,12 @@ class ModelPicker(ModalScreen[object | None]):
         super().__init__()
         self.provider = provider
         self.models, self.stale = cached(provider)
+        try:
+            from mlca.config import load
+
+            self.selected = set(load().catalog.selected)
+        except Exception:
+            self.selected = set()
         self.filtered_models = []
 
     def compose(self) -> ComposeResult:
@@ -53,7 +59,13 @@ class ModelPicker(ModalScreen[object | None]):
         ]
         # Free router first; models that cannot output text (cannot write code) last.
         self.filtered_models = sorted(
-            matches, key=lambda m: (m.id != "openrouter/free", m.text_output is False, m.name.casefold())
+            matches,
+            key=lambda m: (
+                m.id != "openrouter/free",
+                m.id not in self.selected,
+                m.text_output is False,
+                m.name.casefold(),
+            ),
         )
         listing = self.query_one("#model-list", OptionList)
         listing.clear_options()
@@ -67,6 +79,8 @@ class ModelPicker(ModalScreen[object | None]):
             )
             if m.id == "openrouter/free":
                 label = "★ Free models router\n  picks an available free model for each request"
+            elif m.id in self.selected:
+                label = f"☆ {m.name}  (your shortlist)\n  {m.id} · {cost}"
             elif m.text_output is False:
                 label = f"{m.name}  (cannot write code)\n  {m.id} · {cost}"
             else:

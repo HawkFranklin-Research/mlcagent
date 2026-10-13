@@ -62,7 +62,13 @@ class ChatGPTAuth(ConfigModel):
         return self
 
 
+class CatalogConfig(ConfigModel):
+    # Model IDs always listed beside the free models in catalogue snapshots and the model picker.
+    selected: list[str] = Field(default_factory=list)
+
+
 class Config(ConfigModel):
+    catalog: CatalogConfig = Field(default_factory=CatalogConfig)
     chatgpt_auth: ChatGPTAuth = Field(default_factory=ChatGPTAuth)
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     roles: dict[str, RoleConfig] = Field(default_factory=dict)

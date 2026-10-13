@@ -552,6 +552,12 @@ Approval requests, study proposals/deciders and human_decision refusals are coun
 
 MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.
 
+## MX review follow-up — 13 October 2026
+
+Study-field updates display an Onboard re-check rather than a misleading continuation. Approval resolution records include their kind and display “You approved: study fields” (or declined); old records without a kind remain readable. Invalid study-field proposals use `invalid_request`, while integrity exceptions are preserved. Offline regression coverage includes invalid columns, unknown fields, non-text fields, malformed proposals and the presentation messages.
+
+The initial destination selection was superseded by the author: use HawkFranklin-Research, not VatsalPatel18. The newly created personal repository was empty and was deleted with the supplied credential (never displayed or persisted). Its local remote was removed. No code was pushed. The organization destination is awaiting identification; publication is paused for that discussion. The frozen master and untracked browser plans remain untouched. No package version change or PyPI upload is authorized by this follow-up.
+
 ## P16 — Project accounting and routing (13 October 2026)
 
 Implemented optional generation/provider IDs, reasoning/cache-write tokens and upstream costs;

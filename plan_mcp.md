@@ -472,6 +472,15 @@ Meanwhile, a TUI open in a second terminal updates live, shows "driven by agent"
 
 ## Status
 
+- **2026-10-13 MX review (`64c7a52`):** suite 202 passed, 1 skipped, reproduced. A live stdio brain-mode session verified MX1–MX4: human cards with `actor`/`how`; the specific refusal; a `study_fields` proposal approved in the CLI, recorded with its proposer; an invalid column refused at request time; journey, messages and phases. MX3 polling and the MX5 guided style are present.
+
+  Small wording fixes, implemented (2026-10-13):
+  1. `messages_data` shows "→ Continue to onboard" after study fields change (`EventEntered` via `study_fields_updated`). It should say "↻ Onboard re-checked after your study details".
+  2. "✓ Approval approved" should be "✓ You approved: <kind>".
+  3. Invalid `study_fields` proposals now use `invalid_request`; integrity exceptions retain their category.
+
+  Approval resolution records now carry `kind`; historical records remain readable without rewriting the log. Regression tests cover re-check messages, approved/declined wording, invalid columns and malformed proposals.
+
 - **2026-10-13 MX implementation:** MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.
 
 ## Beta 2 published and beta 1 yanked — 2026-10-13

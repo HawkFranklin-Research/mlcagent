@@ -458,14 +458,75 @@ class MlcaApp(App):
 
     def action_custom(self) -> Any:
         if self._can_act():
+            from mlca.tui.screens.custom import CustomScreen
+
+            event = self.session.workflow.events[self.session.state.current_event]
             self.push_screen(
-                FormScreen(
-                    "Custom instruction · allowed here: "
-                    + self.session.workflow.events[self.session.state.current_event].custom_scope.description,
-                    [("instruction", "Your instruction", "")],
-                ),
-                lambda result: self.run_session_action("custom", result["instruction"]) if result else None,
+                CustomScreen(event.custom_scope.description, self.custom_suggestions(event)),
+                lambda result: self.route_instruction(result["instruction"]) if result else None,
             )
+
+    def runnable_cards(self):
+        items = self.screen.query_one(Options).items if isinstance(self.screen, MainScreen) else []
+        return [
+            o
+            for o in items
+            if not o.get("disabled")
+            and o["id"] not in {"custom", "ui:connect"}
+            and not o["id"].startswith("locked:")
+        ]
+
+    def custom_suggestions(self, event):
+        """Ready-made prompts: do the next step, the step's cards (AI-proposed when a model is connected), help."""
+        items = ["Complete this step for me"]
+        for card in self.runnable_cards():
+            if card["id"].startswith("human:") or card["id"] == "next":
+                continue
+            items.append(card["title"])
+        for action_id in event.actions:
+            title = self.session.workflow.actions[action_id].title
+            if title not in items:
+                items.append(title)
+        items.append("Explain what this step needs from me")
+        return items[:6]
+
+    def route_instruction(self, instruction):
+        from mlca.tui.screens.custom import intent
+        from mlca.ui_text import next_hint
+
+        kind = intent(instruction)
+        titles = {self.session.workflow.actions[a].title: a for a in self.session.workflow.actions}
+        if kind == "proceed":
+            cards = self.runnable_cards()
+            if not cards:
+                self.notify("Nothing can run yet. " + next_hint(self.decorated_status()), severity="warning")
+                return
+            self.notify("Doing the next step: " + cards[0]["title"])
+            self.select_option(cards[0]["id"])
+        elif kind == "explain":
+            status = self.decorated_status()
+            event = status.get("event_spec") or {}
+            pending = [
+                g["text"]
+                for g in event.get("subgoals", [])
+                if not status.get("subgoals", {}).get(event.get("id", "") + "." + g["id"], {}).get("passed")
+            ]
+            self.notify(
+                "This step: "
+                + str(event.get("goal", ""))
+                + ("\nStill to do: " + "; ".join(pending) if pending else "")
+                + "\nNext: "
+                + next_hint(status),
+                timeout=20,
+            )
+        elif instruction in titles:
+            card = next((o for o in self.runnable_cards() if o["title"] == instruction), None)
+            if card:
+                self.select_option(card["id"])
+            else:
+                self.run_session_action("custom", instruction)
+        else:
+            self.run_session_action("custom", instruction)
 
     def action_approvals(self):
         if not self._can_act():
@@ -522,8 +583,9 @@ class MlcaApp(App):
         if self._can_act():
             from .screens.study import StudyScreen
 
+            drafter = self.session.draft_brief if "navigator" in self.session.config.roles else None
             self.push_screen(
-                StudyScreen(self.session.state),
+                StudyScreen(self.session.state, drafter=drafter),
                 lambda result: (
                     self.run_session_action("resolve_study", result["answers"], result["primary_data"])
                     if result
@@ -539,31 +601,44 @@ class MlcaApp(App):
                 self.notify("Resolve study details before confirming")
                 self.action_study()
                 return
+            event = self.session.workflow.events[self.session.state.current_event]
+            goal = next((g for g in event.subgoals if g.check.type == "user_confirm"), None)
+            if goal is None:
+                self.notify("Nothing to approve in this step")
+                return
             self.push_screen(
                 FormScreen(
-                    text("confirm"),
-                    [
-                        (
-                            "goal",
-                            text("subgoal"),
-                            next(
-                                (
-                                    g.id
-                                    for g in self.session.workflow.events[
-                                        self.session.state.current_event
-                                    ].subgoals
-                                    if g.check.type == "user_confirm"
-                                ),
-                                "",
-                            ),
-                        ),
-                        ("note", text("note"), ""),
-                    ],
+                    self.approval_summary(event, goal),
+                    [("note", "Note (optional)", "")],
+                    submit="Approve",
                 ),
                 lambda result: (
-                    self.run_session_action("confirm", result["goal"], result["note"]) if result else None
+                    self.run_session_action("confirm", goal.id, result["note"].strip() or "Approved as shown")
+                    if result
+                    else None
                 ),
             )
+
+    def approval_summary(self, event, goal):
+        state = self.session.state
+        if event.id != "onboard":
+            return "[b]Approve[/b]\n" + goal.text
+        brief = state.brief
+        lines = ["[b]Approve the study brief[/b]", ""]
+        lines.append("Aim: " + str(brief.get("aim") or "—"))
+        lines.append("Main table: " + str(state.primary_data or "—"))
+        for field, label in [
+            ("target", "Predict"),
+            ("duration", "Time column"),
+            ("event_column", "Event column"),
+        ]:
+            if state.columns.get(field):
+                lines.append(label + ": " + state.columns[field])
+        lines.append("One row is: " + str(brief.get("unit") or "—"))
+        repeated = {"yes": "yes", "no": "no"}.get(brief.get("repeated_subjects"), "not sure")
+        lines.append("Same subject in several rows: " + repeated)
+        lines += ["", "To change anything, cancel and open the study details card."]
+        return "\n".join(lines)
 
     def action_unlock(self) -> Any:
         if self._can_act():

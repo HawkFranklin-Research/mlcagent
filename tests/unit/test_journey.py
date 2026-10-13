@@ -55,7 +55,9 @@ def test_next_hint_names_the_missing_field_and_model():
         "model_status": {"navigator": {}},
     }
     assert "what one row represents" in next_hint(status)
-    assert next_hint({**status, "model_status": {}}).startswith("connect an AI model")
+    assert "what one row represents" in next_hint({**status, "model_status": {}})
+    other = {**event, "subgoals": [{"id": "s", "text": "Schema audited", "check": {"type": "output_exists"}}]}
+    assert next_hint({**status, "event_spec": other, "model_status": {}}).startswith("connect an AI model")
 
 
 def test_rules_recommend_the_outcome_column():
@@ -71,3 +73,18 @@ def test_rules_recommend_the_outcome_column():
     survival = pd.DataFrame({"time": [float(i) for i in range(50)], "cens": [0, 1] * 25, "age": [40] * 50})
     picks = recommendations(survival, "survival")
     assert picks["duration"][0][0] == "time" and picks["event_column"][0][0] == "cens"
+
+
+def test_review_messages_keep_transitions_and_historical_approvals_readable():
+    def message(record_type, **payload):
+        return record_message(NS(type=NS(value=record_type), payload=payload))
+
+    assert message("EventEntered", event_id="onboard", via="study_fields_updated") == (
+        "↻ Setup re-checked after your study details"
+    )
+    assert message("EventEntered", event_id="data", via="next") == "→ Moved to data"
+    assert message("ApprovalResolved", decision="approved", kind="study_fields") == (
+        "✓ You approved: study fields"
+    )
+    assert message("ApprovalResolved", decision="declined", kind="package") == "✗ You declined: package"
+    assert message("ApprovalResolved", decision="approved") == "✓ You approved: request"

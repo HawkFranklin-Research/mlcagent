@@ -91,10 +91,23 @@ def record_message(record):
         return scope_message(p)
     if kind == "Refusal" and p.get("category") == "gate_blocked":
         return "⚠ Can't continue yet: finish this step's requirements first"
+    if kind == "Refusal" and p.get("operation") == "navigator_options":
+        return "⚠ The AI's suggestions were unusable; showing built-in cards"
+    if kind == "Refusal" and p.get("reason"):
+        return "⚠ Not done: " + p["reason"]
+    if kind == "Refusal" and p.get("category") == "invalid_options":
+        return "⚠ That card is no longer available; choose again"
     messages = {
         "BriefRecorded": lambda: "✓ Brief recorded",
         "StudyFieldsResolved": lambda: "✓ Study details chosen by you",
-        "UserConfirmed": lambda: "✓ You confirmed: " + p["subgoal_id"].split(".")[-1].replace("_", " "),
+        "UserConfirmed": lambda: (
+            "✓ You approved the "
+            + (
+                "study brief"
+                if p["subgoal_id"].startswith("onboard.")
+                else p["subgoal_id"].split(".")[-1].replace("_", " ")
+            )
+        ),
         "EventEntered": lambda: (
             "↻ Setup re-checked after your study details"
             if p.get("via") == "study_fields_updated"
@@ -114,7 +127,7 @@ def record_message(record):
         "ModelChanged": lambda: "✓ " + p["role"].capitalize() + " model set to " + p["to"]["model"],
         "ProviderFailed": lambda: "⚠ Model request failed; see Models for connection details",
         "BudgetStopped": lambda: "⚠ Budget reached; review Models before continuing",
-        "Refusal": lambda: "⚠ Action refused: " + p.get("reason", p["category"]).replace("_", " "),
+        "Refusal": lambda: "⚠ Not done: " + p["category"].replace("_", " "),
     }
     return messages[kind]() if kind in messages else None
 
@@ -156,8 +169,8 @@ def missing_study_fields(detail):
 def next_hint(status):
     """One sentence: the first thing the user should do now."""
     models = status.get("model_status")
-    if models is not None and not models and not status.get("external_client"):
-        return "connect an AI model (card 1, or press m). Until then only built-in steps can run."
+    no_model = models is not None and not models and not status.get("external_client")
+    connect = "connect an AI model (card 1, or press m). Until then only built-in steps can run."
     event = status["event_spec"]
     title = EVENT_TITLES.get(event["id"], event.get("title", event["id"]))
     for goal in event["subgoals"]:
@@ -165,13 +178,16 @@ def next_hint(status):
         if result.get("passed"):
             continue
         check = goal["check"]["type"]
+        # Steps only the author can do come first: they need no model.
         if check == "study_fields_resolved":
             missing = missing_study_fields(result.get("detail") or status.get("study_detail", ""))
-            return "open Complete the study details and fill in " + (missing or "the missing fields") + "."
+            return "open the study details card and fill in " + (missing or "the missing fields") + "."
         if check == "user_confirm":
-            return "review and confirm: " + goal["text"].lower() + "."
+            return "approve: " + goal["text"][0].lower() + goal["text"][1:] + "."
         if check == "test_unlocked":
             return "approve the planned test evaluation (type UNLOCK TEST)."
+        if no_model:
+            return connect
         return goal["text"][0].lower() + goal["text"][1:] + " (choose the matching card)."
     events = status["workflow"]["events"]
     index = events.index(event["id"])

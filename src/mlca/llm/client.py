@@ -42,6 +42,20 @@ class LLMResult(BaseModel):
     latency_ms: float = 0
 
 
+def structured_setting(provider_config, model):
+    """(enabled, source) for JSON-schema output: explicit config wins, else the OpenRouter catalogue."""
+    if provider_config.structured_outputs is not None:
+        return provider_config.structured_outputs, "config"
+    if provider_config.kind != "openrouter":
+        return False, "default"
+    from .catalog import cached
+
+    models, _ = cached(provider_config)
+    if not models:
+        return False, "no_catalogue"
+    return any(m.id == model and m.json_output for m in models), "catalogue"
+
+
 class Client:
     def __init__(self, root: Path, config: Any, emit: Any = None) -> None:
         self.root, self.config, self.emit = root, config, emit
@@ -108,12 +122,7 @@ class Client:
             payload["max_tokens"] = payload.pop("max_completion_tokens")
         if selected.temperature is not None:
             payload["temperature"] = selected.temperature
-        structured = provider_config.structured_outputs
-        if structured is None and provider_config.kind == "openrouter":
-            from .catalog import cached
-
-            models, _ = cached(provider_config)
-            structured = any(m.id == selected.model and m.json_output for m in models)
+        structured, structured_source = structured_setting(provider_config, selected.model)
         if schema and structured:
             payload["response_format"] = {
                 "type": "json_schema",
@@ -168,6 +177,7 @@ class Client:
                 "upstream_cost_usd": None,
                 "request_settings": {
                     "structured_outputs": bool(schema and structured),
+                    "structured_outputs_source": structured_source,
                     "response_format": payload.get("response_format"),
                     "extra_body": payload.get("extra_body"),
                     "temperature": payload.get("temperature"),

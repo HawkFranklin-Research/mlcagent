@@ -76,11 +76,11 @@ def cards(session, options):
                 human.append(
                     {
                         "id": "human:confirm:" + goal.id,
-                        "title": "Confirm the study brief"
+                        "title": "Approve the study brief"
                         if event.id == "onboard"
-                        else "Confirm " + goal.text,
-                        "description": "Review this decision and add your note",
-                        "produces": "Your recorded confirmation",
+                        else "Approve: " + goal.text,
+                        "description": "Check the aim, columns and row meaning; approve in one click",
+                        "produces": "Your recorded approval",
                         "why_now": goal.text,
                     }
                 )
