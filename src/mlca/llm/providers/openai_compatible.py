@@ -24,20 +24,30 @@ class CompatibleProvider:
         data = response.model_dump()
         choice = data["choices"][0]
         message = choice["message"]
-        if message.get("refusal"):
-            raise MlcaUserError("Model refused this request")
-        if choice.get("finish_reason") == "length":
-            raise MlcaUserError("Model response exceeded its token limit")
         usage = data.get("usage") or {}
-        return {
+        result = {
             "text": message.get("content") or "",
             "input_tokens": usage.get("prompt_tokens"),
             "output_tokens": usage.get("completion_tokens"),
             "cached_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
+            "reasoning_tokens": (usage.get("completion_tokens_details") or {}).get("reasoning_tokens"),
+            "cache_write_tokens": (usage.get("prompt_tokens_details") or {}).get("cache_write_tokens"),
+            "upstream_cost_usd": (usage.get("cost_details") or {}).get("upstream_inference_cost"),
+            "provider_reported": data.get("provider"),
             "cost_usd": usage.get("cost"),
             "provider_request_id": data.get("id"),
             "model_reported": data.get("model"),
         }
+
+        if message.get("refusal") or choice.get("finish_reason") == "length":
+            error = MlcaUserError(
+                "Model refused this request"
+                if message.get("refusal")
+                else "Model response exceeded its token limit"
+            )
+            error.accounting = result
+            raise error
+        return result
 
     def models(self) -> list[str]:
         return [m.id for m in self.client.models.list()]

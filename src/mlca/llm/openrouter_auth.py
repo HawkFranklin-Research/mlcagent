@@ -193,7 +193,7 @@ def configure_free(config, reference):
 
     data = config.model_dump()
     data["providers"]["openrouter_free"] = ProviderConfig(
-        kind="openrouter", api_key_env=reference, structured_outputs=True
+        kind="openrouter", api_key_env=reference
     ).model_dump()
     for role in ("navigator", "worker"):
         old = config.roles.get(role)

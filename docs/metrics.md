@@ -114,3 +114,7 @@ paper's experiment workspace and are not implemented or run by this instrumentat
 `brain_mode.agent_requested_approvals` counts actual agent ApprovalRequested records. `human_approval_wait_s` sums measured waits on resolved agent requests decided by user; pending requests are counted separately, not assigned a zero wait. Proposal relations name proposer and decider; declines do not apply fields. Human-decision refusals are counted from their root Refusal records.
 
 `agent_script_step_share` uses all started steps, including engine actions and failures, as its denominator; its numerator counts steps with a recorded agent script source. Missing script source metadata makes the share unavailable. Modes describe step execution, excluding standalone human approval snapshots; mixed execution is labelled mixed. All fields are computed from evidence without model calls.
+
+## P16 accounting
+
+Project usage totals, model/provider groups, CSV export and missing-field backfill are described in [P16_ACCOUNTING.md](P16_ACCOUNTING.md). Role token metrics now include reasoning and cache-write counts; unknown complete totals remain unavailable, with known subtotals and missing-request counts shown separately.

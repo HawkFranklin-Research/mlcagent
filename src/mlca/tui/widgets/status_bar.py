@@ -8,8 +8,10 @@ class StatusBar(Static):
         usage = status["usage"]
         from rich.text import Text
 
+        cost = usage["known_cost_usd"]
+        cost_label = "unavailable" if cost is None else f"{cost:.4f}"
         rendered = Text(
-            f"{status['branch']} | {status['current_event']} | requests {usage['model_requests']} | known USD {usage['known_cost_usd']:.4f} | unknown costs {usage['unknown_cost_requests']}"
+            f"{status['branch']} | {status['current_event']} | requests {usage['model_requests']} | known USD {cost_label} | unknown costs {usage['unknown_cost_requests']}"
         )
         client = status.get("external_client")
         if client and client["mode"] == "brain":

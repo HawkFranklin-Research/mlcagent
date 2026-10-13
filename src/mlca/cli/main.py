@@ -449,11 +449,34 @@ def metrics(
 
 
 @usage_app.callback()
-def usage(ctx: typer.Context, json_output: bool = typer.Option(False, "--json")) -> Any:
+def usage(
+    ctx: typer.Context,
+    json_output: bool = typer.Option(False, "--json"),
+    csv_file: Path | None = typer.Option(None, "--csv"),
+) -> Any:
     if ctx.invoked_subcommand is not None:
         return
     with Session.open(_path(ctx)) as session:
-        output(session.status()["usage"], json_output)
+        from mlca.llm.usage import export_csv
+
+        data = session.status()["usage"]
+        if csv_file:
+            export_csv(session.root, csv_file)
+        if json_output:
+            output(data, True)
+        else:
+            output({"totals": data["totals"]})
+            for model, group in data["groups"]["model_reported"].items():
+                output({"model_reported": model, **group})
+
+
+@usage_app.command("backfill")
+def usage_backfill(ctx: typer.Context):
+    from mlca.llm.backfill import backfill
+
+    with Session.open(_path(ctx)) as session:
+        with session.mutation():
+            output(backfill(session), True)
 
 
 @usage_app.command("import")

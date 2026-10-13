@@ -299,15 +299,28 @@ def summarize(out):
         },
         "tokens": {
             key: distribution(
-                sum(r[key]["value"] for role, r in m["models"].items() if role != "external_agent")
+                sum(
+                    r.get(key, {"value": None})["value"]
+                    for role, r in m["models"].items()
+                    if role != "external_agent"
+                )
                 if m
                 and all(
-                    r[key]["value"] is not None for role, r in m["models"].items() if role != "external_agent"
+                    r.get(key, {"value": None})["value"] is not None
+                    for role, r in m["models"].items()
+                    if role != "external_agent"
                 )
                 else None
                 for m in loaded
             )
-            for key in ("input_tokens", "output_tokens", "cached_tokens", "cost_usd")
+            for key in (
+                "input_tokens",
+                "output_tokens",
+                "reasoning_tokens",
+                "cached_tokens",
+                "cache_write_tokens",
+                "cost_usd",
+            )
         },
         "cost_sources": sorted(
             {

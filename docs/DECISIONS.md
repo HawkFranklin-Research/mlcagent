@@ -551,3 +551,19 @@ Approval requests, study proposals/deciders and human_decision refusals are coun
 ## MX final acceptance
 
 MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.
+
+## P16 — Project accounting and routing (13 October 2026)
+
+Implemented optional generation/provider IDs, reasoning/cache-write tokens and upstream costs;
+project/model/provider summaries with known subtotals, unknown counts and partial flags; usage CSV
+with project IDs; pseudonymous OpenRouter user IDs; cached-catalogue automatic structured output,
+compatible routing and advanced privacy preferences. Backfill fills only unavailable fields, retains
+egress, spaces metadata requests at one second and lists unrecoverable/skipped/failed requests.
+No live calls occurred. Activity reconciliation remains blocked on the author's actual CSV.
+Focused offline subsets pass; the full suite follows. Worker execution and A/B opt-in rules are unchanged.
+The implementation also preserves accounting for provider refusals, displays unknown cost safely in
+the TUI and retains older evaluation value/source shapes for fully known values.
+
+Existing uncommitted P13/catalogue/browser work is preserved. P16 needs only the existing catalogue
+JSON-support property; that small dependency is included separately from the catalogue-snapshot work.
+No publish, push, tag, version bump or installed-tool refresh is performed.

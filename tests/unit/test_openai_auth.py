@@ -153,10 +153,12 @@ def test_responses_only_accepts_completed_stream(monkeypatch):
     terminal = {
         "model": "actual",
         "output": [{"content": [{"type": "output_text", "text": "OK"}]}],
-        "usage": {"input_tokens": 1, "output_tokens": 1},
+        "usage": {"input_tokens": 1, "output_tokens": 4, "output_tokens_details": {"reasoning_tokens": 2}},
     }
     events.append(NS(type="response.completed", response=NS(model_dump=lambda: terminal)))
-    assert adapter.complete(payload)["text"] == "OK"
+    result = adapter.complete(payload)
+    assert result["text"] == "OK" and result["reasoning_tokens"] == 2
+    assert result["output_tokens"] == 4 and result["cache_write_tokens"] is None
     assert requests[-1]["store"] is False and requests[-1]["stream"] is True
     events[:] = [NS(type="response.failed")]
     with pytest.raises(MlcaUserError):

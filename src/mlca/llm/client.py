@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -107,7 +108,13 @@ class Client:
             payload["max_tokens"] = payload.pop("max_completion_tokens")
         if selected.temperature is not None:
             payload["temperature"] = selected.temperature
-        if schema and provider_config.structured_outputs:
+        structured = provider_config.structured_outputs
+        if structured is None and provider_config.kind == "openrouter":
+            from .catalog import cached
+
+            models, _ = cached(provider_config)
+            structured = any(m.id == selected.model and m.json_output for m in models)
+        if schema and structured:
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
@@ -116,6 +123,26 @@ class Client:
                     "strict": False,
                 },
             }
+        end_user = None
+        if provider_config.kind == "openrouter":
+            import yaml
+
+            project_file = self.root / ".mlca/project.yaml"
+            project_id = (
+                yaml.safe_load(project_file.read_text())["project_id"]
+                if project_file.exists()
+                else "diagnostic:" + context.session_id
+            )
+            end_user = "mlca-" + hashlib.sha256(project_id.encode()).hexdigest()[:16]
+            routing = {}
+            if "response_format" in payload:
+                routing["require_parameters"] = True
+            privacy = self.config.privacy
+            if privacy.provider_data_collection is not None:
+                routing["data_collection"] = privacy.provider_data_collection
+            if privacy.zero_data_retention:
+                routing["zdr"] = True
+            payload["extra_body"] = {"user": end_user, **({"provider": routing} if routing else {})}
         digest = egress.classify(payload, categories, self.config.privacy.allow_sample_rows)
         provider = self._provider(selected.provider)
         if not 1 <= max_attempts <= 3:
@@ -132,7 +159,17 @@ class Client:
                 "model": selected.model,
                 "attempt": attempt,
                 "model_reported": None,
+                "provider_reported": None,
+                "provider_request_id": None,
+                "provider_kind": provider_config.kind,
+                "end_user": end_user,
+                "reasoning_tokens": None,
+                "cache_write_tokens": None,
+                "upstream_cost_usd": None,
                 "request_settings": {
+                    "structured_outputs": bool(schema and structured),
+                    "response_format": payload.get("response_format"),
+                    "extra_body": payload.get("extra_body"),
                     "temperature": payload.get("temperature"),
                     "max_output_tokens": payload.get("max_tokens", payload.get("max_completion_tokens")),
                 },
@@ -157,24 +194,12 @@ class Client:
                         result = provider.complete(payload, context, index)
                     else:
                         result = provider.complete(payload)
-                    record.update({k: result[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]})
-                    record["model_reported"] = redact_value(result.get("model_reported"), self.config)
-                    cost = result.get("cost_usd")
-                    if cost is not None:
-                        record.update(cost_usd=float(cost), cost_source="provider")
-                    elif all(
-                        record[k] is not None for k in ("input_tokens", "output_tokens", "cached_tokens")
-                    ):
-                        cost = pricing.estimate(
-                            selected.provider,
-                            selected.model,
-                            **{k: record[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]},
-                        )
-                        if cost is not None:
-                            record.update(cost_usd=cost, cost_source="pricing_table")
+                    self._record_usage(record, result, selected)
                     record["status"] = "ok"
                 except Exception as exc:
                     error = exc
+                    if getattr(exc, "accounting", None):
+                        self._record_usage(record, exc.accounting, selected)
                     record.update(
                         status="error",
                         error_type=type(exc).__name__,
@@ -219,6 +244,24 @@ class Client:
                 },
             )
         raise MlcaUserError("Provider retry limit exhausted")
+
+    def _record_usage(self, record, result, selected):
+        record.update({k: result[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]})
+        for key in ("reasoning_tokens", "cache_write_tokens", "upstream_cost_usd"):
+            record[key] = result.get(key)
+        for key in ("model_reported", "provider_reported", "provider_request_id"):
+            record[key] = redact_value(result.get(key), self.config)
+        cost = result.get("cost_usd")
+        if cost is not None:
+            record.update(cost_usd=float(cost), cost_source="provider")
+        elif all(record[k] is not None for k in ("input_tokens", "output_tokens", "cached_tokens")):
+            cost = pricing.estimate(
+                selected.provider,
+                selected.model,
+                **{k: record[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]},
+            )
+            if cost is not None:
+                record.update(cost_usd=cost, cost_source="pricing_table")
 
     def _bound(self, payload: Any, role: Any, provider: Any) -> Any:
         if provider.kind in {"fake", "openai_chatgpt"}:

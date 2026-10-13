@@ -2,11 +2,12 @@ from textual import work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, Select, Static
+from textual.widgets import Button, Checkbox, Collapsible, Input, Label, Select, Static
 
 from mlca.config import Config, ProviderConfig, RoleConfig
 from mlca.llm.catalog import DEFAULTS, cached, save_prices
 from mlca.llm.credentials import forget, forget_reference, remember, remember_secure, resolve
+from mlca.ui_text import text
 
 from .model_picker import ModelPicker
 from .openai_signin import OpenAISignin
@@ -125,6 +126,22 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 value=self.config.sandbox.allow_level_b,
                 id="allow-b",
             )
+            with Collapsible(title=text("router_privacy"), collapsed=True):
+                yield Select(
+                    [
+                        (text("router_privacy_default"), "default"),
+                        (text("router_privacy_allow"), "allow"),
+                        (text("router_privacy_deny"), "deny"),
+                    ],
+                    value=self.config.privacy.provider_data_collection or "default",
+                    allow_blank=False,
+                    id="provider-data-collection",
+                )
+                yield Checkbox(
+                    text("router_zdr"),
+                    value=self.config.privacy.zero_data_retention,
+                    id="provider-zdr",
+                )
             yield Static("", id="settings-error")
             yield Button("Refresh OpenRouter quota (metadata only)", id="refresh-quota")
             with Horizontal(id="settings-buttons"):
@@ -183,11 +200,7 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 "kind": kind,
                 "api_key_env": env,
                 "oauth_client_id": self.config.chatgpt_auth.client_id if kind == "openai_chatgpt" else None,
-                "structured_outputs": True
-                if kind == "openrouter" and self.signed_reference
-                else True
-                if kind == "openai_chatgpt"
-                else base.structured_outputs,
+                "structured_outputs": True if kind == "openai_chatgpt" else base.structured_outputs,
                 "base_url": self.query_one(prefix + "url", Input).value.strip() or None,
                 "request_cost_bound_usd": float(bound) if bound else None,
             }
@@ -460,6 +473,9 @@ class OnboardingScreen(ModalScreen[dict | None]):
                 turn_max_usd=float(self.query_one("#turn-budget", Input).value),
                 session_max_usd=float(self.query_one("#session-budget", Input).value),
             )
+            collection = self.query_one("#provider-data-collection", Select).value
+            data["privacy"]["provider_data_collection"] = None if collection == "default" else collection
+            data["privacy"]["zero_data_retention"] = self.query_one("#provider-zdr", Checkbox).value
             data["sandbox"]["allow_level_b"] = self.query_one("#allow-b", Checkbox).value
             config = Config.model_validate(data)
             for role, model in self.prices.items():

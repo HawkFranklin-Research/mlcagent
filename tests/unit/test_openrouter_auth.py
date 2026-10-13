@@ -137,7 +137,7 @@ def test_free_configuration_preserves_optional_roles(monkeypatch):
     assert updated.roles["inspector"].model == "old"
     assert updated.roles["navigator"].model == "openrouter/free"
     assert updated.providers["openrouter_free"].request_cost_bound_usd is None
-    assert updated.providers["openrouter_free"].structured_outputs
+    assert updated.providers["openrouter_free"].structured_outputs is None
     assert "canary" not in updated.model_dump_json()
 
 

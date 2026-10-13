@@ -19,7 +19,7 @@ class ProviderConfig(ConfigModel):
     base_url: str | None = None
     api_key_env: str | None = None
     script: str | None = None
-    structured_outputs: bool = False
+    structured_outputs: bool | None = None
     timeout_s: float = Field(default=90, gt=0)
     request_cost_bound_usd: float | None = Field(default=None, ge=0)
 
@@ -34,6 +34,8 @@ class RoleConfig(ConfigModel):
 class Privacy(ConfigModel):
     allow_sample_rows: bool = False
     store_payloads: bool = True
+    provider_data_collection: Literal["allow", "deny"] | None = None
+    zero_data_retention: bool = False
 
 
 class Budgets(ConfigModel):

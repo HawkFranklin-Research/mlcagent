@@ -4,7 +4,7 @@ import hashlib
 from collections import Counter, defaultdict
 from datetime import datetime
 
-from mlca.llm.usage import read
+from mlca.llm.usage import TOKEN_FIELDS, measured_total, read, summary
 from mlca.log.replay import replay
 from mlca.paths import atomic_json, canonical, sha256
 
@@ -205,21 +205,23 @@ def build(session, branch=None):
     ]
     human_timing = [r for r in timing if actor_kind(r.actor) == "human"]
     agent_timing = [r for r in timing if actor_kind(r.actor) == "agent"]
+    usage_summary = summary(requests)
     models = {}
     for role in sorted({r["role"] for r in requests if r["role"] != "mcp"}):
         calls = [r for r in requests if r["role"] == role]
         models[role] = {
             "calls": measured(len(calls)),
             **{
-                key: sum_known(
-                    (r.get(key) for r in calls),
+                key: measured_total(
+                    usage_summary["groups"]["role"][role],
+                    key,
                     "client-reported"
                     if role == "external_agent"
                     else "derived"
                     if key == "cost_usd" and any(r.get("cost_source") == "pricing_table" for r in calls)
                     else "exact",
                 )
-                for key in ("input_tokens", "output_tokens", "cached_tokens", "cost_usd")
+                for key in (*TOKEN_FIELDS, "cost_usd")
             },
             "cost_sources": sorted({r["cost_source"] for r in calls}),
             "model_reported": sorted({r["model_reported"] for r in calls if r.get("model_reported")}),

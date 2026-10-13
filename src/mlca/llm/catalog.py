@@ -34,6 +34,10 @@ class Model:
     free: bool = False
     text_output: bool | None = None  # None: the provider did not say
 
+    @property
+    def json_output(self) -> bool:
+        return bool({"response_format", "structured_outputs"} & set(self.parameters or []))
+
 
 def price(value):
     try:

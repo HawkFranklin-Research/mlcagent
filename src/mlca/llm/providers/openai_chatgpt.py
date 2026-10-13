@@ -67,5 +67,9 @@ class ChatGPTProvider:
             "input_tokens": usage.get("input_tokens"),
             "output_tokens": usage.get("output_tokens"),
             "cached_tokens": (usage.get("input_tokens_details") or {}).get("cached_tokens"),
+            "reasoning_tokens": (usage.get("output_tokens_details") or {}).get("reasoning_tokens"),
+            "cache_write_tokens": (usage.get("input_tokens_details") or {}).get("cache_write_tokens"),
+            "upstream_cost_usd": None,
+            "provider_reported": None,
             "cost_usd": None,
         }
