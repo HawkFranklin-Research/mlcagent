@@ -1,3 +1,10 @@
+# P16 and revision-cut status — 13 October 2026
+
+P16.1–P16.4 and metadata backfill implemented; Navigator failure recovery (P14.6) implemented.
+Full offline working-tree suite: **245 passed, 1 skipped in 678.51 s** (PowerShell unavailable). Ruff lint and formatting pass. The isolated selective P16/P14.6 candidate passed 34 tests, independently of the other uncommitted work.
+Pending: real Activity CSV reconciliation, author-authorized live smoke, post-freeze P14/P15 work.
+See [P16 accounting](P16_ACCOUNTING.md). Pre-existing changes remain separate; no remote operations.
+
 # MCP/TUI alignment acceptance — 2026-10-13
 
 MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.

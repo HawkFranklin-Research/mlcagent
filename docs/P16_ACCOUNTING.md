@@ -71,3 +71,8 @@ Primary API references checked during implementation:
 - [Usage accounting](https://openrouter.ai/docs/cookbook/administration/usage-accounting)
 - [Provider routing](https://openrouter.ai/docs/guides/routing/provider-selection)
 - [Generation metadata](https://openrouter.ai/docs/api/api-reference/generations/get-request-%26-usage-metadata-for-a-generation)
+
+## Final offline acceptance — 13 October 2026
+
+Full offline working-tree suite: **245 passed, 1 skipped in 678.51 s** (PowerShell unavailable). Ruff lint and formatting pass. The isolated selective P16/P14.6 candidate passed 34 tests, independently of the other uncommitted work.
+No installed-tool refresh, version change or remote publication was performed.

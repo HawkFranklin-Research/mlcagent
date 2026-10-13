@@ -340,3 +340,8 @@ Integrity errors still stop. Worker steps, repair limits, failure records, fit r
 remain unchanged; no reference script substitutes for a measured Worker failure. Six focused
 Navigator regressions pass, including repair/caching and integrity-stop behavior. Combined isolated
 P16/P14.6 candidate checks: 34 passed. Final full-suite verification follows.
+
+## P16/P14.6 final offline acceptance
+
+Full offline working-tree suite: **245 passed, 1 skipped in 678.51 s** (PowerShell unavailable). Ruff lint and formatting pass. The isolated selective P16/P14.6 candidate passed 34 tests, independently of the other uncommitted work.
+An earlier run identified a legacy external-usage shape mismatch; complete totals now preserve the value/source contract. The corrected suite passed. Activity reconciliation and live smoke remain pending; post-freeze P14/P15 work is deferred. Existing uncommitted work is preserved.
