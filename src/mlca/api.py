@@ -82,6 +82,10 @@ class Session:
         self.started = False
         self._state_key = None
         self._state_cache = None
+        if client == "mcp":
+            from mlca.live import register
+
+            register(self)
 
     @classmethod
     def open(cls, path: Any, client: Any = "cli", **kwargs) -> Any:
@@ -180,9 +184,9 @@ class Session:
         self._state_key = None
 
     @contextmanager
-    def mutation(self) -> Any:
+    def mutation(self, wait=0) -> Any:
         try:
-            with self._action_lock:
+            with self._action_lock.acquire(timeout=wait):
                 self.branch_name = self.branches.current()
                 try:
                     yield
@@ -260,6 +264,34 @@ class Session:
             "workflow": self.workflow.spec.model_dump(),
             "event_spec": self.workflow.events[state.current_event].model_dump(),
         }
+
+    def guided_view(self):
+        """Read-only view for an external observer; never invokes a Navigator."""
+        from mlca.engine.guidance import cards
+
+        state = self.state
+        options = list(
+            state.pending_options if state.pending_options is not None else fallback(state, self.workflow)
+        )
+        ids = self.workflow.spec.events
+        index = ids.index(state.current_event)
+        if state.event_statuses.get(state.current_event) == "done" and index + 1 < len(ids):
+            target = ids[index + 1]
+            if gates.check(target, state, self.workflow, self.root)[0]:
+                options.insert(0, {"id": "next", "title": f"Continue to {target}"})
+        if state.current_event == "validate" and not self._ever_unlocked():
+            for transition in self.workflow.spec.transitions.get("loops", []):
+                if transition["from"] == "validate":
+                    options.extend(
+                        {"id": "loop:" + target, "title": f"Return to {target}"}
+                        for target in transition["to"]
+                    )
+        if state.current_event == "onboard":
+            from mlca.project.init import study_ready
+
+            if not study_ready(state)[0]:
+                options = []
+        return cards(self, options)
 
     def options(self, guided=False) -> Any:
         with self.mutation():
@@ -798,7 +830,7 @@ class Session:
 
     def resolve_approval(self, request_id, decision, note="", phrase="", proposed=None):
         self._require_human()
-        with self.mutation():
+        with self.mutation(wait=2):
             request = next((r for r in self.approvals() if r["request_id"] == request_id), None)
             if not request or decision not in {"approved", "declined"}:
                 raise MlcaUserError("Unknown open approval or decision")
@@ -812,7 +844,11 @@ class Session:
                     raise MlcaUserError(
                         "Approval request is stale; request a new decision in the current event"
                     )
-                self._ensure_idle()
+                if (
+                    request["kind"] != "confirm"
+                    or (self.active_step() or {}).get("status") != "awaiting_script"
+                ):
+                    self._ensure_idle()
                 if request["kind"] == "study_fields":
                     values = request.get("proposed", {}) if proposed is None else proposed
                     self.resolve_study(
@@ -893,6 +929,10 @@ class Session:
             if self.started:
                 self.emit("SessionEnded", {"client": self.client_name})
             self.closed = True
+            if self.client_name == "mcp":
+                from mlca.live import unregister
+
+                unregister(self)
 
     def __enter__(self) -> Any:
         return self

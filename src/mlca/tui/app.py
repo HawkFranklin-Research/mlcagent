@@ -44,9 +44,12 @@ class MlcaApp(App):
         self.session = None
         self.busy = False
         self.pending_config = None
+        self.external_client = None
+        self._external_head = None
         self.activity = Activity()
 
     def on_mount(self) -> Any:
+        self.set_interval(1, self.poll_external)
         self.push_screen(WelcomeScreen())
         if self.configure_first:
             self.action_configure()
@@ -69,14 +72,51 @@ class MlcaApp(App):
             self.session.subscribe(
                 lambda record: self.call_from_thread(self.record_arrived, record) if self.busy else None
             )
+            self.sync_external_mode()
             self.switch_screen(MainScreen())
         except Exception as exc:
             self.notify(str(exc), severity="error")
+
+    def sync_external_mode(self):
+        from mlca.live import clients
+
+        attached = clients(self.session)
+        self.external_client = attached[-1] if attached else None
+        self.session.mode = self.external_client["mode"] if self.external_client else "driver"
+        self.session.client.disabled = self.session.mode == "brain"
+
+    @work(thread=True, exclusive=True, group="external-poll")
+    def poll_external(self):
+        if not self.session or self.busy:
+            return
+        try:
+            self.session.branch_name = self.session.branches.current()
+            records = self.session.store.read()
+            self.sync_external_mode()
+            from mlca.live import project_busy
+
+            locked = project_busy(self.session)
+            key = (
+                records[-1].id if records else None,
+                self.session.branch_name,
+                (self.external_client or {}).get("session_id"),
+                locked,
+            )
+            if key != self._external_head:
+                self._external_head = key
+                options = self.session.guided_view()
+                active = self.session.active_step()
+                if active or locked:
+                    options = [{**o, "disabled": not o["id"].startswith("human:")} for o in options]
+                self.call_from_thread(self.refresh_project, options)
+        except Exception as exc:
+            self.call_from_thread(self.notify, str(exc), severity="error")
 
     def refresh_project(self, options: Any = None) -> Any:
         if not self.session or not isinstance(self.screen, MainScreen):
             return
         status = self.session.status()
+        status["external_client"] = self.external_client
         from mlca.llm.status import roles
         from mlca.llm.usage import read
 
@@ -98,6 +138,8 @@ class MlcaApp(App):
         self.screen.query_one(Subgoals).render_state(status)
         self.screen.query_one(Facts).render_state(status)
         self.screen.query_one(StatusBar).render_state(status)
+        if options is None and self.external_client:
+            options = self.session.guided_view()
         if options is not None:
             records = self.session.branches.records()
             anchor = next((r.id for r in reversed(records) if r.type.value == "OptionsProposed"), None)

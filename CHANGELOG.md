@@ -295,3 +295,7 @@ Guided MCP cards expose actor/how, preserve colon-containing IDs and refuse huma
 ## MX2 — Proposed study fields and human resolution
 
 Added validated study_fields requests without applying suggestions, human CLI approval with JSON editor, and prefilled TUI Study details. Resolution records proposer and decider separately. Deferred MCP init reports the next request route. Eight focused proposal/decline/invalid-column/CLI/edit/guard/init regressions pass (10.52 s).
+
+## MX3 — Live TUI observer
+
+Added transient MCP client presence and one-second incremental log polling. Observer cards refresh without invoking models; agent work greys nonhuman cards while human approvals remain accessible. Brain mode identifies its driver instead of requesting provider setup. Confirmation approvals may resolve while a script is awaited; running mutations wait briefly on the existing lock. Study-field changes still require an idle step because they invalidate its work order. Textual second-session/thread and waiting-script approval tests pass (four focused tests, 9.84 s). Presence files are presentation hints, never authorization or immutable evidence.

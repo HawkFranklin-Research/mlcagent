@@ -416,6 +416,8 @@ Driver mode over MCP is also affected by G1, G3, G4 and G5.
 - **Tests:** agent proposes → human approves → `StudyFieldsResolved` with actor `user`, proposer `agent:…`; a decline leaves the state unchanged; invalid column names are refused at request time.
 
 ### MX3 · A live TUI next to an MCP session (G3, G6)
+
+**Implemented:** incremental external polling, brain-mode attribution and waiting-script confirmation approval; focused Textual tests pass.
 - The TUI also polls the event log (about every 1 s, using the incremental `Store` read) and refreshes cards, sub-goals, facts, the journey and the status when another process wrote records.
 - **While another principal holds an active step or the project lock:**
   - the cards are greyed out, with "Claude (agent:…) is working on step <id>: <phase>";

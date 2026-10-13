@@ -27,6 +27,7 @@ class OptionCard(Button):
         super().__init__(
             Text("\n".join(lines)),
             id=f"option-{number}",
+            disabled=option.get("disabled", False),
             tooltip=Text(
                 option.get("description", "")
                 + "\nProduces: "

@@ -11,7 +11,17 @@ class StatusBar(Static):
         rendered = Text(
             f"{status['branch']} | {status['current_event']} | requests {usage['model_requests']} | known USD {usage['known_cost_usd']:.4f} | unknown costs {usage['unknown_cost_requests']}"
         )
-        for role, info in status.get("model_status", {}).items():
+        client = status.get("external_client")
+        if client and client["mode"] == "brain":
+            rendered.append(f"\n● Brain mode · driven by {client['actor']} · MLCA makes no model calls")
+        active = status.get("active_step")
+        if active and client:
+            rendered.append(
+                f"\n{client['actor']} is working on step {active['step_id']}: {active.get('phase', active['status'])}"
+            )
+        for role, info in (
+            {} if client and client["mode"] == "brain" else status.get("model_status", {})
+        ).items():
             rendered.append(
                 "\n● ",
                 style={"grey": "grey50", "green": "green", "yellow": "yellow", "red": "red"}[info["health"]],
