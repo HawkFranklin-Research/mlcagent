@@ -42,6 +42,18 @@ class LLMResult(BaseModel):
     latency_ms: float = 0
 
 
+RATE_LIMIT_WAITS_S = (5, 15, 30, 60)
+
+
+def retry_after(error, index):
+    """Seconds to wait after a 429: the provider's Retry-After (capped at 60 s), else a fixed schedule."""
+    headers = getattr(getattr(error, "response", None), "headers", None) or {}
+    try:
+        return min(60.0, max(1.0, float(headers.get("retry-after"))))
+    except (TypeError, ValueError):
+        return float(RATE_LIMIT_WAITS_S[index])
+
+
 def structured_setting(provider_config, model):
     """(enabled, source) for JSON-schema output: explicit config wins, else the OpenRouter catalogue."""
     if provider_config.structured_outputs is not None:
@@ -123,6 +135,8 @@ class Client:
         if selected.temperature is not None:
             payload["temperature"] = selected.temperature
         structured, structured_source = structured_setting(provider_config, selected.model)
+        if (selected.provider, selected.model) in self._no_structured_endpoint():
+            structured, structured_source = False, "no_endpoint_fallback"
         if schema and structured:
             payload["response_format"] = {
                 "type": "json_schema",
@@ -156,7 +170,9 @@ class Client:
         provider = self._provider(selected.provider)
         if not 1 <= max_attempts <= 3:
             raise MlcaUserError("Request attempts must be between one and three")
-        for attempt in range(1, max_attempts + 1):
+        attempt, rate_waits, downgraded = 0, 0, False
+        while attempt < max_attempts:
+            attempt += 1
             request_id = str(ULID())
             start = time.monotonic()
             record = {
@@ -167,6 +183,7 @@ class Client:
                 "provider": selected.provider,
                 "model": selected.model,
                 "attempt": attempt,
+                "rate_limit_waits": rate_waits,
                 "model_reported": None,
                 "provider_reported": None,
                 "provider_request_id": None,
@@ -241,7 +258,24 @@ class Client:
                         )
             if error:
                 status = getattr(error, "status_code", None)
-                if attempt < max_attempts and (status == 429 or (isinstance(status, int) and status >= 500)):
+                routing = (payload.get("extra_body") or {}).get("provider") or {}
+                if status == 404 and not downgraded and routing.get("require_parameters"):
+                    # No endpoint honours JSON-schema output (the catalogue lists the union of
+                    # providers). Retry once without it; MLCA validates JSON itself.
+                    downgraded, attempt = True, attempt - 1
+                    self._no_structured_endpoint().add((selected.provider, selected.model))
+                    payload.pop("response_format", None)
+                    routing.pop("require_parameters", None)
+                    if not routing:
+                        payload["extra_body"].pop("provider", None)
+                    structured, structured_source = False, "no_endpoint_fallback"
+                    continue
+                if status == 429 and rate_waits < len(RATE_LIMIT_WAITS_S):
+                    # Rate limits are infrastructure, not model behaviour: wait, do not spend an attempt.
+                    time.sleep(retry_after(error, rate_waits))
+                    rate_waits, attempt = rate_waits + 1, attempt - 1
+                    continue
+                if attempt < max_attempts and isinstance(status, int) and status >= 500:
                     time.sleep(min(2 ** (attempt - 1), 4))
                     continue
                 raise MlcaUserError(redact(str(error), self.config), category="provider_error") from error
@@ -254,6 +288,12 @@ class Client:
                 },
             )
         raise MlcaUserError("Provider retry limit exhausted")
+
+    def _no_structured_endpoint(self):
+        """(provider, model) pairs with no endpoint for JSON-schema output, learned this session."""
+        if not hasattr(self, "_structured_unavailable"):
+            self._structured_unavailable = set()
+        return self._structured_unavailable
 
     def _record_usage(self, record, result, selected):
         record.update({k: result[k] for k in ["input_tokens", "output_tokens", "cached_tokens"]})

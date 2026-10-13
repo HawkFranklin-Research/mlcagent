@@ -388,6 +388,9 @@ def _worker(session, action, params, step_id, step, state, inputs):
         except BudgetError:
             raise
         except MlcaUserError as exc:
+            if exc.category == "provider_error":
+                # The model never answered (rate limit, outage): not a code attempt, never a "repair".
+                raise
             error = str(exc)
             continue
         observation, error = run_attempt(session, action, params, step_id, attempt, previous, request_id)
