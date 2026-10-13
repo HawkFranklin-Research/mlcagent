@@ -99,6 +99,7 @@ def run_step(session: Any, action: Any, params: Any) -> Any:
         "StepStarted",
         {
             "step_id": step_id,
+            "mode": session.mode,
             "action_id": action.id,
             "params": params,
             "inputs": {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()},

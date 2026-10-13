@@ -15,8 +15,16 @@ def build(state: Any, requests: Any, records: Any) -> Any:
         "BranchCreated",
         "BranchCheckedOut",
         "ApprovalResolved",
+        "ApprovalRequested",
+        "StudyFieldsResolved",
     }
-    principals = Counter(r.actor for r in records if r.type.value in decisions)
+    principals = Counter(
+        r.actor
+        for r in records
+        if r.type.value in decisions
+        or r.type.value == "Refusal"
+        and r.payload.get("category") == "human_decision"
+    )
     script_sources = Counter(
         script.get("source", "worker")
         for step in state.steps
@@ -36,6 +44,29 @@ def build(state: Any, requests: Any, records: Any) -> Any:
         ],
         "agent_file_access": "unknown (outside MLCA)",
         "decisions_by_principal": dict(principals),
+        "study_proposals": [
+            {
+                "request_id": r.id,
+                "proposer": r.actor,
+                "decider": next(
+                    (
+                        d.actor
+                        for d in records
+                        if d.type.value == "ApprovalResolved" and d.payload["request_id"] == r.id
+                    ),
+                    None,
+                ),
+            }
+            for r in records
+            if r.type.value == "ApprovalRequested" and r.payload["kind"] == "study_fields"
+        ],
+        "human_decision_refusals_by_principal": dict(
+            Counter(
+                r.actor
+                for r in records
+                if r.type.value == "Refusal" and r.payload.get("category") == "human_decision"
+            )
+        ),
         "script_attempts_by_source": dict(script_sources),
         **summary(requests),
         "steps_completed": sum(s["status"] == "completed" for s in state.steps),

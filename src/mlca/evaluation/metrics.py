@@ -151,6 +151,12 @@ def build(session, branch=None):
         }
         if kind in mapping:
             counts[mapping[kind]] += 1
+        if kind == "ApprovalRequested" and p["kind"] == "study_fields":
+            counts["study_fields_proposed"] += 1
+        if kind == "Refusal" and p.get("category") == "human_decision":
+            counts["human_decision_refusals"] += 1
+        if kind == "StudyFieldsResolved" and (p.get("proposer") or "").startswith("agent:"):
+            counts["agent_proposals_applied"] += 1
         if kind == "CustomInstructionSubmitted":
             counts["custom_words"] += p.get("words", len(p["text"].split()))
         if kind == "ApprovalResolved":
@@ -285,13 +291,49 @@ def build(session, branch=None):
             "ci": measured(selected.get("ci"), "exact") if selected else measured(None),
         }
     results["selected_model"] = measured(state.facts.get("best_model", {}).get("value"), "exact")
+    approval_requests = [
+        r for r in records if r.type.value == "ApprovalRequested" and r.actor.startswith("agent:")
+    ]
+    request_ids = {r.id for r in approval_requests}
+    approval_decisions = [
+        r
+        for r in records
+        if r.type.value == "ApprovalResolved" and r.actor == "user" and r.payload["request_id"] in request_ids
+    ]
+    sourced_steps = [
+        step
+        for step in state.steps
+        if any((script.get("source") or "").startswith("agent:") for script in step.get("scripts", []))
+    ]
+    unknown_sources = [
+        step
+        for step in state.steps
+        if any(not script.get("source") and not script.get("builtin") for script in step.get("scripts", []))
+    ]
+    snapshot_modes = {r.session_id: r.payload["mode"] for r in snapshots}
+    modes = {
+        r.payload.get("mode", snapshot_modes.get(r.session_id))
+        for r in records
+        if r.type.value == "StepStarted"
+    }
+    modes.discard(None)
+    run_mode = (
+        next(iter(modes))
+        if len(modes) == 1
+        else "mixed"
+        if modes
+        else snapshots[-1].payload["mode"]
+        if snapshots
+        else "unavailable"
+    )
+    proposal_decisions = {r.payload["request_id"]: r for r in records if r.type.value == "ApprovalResolved"}
     return {
         "schema_version": "1",
         "measurement_kind": "agent_run",
         "run": {
             "snapshot_refs": [r.id for r in snapshots],
             "snapshots": [r.payload for r in snapshots],
-            "mode": snapshots[-1].payload["mode"] if snapshots else "unavailable",
+            "mode": run_mode,
             "principals": sorted({r.actor for r in records}),
             "start": start.isoformat(),
             "end": end.isoformat(),
@@ -313,6 +355,37 @@ def build(session, branch=None):
         },
         "failures": {key: measured(value) for key, value in failure_counts.items()},
         "interventions": interventions,
+        "brain_mode": {
+            "agent_requested_approvals": measured(len(approval_requests), "exact"),
+            "human_approval_wait_s": sum_known(r.payload.get("wait_s") for r in approval_decisions),
+            "approval_wait_scope": "resolved agent requests decided by user; pending waits excluded",
+            "pending_agent_approvals": measured(
+                len(
+                    request_ids
+                    - {r.payload["request_id"] for r in records if r.type.value == "ApprovalResolved"}
+                ),
+                "exact",
+            ),
+            "agent_script_steps": measured(len(sourced_steps), "exact"),
+            "agent_script_step_share": measured(
+                len(sourced_steps) / len(state.steps) if state.steps and not unknown_sources else None,
+                "derived",
+                denominator="all started steps including engine actions and failures",
+            ),
+            "unknown_script_source_steps": measured(len(unknown_sources), "exact"),
+        },
+        "study_proposals": [
+            {
+                "request_id": r.id,
+                "proposer": r.actor,
+                "decider": proposal_decisions[r.id].actor if r.id in proposal_decisions else None,
+                "decision": proposal_decisions[r.id].payload["decision"]
+                if r.id in proposal_decisions
+                else "pending",
+            }
+            for r in approval_requests
+            if r.payload["kind"] == "study_fields"
+        ],
         "time": {
             "llm_s": llm_s,
             "compute_s": measured(compute),
@@ -363,6 +436,7 @@ def build(session, branch=None):
                 "gate_blocked",
                 "privacy_refusal",
                 "sandbox_denied",
+                "human_decision",
             }
         ],
         "decisions": decisions,

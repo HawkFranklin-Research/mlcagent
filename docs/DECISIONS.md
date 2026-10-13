@@ -543,3 +543,7 @@ Added actor-labelled last-12 action trails, last-10 plain messages and canonical
 ## MX5 — Guided agent instructions and VM workflow
 
 Server instructions remain 15 lines, explain actor/how and deferred study-field requests, and default to numbered user choices unless autonomy was requested. The packaged skill and VM guide cover live TUI watching, approvals, deferred targets and request-scoped notifications. The guide distinguishes unpublished MX source from public beta 2. Seven focused instruction/protocol/card/proposal/live-TUI tests pass (10.99 s). No live model or browser calls.
+
+## MX6 — Attribution and brain-mode metrics
+
+Approval requests, study proposals/deciders and human_decision refusals are counted by actual principal. Metrics expose agent-requested approvals, measured resolved human waits, pending requests and the agent script share (all started steps denominator; unknown sources remain unavailable). Run mode now follows step execution rather than the last human-approval snapshot. Six focused synthetic attribution/approval/phase/live-TUI tests pass (16.50 s). MX5 installed source refresh and 14-tool probe passed; no new beta published. Full offline suite follows.

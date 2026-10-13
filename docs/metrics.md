@@ -108,3 +108,9 @@ reports the dominant observed sequence share, available/unavailable sequence cou
 runs with fresh calls. Synthetic/fake-provider checks measure harness behavior, not scientific
 performance. Real-data studies, AutoML/plain-LLM baselines and planted-flaw tasks belong in the
 paper's experiment workspace and are not implemented or run by this instrumentation phase.
+
+## MCP alignment metrics (MX6)
+
+`brain_mode.agent_requested_approvals` counts actual agent ApprovalRequested records. `human_approval_wait_s` sums measured waits on resolved agent requests decided by user; pending requests are counted separately, not assigned a zero wait. Proposal relations name proposer and decider; declines do not apply fields. Human-decision refusals are counted from their root Refusal records.
+
+`agent_script_step_share` uses all started steps, including engine actions and failures, as its denominator; its numerator counts steps with a recorded agent script source. Missing script source metadata makes the share unavailable. Modes describe step execution, excluding standalone human approval snapshots; mixed execution is labelled mixed. All fields are computed from evidence without model calls.
