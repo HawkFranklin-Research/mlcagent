@@ -78,8 +78,14 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
     path = Path(registered["original_path"])
     if sha256(path) != registered["sha256"]:
         raise IntegrityError("Registered input changed")
+    if state.prepared_data:
+        path = root / state.prepared_data["path"]
+        if sha256(path) != state.prepared_data["sha256"]:
+            raise IntegrityError("Prepared input changed")
     frame = read_table(path).reset_index(drop=True)
     assignments = partitions(frame, params, column_for(state))
+    if state.group_column:
+        frame = frame.drop(columns=[state.group_column])
     from mlca.privacy.rows import guard
 
     guard(root, state).register_split(step_id, frame, assignments)

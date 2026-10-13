@@ -10,6 +10,7 @@ from mlca.runner.run_step import run_step
 
 
 def execute(session: Any, action: Any, params: Any) -> Any:
+    session._questions_clear()
     if action.event in {"split", "preprocess", "features", "model"} and session._ever_unlocked():
         raise MlcaUserError(
             "Fitting and split changes are closed after project-wide test exposure", category="test_lock"

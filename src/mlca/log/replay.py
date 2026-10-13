@@ -7,7 +7,33 @@ def replay(records: list[Record]) -> ProjectState:
         p, kind = record.payload, record.type.value
         state.head = record.id
         state.counts[kind] = state.counts.get(kind, 0) + 1
-        if kind == "ProjectCreated":
+        if kind == "DataReviewStarted":
+            state.guided_enabled = True
+            state.data_review_context = p["context_sha256"]
+            state.questions, state.answers, state.data_decisions = {}, {}, []
+            state.prepared_data = None
+        elif kind == "QuestionAsked":
+            state.questions[p["question_id"]] = {**p, "event_id": record.event_id}
+        elif kind == "QuestionAnswered":
+            state.answers[p["question_id"]] = p
+            state.pending_options = None
+        elif kind == "OutcomeSelected":
+            state.columns["target"] = p["column"]
+            state.brief["target"] = p["column"]
+            state.outcome_reviewed = True
+            state.outcome_exclusions = p["excluded_columns"]
+        elif kind == "DataDecision":
+            if p["effect"]["kind"] == "set_outcome":
+                state.outcome_reviewed = True
+            state.data_decisions.append({**p, "actor": record.actor})
+            state.prepared_data = None
+        elif kind == "TaskConfigured":
+            state.task = p["task"]
+            state.excluded_columns = p.get("excluded_columns", [])
+            state.group_column = p.get("group_column")
+        elif kind == "DataPrepared":
+            state.prepared_data = p
+        elif kind == "ProjectCreated":
             state.project_id = p["project_id"]
             state.template_id, state.template_version = p["template_id"], p["template_version"]
         elif kind == "DataRegistered":

@@ -36,6 +36,10 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
                 path = Path(data["original_path"])
                 if sha256(path) != data["sha256"]:
                     raise IntegrityError("Registered input hash changed")
+                if name == state.primary_data and state.prepared_data:
+                    path = root / state.prepared_data["path"]
+                    if sha256(path) != state.prepared_data["sha256"]:
+                        raise IntegrityError("Prepared input changed")
                 paths[name] = path
         elif ref in {"train", "val"}:
             if not state.split:
@@ -69,6 +73,13 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
                         paths["latest_model"] = path
         else:
             raise MlcaUserError(f"Unknown action input reference: {ref}")
+    if state.guided_enabled:
+        from types import SimpleNamespace
+
+        from mlca.engine.data_review import protocol_input
+
+        path = protocol_input(SimpleNamespace(root=root, state=state))
+        paths["_protocol"] = path
     return paths
 
 

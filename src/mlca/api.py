@@ -335,6 +335,29 @@ class Session:
                 options = []
         return cards(self, options)
 
+    def questions(self):
+        from mlca.engine.questions import pending
+
+        return pending(self)
+
+    def review_data(self):
+        from mlca.engine.questions import review
+
+        with self.mutation():
+            self._ensure_idle()
+            return review(self)
+
+    def answer_question(self, question_id, answer=None, default=False, free_text=None):
+        from mlca.engine.questions import answer as resolve
+
+        with self.mutation():
+            self._ensure_idle()
+            return resolve(self, question_id, answer, default=default, free_text=free_text)
+
+    def _questions_clear(self):
+        if self.questions():
+            raise MlcaUserError("Answer the pending question before continuing", category="gate_blocked")
+
     def options(self, guided=False) -> Any:
         with self.mutation():
             state = self.state
@@ -453,6 +476,7 @@ class Session:
             return self._choose_available(n)
 
     def _choose_available(self, n):
+        self._questions_clear()
         options = self.options()
         choice = next((o for o in options if o["id"] == str(n)), None)
         if choice is None:
@@ -470,6 +494,8 @@ class Session:
             if action.id not in self.workflow.events[state.current_event].actions:
                 raise MlcaUserError("Option is stale; request current options")
             values = parameters(action, choice["params"], state)
+            if action.builtin == "split" and state.group_column:
+                values.update(method="group", group_column=state.group_column)
             self.emit("OptionChosen", {"option_id": choice["id"]}, actor="user")
             return execute(self, action, values)
 
@@ -481,6 +507,7 @@ class Session:
     def _custom(self, text):
         with self.mutation():
             self._ensure_idle()
+            self._questions_clear()
             state = self.state
             event = self.workflow.events[state.current_event]
             self.emit("CustomInstructionSubmitted", {"text": text}, actor="user")
@@ -562,6 +589,7 @@ class Session:
         return any(r.type.value == "TestUnlocked" for r in self.store.read())
 
     def _enter(self, target: Any, via: Any) -> Any:
+        self._questions_clear()
         state = self.state
         if target not in self.workflow.events:
             raise MlcaUserError("Unknown workflow event")

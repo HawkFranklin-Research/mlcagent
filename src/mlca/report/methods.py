@@ -22,6 +22,13 @@ def build(state: Any, workflow: Any) -> Any:
                 "",
             ]
         )
+    if state.data_decisions:
+        lines.extend(["## Pre-split data decisions", ""])
+        for decision in state.data_decisions:
+            lines.append(
+                f"- {decision['rule']}: {decision['effect']} (actor: {decision.get('actor', 'unavailable')})"
+            )
+        lines.append("")
     for step in state.steps:
         if step["status"] != "completed":
             continue

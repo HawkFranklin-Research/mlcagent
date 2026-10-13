@@ -351,3 +351,7 @@ P16/P14.6 candidate checks: 34 passed. Final full-suite verification follows.
 
 Full offline working-tree suite: **245 passed, 1 skipped in 678.51 s** (PowerShell unavailable). Ruff lint and formatting pass. The isolated selective P16/P14.6 candidate passed 34 tests, independently of the other uncommitted work.
 An earlier run identified a legacy external-usage shape mismatch; complete totals now preserve the value/source contract. The corrected suite passed. Activity reconciliation and live smoke remain pending; post-freeze P14/P15 work is deferred. Existing uncommitted work is preserved.
+
+## P14.4 — Generic pre-split data review
+
+Added property-based findings, bounded questions, explicit sensitive decisions, replayable DataDecision/TaskConfigured records and immutable prepared inputs. Raw inputs are never modified. Approved excluded columns leave the prepared feature table; grouping columns are used for assignment and removed from model partitions. Review decisions cannot be changed after freezing, and pending questions block actions/transitions. Detection is heuristic (aliases, low-cardinality mappings, separating ranges and name hints), not proof of all leakage. Existing manual API projects retain compatibility; the P15 turn entry enables review. Initial baseline: 248 passed, 1 skipped. Data-review/gate/scope subset passes offline. No live calls or original-data scientific study.

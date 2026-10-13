@@ -12,6 +12,13 @@ class StrictModel(BaseModel):
 
 # Required payload fields, supplemented by independently validated engine contracts.
 PAYLOAD_FIELDS = {
+    "DataReviewStarted": ["context_sha256"],
+    "QuestionAsked": ["question_id", "header", "question", "options", "recommended", "asker"],
+    "QuestionAnswered": ["question_id", "answer", "by"],
+    "DataDecision": ["question_id", "effect", "rule"],
+    "OutcomeSelected": ["column", "excluded_columns"],
+    "TaskConfigured": ["task"],
+    "DataPrepared": ["path", "sha256", "source_sha256", "decision_sha256"],
     "ProjectCreated": ["project_id", "mlca_version", "template_id", "template_version", "template_sha256"],
     "DataRegistered": ["name", "original_path", "sha256", "size", "read_only"],
     "InventoryRecorded": ["files", "sha256"],
@@ -170,6 +177,17 @@ class Record(StrictModel):
 
 
 class ProjectState(StrictModel):
+    outcome_reviewed: bool = False
+    outcome_exclusions: list[str] = Field(default_factory=list)
+    guided_enabled: bool = False
+    data_review_context: str | None = None
+    questions: dict[str, dict] = Field(default_factory=dict)
+    answers: dict[str, dict] = Field(default_factory=dict)
+    data_decisions: list[dict] = Field(default_factory=list)
+    prepared_data: dict | None = None
+    task: dict = Field(default_factory=dict)
+    excluded_columns: list[str] = Field(default_factory=list)
+    group_column: str | None = None
     primary_data: str | None = None
     project_id: str = ""
     template_id: str = ""
