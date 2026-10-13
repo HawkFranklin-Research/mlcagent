@@ -207,6 +207,8 @@ Row and column counts were checked on the files (columns include the target). Wh
 
 ## Status
 
+- **Unpublished MX source:** MCP/TUI alignment MX1–MX6 is implemented; 202 offline tests pass, 1 skipped. Guided human cards, study-field proposals, live TUI observation, phases and attribution metrics are available from the local checkout. Public beta 2 lacks these changes; beta 3 awaits author authorization.
+
 - **Hands-on testing:** native onboarding is being tested by the author. Complete real-data driver/brain studies remain pending; the datasets above are staged for them.
 - **Beta 2:** [`mlcagent` 0.2.0b2](https://pypi.org/project/mlcagent/0.2.0b2/) is published with the guided native TUI and provider controls; beta 1 is yanked. The command remains `mlca`. Publication evidence is recorded in [validation](docs/IMPLEMENTATION_STATUS.md).
 

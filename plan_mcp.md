@@ -456,7 +456,7 @@ Driver mode over MCP is also affected by G1, G3, G4 and G5.
 
 ### MX6 · Accounting and reports
 
-**Implemented:** evidence-based proposal/decision/refusal counts, approval waits and script-source share; synthetic tests pass. Full-suite validation follows.
+**Implemented:** evidence-based proposal/decision/refusal counts, approval waits and script-source share; synthetic tests pass. Full-suite validation: 202 passed, 1 skipped.
 - **Decisions by principal** also count: human cards requested by the agent; study-field proposals (proposed by agent, decided by user); and refusals with category `human_decision`.
 - **`mlca metrics`** reports, for brain-mode runs: the number of agent-requested approvals, the human approval wait time (already timed in P10.2), and the share of steps whose script came from the agent.
 - **Tests:** a synthetic brain-mode run → metrics show those counts.
@@ -472,7 +472,7 @@ Meanwhile, a TUI open in a second terminal updates live, shows "driven by agent"
 
 ## Status
 
-- **2026-10-13 MX implementation:** MX1–MX6 built in ordered local commits; focused offline tests pass. Installed source refreshed after MX5; final full suite pending. No live models, computer controls or beta 3 publication.
+- **2026-10-13 MX implementation:** MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.
 
 ## Beta 2 published and beta 1 yanked — 2026-10-13
 

@@ -547,3 +547,7 @@ Server instructions remain 15 lines, explain actor/how and deferred study-field 
 ## MX6 — Attribution and brain-mode metrics
 
 Approval requests, study proposals/deciders and human_decision refusals are counted by actual principal. Metrics expose agent-requested approvals, measured resolved human waits, pending requests and the agent script share (all started steps denominator; unknown sources remain unavailable). Run mode now follows step execution rather than the last human-approval snapshot. Six focused synthetic attribution/approval/phase/live-TUI tests pass (16.50 s). MX5 installed source refresh and 14-tool probe passed; no new beta published. Full offline suite follows.
+
+## MX final acceptance
+
+MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.

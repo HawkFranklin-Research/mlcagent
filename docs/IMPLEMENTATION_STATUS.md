@@ -1,3 +1,9 @@
+# MCP/TUI alignment acceptance — 2026-10-13
+
+MX1–MX6 implemented in ordered local commits. Full offline suite: **202 passed, 1 skipped in 719.16 s** (PowerShell unavailable). Ruff lint/format pass. Installed source refreshed after MX5; final refresh includes MX6. No live model calls, computer controls, remote pushes or beta 3 publication. Public beta 2 is unchanged; local development source still reports 0.2.0b2. Master and browser plans remain untouched.
+
+The synthetic SDK, CLI and Textual tests cover human card routes/refusals, validated proposals and attribution, live updates while awaiting scripts, phase order and progress callbacks, bounded privacy/accounting views and brain-mode metrics. Native real-client M7 remains an author-run check.
+
 ## Beta 2 release validation — 2026-10-13
 
 ## Beta 2 published and beta 1 yanked — 2026-10-13

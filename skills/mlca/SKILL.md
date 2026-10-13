@@ -18,7 +18,8 @@ The human may watch in a second terminal using `mlca -p <project>`; the live TUI
 1. Open or initialize the project using `mlca_open` or `mlca_init`.
 2. Read `mlca_status`, then `mlca_options`. Stay in the current event.
 3. In brain mode, propose catalog actions using `mlca_submit_options` when useful.
-   Use the returned menu IDs, not action names, with `mlca_choose`.
+   After submitting options, call `mlca_options` again to get the current wrapped card IDs.
+   Use those IDs, not action names or unwrapped IDs, with `mlca_choose`.
 4. In driver mode, choose an option and let MLCA's models execute it.
 5. Poll `mlca_step_status` every 2–10 seconds while a step runs.
 6. In brain mode, an awaiting step supplies a work order. Write one standalone
