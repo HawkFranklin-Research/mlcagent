@@ -45,7 +45,7 @@ def finish(session, action, observation):
             safe_facts.append(candidate)
     observation = {**observation, "facts": safe_facts}
     candidates = []
-    if session.mode != "brain" and "navigator" in session.config.roles:
+    if not session.state.guided_enabled and session.mode != "brain" and "navigator" in session.config.roles:
         try:
             candidates = Navigator(session).extract_facts(observation, action, observation["step_id"])
         except MlcaUserError as exc:

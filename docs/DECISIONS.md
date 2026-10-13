@@ -591,3 +591,11 @@ An earlier run identified a legacy external-usage shape mismatch; complete total
 ## P14.4 — Generic pre-split data review
 
 Added property-based findings, bounded questions, explicit sensitive decisions, replayable DataDecision/TaskConfigured records and immutable prepared inputs. Raw inputs are never modified. Approved excluded columns leave the prepared feature table; grouping columns are used for assignment and removed from model partitions. Review decisions cannot be changed after freezing, and pending questions block actions/transitions. Detection is heuristic (aliases, low-cardinality mappings, separating ranges and name hints), not proof of all leakage. Existing manual API projects retain compatibility; the P15 turn entry enables review. Initial baseline: 248 passed, 1 skipped. Data-review/gate/scope subset passes offline. No live calls or original-data scientific study.
+
+## P15 guided turns (2026-10-13)
+
+The engine owns the turn loop; the Navigator returns a short situation and validated catalogue choices. Exactly one choice is recommended. A catalogue with only one legal action yields one choice rather than fabricated alternatives. Bounded repair falls back to template choices. Turn menus are cached until state changes; external TUI observers remain read-only.
+
+Questions are logged, docked in the TUI, and exposed as `mlca_questions`/`mlca_answer` (16 MCP tools now). Sensitive leakage/label decisions require explicit human answers. Free text maps to an existing answer only after a separate confirmation. Autopilot (`a`) stops for questions, approvals, failures, budgets or a requested pause (`space`). `p` opens approvals. A comparison sub-goal requires both prespecified models in autopilot; ordinary step mode retains its selected-model rule. Narration uses recorded metrics and has a deterministic fallback. Worker failures remain failures and offer retry/pause; they never select reference code.
+
+Focused validation: question/turn tests (8 passed), TUI/protocol tests (22 passed), turn/MCP card regressions (6 passed). These are offline harness checks, not paper results. No live calls, publication or installed-tool refresh.

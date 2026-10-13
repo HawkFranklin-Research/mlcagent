@@ -98,9 +98,7 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
                 if option["label"].casefold() == free_text.strip().casefold()
             ]
             if len(matches) != 1:
-                raise MlcaUserError(
-                    "Choose an option or use the guided free-text mapping", category="invalid_request"
-                )
+                return map_text(session, qid, free_text)
             index = matches[0]
     if effect is None:
         if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(q["options"]):
@@ -130,6 +128,10 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
                 data_review.source_frame(state), state.data_decisions + [{"effect": effect}]
             )
             data_review.task_for(candidate, state, mode)
+    if effect["kind"] not in data_kinds:
+        from .guided import validate_effect
+
+        validate_effect(session, effect)
     requested = next(
         r for r in session.store.read() if r.type.value == "QuestionAsked" and r.payload["question_id"] == qid
     )
@@ -212,4 +214,66 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
         from .guided import apply_effect
 
         apply_effect(session, effect)
+    return pending(session)
+
+
+class AnswerMapping(StrictModel):
+    index: int = Field(ge=0)
+
+
+def map_text(session, qid, text):
+    q = session.state.questions[qid]
+    if session.mode == "brain" or session.client.disabled or "navigator" not in session.config.roles:
+        raise MlcaUserError(
+            "Choose a listed answer; no model is available to interpret free text", category="invalid_request"
+        )
+    from mlca.llm.structured import complete
+    from mlca.roles.base import prompt
+    from mlca.roles.navigator import Navigator
+
+    response = complete(
+        session.client,
+        "navigator",
+        [
+            {
+                "role": "user",
+                "content": prompt(
+                    "navigator_question.md",
+                    question=q["question"],
+                    options=[{"label": o["label"], "description": o["description"]} for o in q["options"]],
+                    answer=text,
+                    schema=AnswerMapping.model_json_schema(),
+                ),
+            }
+        ],
+        AnswerMapping,
+        Navigator(session).context("question"),
+        ["user_text", "template_spec"],
+    )
+    index = response.parsed.index
+    if index >= len(q["options"]):
+        raise MlcaUserError("The interpreted answer was not a listed choice", category="invalid_request")
+    ask(
+        session,
+        {
+            "header": "Check interpreted answer",
+            "question": "Use this interpreted answer: " + q["options"][index]["label"] + "?",
+            "explicit": True,
+            "human_only": q.get("human_only", False),
+            "options": [
+                {
+                    "label": "Use answer",
+                    "description": q["options"][index]["description"],
+                    "effect": {"kind": "answer_question", "question_id": qid, "index": index},
+                },
+                {
+                    "label": "Choose again",
+                    "description": "Keep the original question open",
+                    "effect": {"kind": "pause"},
+                },
+            ],
+        },
+        asker="navigator",
+        key="mapping",
+    )
     return pending(session)

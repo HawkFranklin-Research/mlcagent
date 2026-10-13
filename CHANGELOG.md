@@ -355,3 +355,9 @@ An earlier run identified a legacy external-usage shape mismatch; complete total
 ## P14.4 — Generic pre-split data review
 
 Added property-based findings, bounded questions, explicit sensitive decisions, replayable DataDecision/TaskConfigured records and immutable prepared inputs. Raw inputs are never modified. Approved excluded columns leave the prepared feature table; grouping columns are used for assignment and removed from model partitions. Review decisions cannot be changed after freezing, and pending questions block actions/transitions. Detection is heuristic (aliases, low-cardinality mappings, separating ranges and name hints), not proof of all leakage. Existing manual API projects retain compatibility; the P15 turn entry enables review. Initial baseline: 248 passed, 1 skipped. Data-review/gate/scope subset passes offline. No live calls or original-data scientific study.
+
+### Unreleased: guided study turns
+
+- Add recorded questions, docked answers, guided choices, explicit sensitive decisions and resumable autopilot.
+- Keep model comparisons explicit, human approvals engine-owned, and result summaries tied to recorded outputs.
+- Add two MCP question tools; legacy project snapshots remain unchanged.

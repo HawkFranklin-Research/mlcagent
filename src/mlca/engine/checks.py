@@ -61,6 +61,12 @@ def evaluate(
             p in state.artefacts and (root / p).is_file() and sha256(root / p) == state.artefacts[p]["sha256"]
             for p in paths
         ), "Artifact hashes"
+    if kind == "actions_completed":
+        if spec.get("when_comparison") and not state.compare_models:
+            return True, "Comparison not requested"
+        from mlca.engine.options import already_run
+
+        return all(already_run(a, state) for a in spec["actions"]), "Prespecified models completed"
     if kind == "metric_present":
         return any(
             m["name"] == spec["name"] and m["split"] == spec["split"]

@@ -1,4 +1,3 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: model
 title: Model
 goal: Fit the baseline and at most one prespecified alternative on training rows.
@@ -18,6 +17,14 @@ subgoals:
   text: Every fit used the frozen training rows
   check:
     type: fit_on_train_only
+- id: comparison_recorded
+  text: Both prespecified models fitted when comparison requested
+  check:
+    type: actions_completed
+    actions:
+    - train_logistic
+    - train_alternative
+    when_comparison: true
 actions:
 - train_logistic
 - train_alternative

@@ -14,6 +14,7 @@ from ..widgets.journey import Journey
 from ..widgets.log_stream import LogStream
 from ..widgets.options import Options
 from ..widgets.progress import Progress
+from ..widgets.questions import Questions
 from ..widgets.status_bar import StatusBar
 from ..widgets.subgoals import Subgoals
 
@@ -27,7 +28,9 @@ class MainScreen(Screen):
         ("q", "app.quit", "Quit"),
         ("L", "app.engine_log", "Engine log"),
         Binding("d", "app.study", "Study details", show=False),
-        Binding("a", "app.approvals", "Approvals", show=False),
+        ("a", "app.autopilot", "Run study"),
+        ("space", "app.pause", "Pause"),
+        Binding("p", "app.approvals", "Approvals", show=False),
         Binding("n", "app.next", "Next", show=False),
         Binding("c", "app.custom", "Custom", show=False),
         Binding("f", "app.confirm", "Confirm", show=False),
@@ -49,6 +52,7 @@ class MainScreen(Screen):
                 yield Subgoals(id="subgoals")
                 yield Options(id="options")
             yield Facts(id="facts")
+        yield Questions(id="questions")
         yield Progress(id="progress")
         yield Static("", id="approvals-banner")
         yield Journey(id="journey")

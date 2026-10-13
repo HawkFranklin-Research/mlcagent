@@ -335,6 +335,22 @@ class Session:
                 options = []
         return cards(self, options)
 
+    def turn(self):
+        from mlca.engine.guided import present
+
+        with self.mutation():
+            self._ensure_idle()
+            return present(self)
+
+    def autopilot(self, max_steps=100):
+        from mlca.engine.guided import drive
+
+        return drive(self, max_steps)
+
+    def pause_autopilot(self):
+        # This flag can be set while a step holds the mutation lock.
+        self._autopilot_pause = True
+
     def questions(self):
         from mlca.engine.questions import pending
 
@@ -477,7 +493,7 @@ class Session:
 
     def _choose_available(self, n):
         self._questions_clear()
-        options = self.options()
+        options = self.turn()["choices"] if self.state.guided_enabled else self.options()
         choice = next((o for o in options if o["id"] == str(n)), None)
         if choice is None:
             raise MlcaUserError("Choose an available option", category="invalid_options")

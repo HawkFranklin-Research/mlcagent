@@ -648,6 +648,41 @@ def validate_template(path: Path, json_output: bool = typer.Option(False, "--jso
     )
 
 
+questions_app = typer.Typer(invoke_without_command=True)
+app.add_typer(questions_app, name="questions")
+
+
+@questions_app.callback()
+def questions_list(ctx: typer.Context):
+    if ctx.invoked_subcommand is None:
+        with Session(_path(ctx)) as session:
+            output(session.questions(), True)
+
+
+@questions_app.command("answer")
+def question_answer(
+    ctx: typer.Context,
+    question_id: str,
+    index: int | None = None,
+    default: bool = False,
+    free_text: str | None = None,
+):
+    with Session(_path(ctx)) as session:
+        output(session.answer_question(question_id, index, default, free_text), True)
+
+
+@app.command("turn")
+def guided_turn(ctx: typer.Context):
+    with Session(_path(ctx)) as session:
+        output(session.turn(), True)
+
+
+@app.command("autopilot")
+def autopilot(ctx: typer.Context, max_steps: int = 100):
+    with Session(_path(ctx)) as session:
+        output(session.autopilot(max_steps), True)
+
+
 def main() -> Any:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):

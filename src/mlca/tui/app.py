@@ -153,13 +153,29 @@ class MlcaApp(App):
         }
         return [card, *options]
 
+    def action_autopilot(self):
+        if self._can_act() and not self.external_client:
+            self.auto_resume = True
+            self.run_session_action("autopilot")
+
+    def action_pause(self):
+        self.auto_resume = False
+        if self.session:
+            self.session.pause_autopilot()
+
+    def on_questions_answer(self, message):
+        self.run_session_action("answer_question", *message.arguments)
+
     def refresh_project(self, options: Any = None) -> Any:
         if not self.session or not isinstance(self.screen, MainScreen):
             return
+        from mlca.tui.widgets.questions import Questions
+
+        self.screen.query_one(Questions).show_questions(self.session.questions())
         status = self.decorated_status()
         count = len(status["approvals"])
         self.screen.query_one("#approvals-banner", Static).update(
-            f"{count} approval(s) waiting (a)" if count else ""
+            f"{count} approval(s) waiting (p)" if count else ""
         )
         self.screen.query_one(Journey).render_state(
             status, self.session.branches.records(), self.session.workflow
@@ -177,7 +193,7 @@ class MlcaApp(App):
             self.activity.begin(anchor)
             self.call_later(self.screen.query_one(Options).render_options, options)
         else:
-            self.run_session_action("options", refresh_only=True)
+            self.run_session_action("turn", refresh_only=True)
 
     def on_key(self, event):
         if not self.busy:
@@ -247,7 +263,22 @@ class MlcaApp(App):
                         severity="error",
                     )
                 self.pending_config = None
-            options = result if method == "options" and not changed_models else self.session.options(True)
+            if method == "autopilot" and result.get("reason") in {"failure", "budget", "paused", "completed"}:
+                self.auto_resume = False
+            if getattr(self, "auto_resume", False) and method in {
+                "answer_question",
+                "confirm",
+                "unlock_test",
+            }:
+                result = self.session.autopilot()
+                if result.get("reason") in {"failure", "budget", "paused", "completed"}:
+                    self.auto_resume = False
+            if self.external_client:
+                options = self.session.guided_view()
+            elif method == "turn" and not changed_models:
+                options = result["choices"]
+            else:
+                options = self.session.turn()["choices"]
             self.call_from_thread(self.refresh_project, options)
             if method == "report":
                 self.call_from_thread(self.show_reports, result)

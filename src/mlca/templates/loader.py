@@ -11,6 +11,7 @@ from mlca.errors import MlcaUserError
 from .model import ActionSpec, EventSpec, TemplateSpec, Workflow
 
 CHECK_TYPES = {
+    "actions_completed",
     "study_fields_resolved",
     "event_done",
     "fact_present",

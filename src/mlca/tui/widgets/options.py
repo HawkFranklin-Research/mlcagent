@@ -92,6 +92,12 @@ class Options(Vertical):
             self.post_message(self.Selected(event.button.option_id))
 
     def on_key(self, event):
+        if event.key == "enter" and not isinstance(self.app.focused, OptionCard):
+            recommended = next((o for o in self.items if o.get("recommended")), None)
+            if recommended:
+                self.post_message(self.Selected(recommended["id"]))
+                event.stop()
+                return
         if event.key in {"up", "down"}:
             buttons = list(self.query(OptionCard))
             if buttons:

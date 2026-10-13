@@ -12,6 +12,11 @@ class StrictModel(BaseModel):
 
 # Required payload fields, supplemented by independently validated engine contracts.
 PAYLOAD_FIELDS = {
+    "GuidedFlowEnabled": [],
+    "ComparisonRequested": [],
+    "TurnPresented": ["situation", "choices"],
+    "ResultSummary": ["text"],
+    "AutopilotStopped": ["reason"],
     "DataReviewStarted": ["context_sha256"],
     "QuestionAsked": ["question_id", "header", "question", "options", "recommended", "asker"],
     "QuestionAnswered": ["question_id", "answer", "by"],
@@ -177,6 +182,8 @@ class Record(StrictModel):
 
 
 class ProjectState(StrictModel):
+    compare_models: bool = False
+    presented_turn: dict | None = None
     outcome_reviewed: bool = False
     outcome_exclusions: list[str] = Field(default_factory=list)
     guided_enabled: bool = False

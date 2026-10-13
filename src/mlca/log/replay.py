@@ -7,7 +7,13 @@ def replay(records: list[Record]) -> ProjectState:
         p, kind = record.payload, record.type.value
         state.head = record.id
         state.counts[kind] = state.counts.get(kind, 0) + 1
-        if kind == "DataReviewStarted":
+        if kind == "GuidedFlowEnabled":
+            state.guided_enabled = True
+        elif kind == "ComparisonRequested":
+            state.compare_models = True
+        elif kind == "TurnPresented":
+            state.presented_turn = p
+        elif kind == "DataReviewStarted":
             state.guided_enabled = True
             state.data_review_context = p["context_sha256"]
             state.questions, state.answers, state.data_decisions = {}, {}, []
@@ -17,6 +23,7 @@ def replay(records: list[Record]) -> ProjectState:
         elif kind == "QuestionAnswered":
             state.answers[p["question_id"]] = p
             state.pending_options = None
+            state.presented_turn = None
         elif kind == "OutcomeSelected":
             state.columns["target"] = p["column"]
             state.brief["target"] = p["column"]
@@ -47,6 +54,7 @@ def replay(records: list[Record]) -> ProjectState:
             state.columns = p.get("columns", {})
             state.primary_data = p.get("primary_data")
         elif kind == "EventEntered":
+            state.presented_turn = None
             state.current_event = p["event_id"]
             for event in p.get("invalidate_events", []):
                 state.event_statuses[event] = "locked"
@@ -59,6 +67,7 @@ def replay(records: list[Record]) -> ProjectState:
             state.event_statuses[p["event_id"]] = "open"
             state.pending_options = None
         elif kind == "ModelChanged":
+            state.presented_turn = None
             state.pending_options = None
         elif kind == "OptionsProposed":
             state.pending_options = p["options"]
@@ -70,6 +79,7 @@ def replay(records: list[Record]) -> ProjectState:
             "BranchCheckedOut",
         ):
             state.pending_options = None
+            state.presented_turn = None
         elif kind == "StepStarted":
             state.steps.append(
                 {**p, "event_id": record.event_id, "status": "running", "runs": [], "scripts": []}
@@ -94,6 +104,7 @@ def replay(records: list[Record]) -> ProjectState:
         elif kind == "UserConfirmed":
             state.confirmations[p["subgoal_id"]] = p
         elif kind == "SubgoalChecked":
+            state.presented_turn = None
             state.subgoals[f"{record.event_id}.{p['subgoal_id']}"] = p
             if "event_done" in p:
                 state.event_statuses[record.event_id] = "done" if p["event_done"] else "open"

@@ -315,6 +315,10 @@ class Controller:
                 ),
             }
         s = self.require(actor)
+        if tool == "mlca_questions":
+            return {"questions_data": s.questions()}
+        if tool == "mlca_answer":
+            return {"questions_data": s.answer_question(**arguments)}
         if tool == "mlca_status":
             return self.status()
         if tool == "mlca_options":
@@ -553,6 +557,26 @@ def create_server(project=None, mode=None):
             annotations=ToolAnnotations(
                 read_only_hint=read_only, destructive_hint=False, open_world_hint=False
             )
+        )
+
+    @register(read_only=True)
+    async def mlca_questions(ctx: Context) -> CallToolResult:
+        """List pending questions; human-only answers must be made through the CLI/TUI."""
+        return await controller.call("mlca_questions", {}, ctx)
+
+    @register()
+    async def mlca_answer(
+        question_id: str,
+        ctx: Context,
+        answer: int | None = None,
+        default: bool = False,
+        free_text: str | None = None,
+    ) -> CallToolResult:
+        """Answer an agent-answerable question through the same engine validation."""
+        return await controller.call(
+            "mlca_answer",
+            dict(question_id=question_id, answer=answer, default=default, free_text=free_text),
+            ctx,
         )
 
     @register()
