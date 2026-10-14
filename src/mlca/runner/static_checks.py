@@ -1,4 +1,5 @@
 import ast
+import re
 from typing import Any
 
 FORBIDDEN = {"subprocess", "socket", "requests", "urllib", "http", "ctypes", "multiprocessing", "importlib"}
@@ -39,9 +40,10 @@ def check(source: str, allow_network: Any = False, require_fit: Any = False) -> 
             value = node.value
             if ".mlca/vault" in value or ".mlca/data/splits" in value or "/keys/" in value:
                 violations.append(f"line {node.lineno}: private path literal")
-            if value.startswith(("/", "~/", "../")):
+            # A path names something after the prefix; a bare "/" (k.split("/")) is a separator.
+            if re.match(r"(/[^/\s]|~/|\.\./)", value):
                 violations.append(
-                    f"line {node.lineno}: use declared runtime inputs, not absolute/parent paths"
+                    f"line {node.lineno}: path literal {value[:60]!r}; use declared runtime inputs, not absolute/parent paths"
                 )
     if require_fit and not any(
         isinstance(n, ast.Call)

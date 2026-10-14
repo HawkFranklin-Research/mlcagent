@@ -78,3 +78,12 @@ def test_brain_prompt_forbids_text_tool_calls():
 
     card = NS(template="tabular_classification", brief={}, custom_instructions=[])
     assert "Never write a tool call as text" in prompt_text(card, "/p")
+
+
+def test_static_check_allows_slash_separator_but_not_paths():
+    from mlca.runner.static_checks import check
+
+    # Line 60 of the heart-nemotron-4 step 9 script, rejected twice before this fix.
+    assert check('k = "a/b"\nname = k.split("/")[0] if "/" in k else k\n') == []
+    for literal in ("/etc/passwd", "~/data.csv", "../secret.csv"):
+        assert any("path literal" in v for v in check(f"open({literal!r})\n"))
