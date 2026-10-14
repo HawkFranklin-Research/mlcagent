@@ -1,6 +1,8 @@
+import inspect
 import re
 from typing import Any
 
+import mlca_runtime
 from mlca.errors import MlcaUserError
 
 from .base import Role, prompt
@@ -33,6 +35,7 @@ class Worker(Role):
                     "role": "user",
                     "content": prompt(
                         "worker_repair.md",
+                        api=runtime_api(),
                         script=source,
                         error=error[:4000],
                         scope=action.prompt,
@@ -44,6 +47,18 @@ class Worker(Role):
             categories=["script", "traceback", "template_spec"],
         )
         return self._script(result)
+
+
+RUNTIME_HELPERS = (
+    "inputs", "output_dir", "set_seed", "fit_record", "save_table", "save_json",
+    "save_figure", "save_model", "record_metric", "record_fact_candidate",
+)
+
+
+def runtime_api():
+    """Exact helper signatures, read from mlca_runtime so the prompt cannot drift from the code."""
+    lines = [f"mlca_runtime.{name}{inspect.signature(getattr(mlca_runtime, name))}" for name in RUNTIME_HELPERS]
+    return re.sub(r"pathlib\.(_local\.)?", "", "\n".join(lines))
 
 
 def render_order(session, action, params, inputs, state):
@@ -80,6 +95,7 @@ def render_order(session, action, params, inputs, state):
         "params": params,
         "packages": session.packages(),
         "brief": brief,
+        "runtime_api": runtime_api(),
         "rules": [
             "Use mlca_runtime.inputs()/output_dir()",
             "Fit only via fit_record on frozen train index",
@@ -88,6 +104,7 @@ def render_order(session, action, params, inputs, state):
         ],
         "worker_prompt": prompt(
             "worker_write.md",
+            api=runtime_api(),
             action=rendered,
             inputs=names,
             brief=brief,
