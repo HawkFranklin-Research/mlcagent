@@ -246,3 +246,30 @@ Cards include actor and a human `how` request route. Human choices return human_
 ## Guided questions
 
 `mlca_options` returns the situation and `questions_data` with the cards. `mlca_questions` lists pending questions; `mlca_answer` selects a zero-based answer index or maps free text through an explicitly confirmed choice. Human-only questions remain refused for agent principals. See [guided studies](GUIDED_STUDIES.md).
+
+
+## Headless brain benchmarking (unreleased)
+
+`mlca bench run card.yaml --mode brain --client opencode|claude|codex --model <id> --out <fresh>`
+uses the same engine project through MCP, with zero internal model requests. The biomedical
+entry point is `mlca bio-bench run` with the same flags and ordered instructions from the card.
+OpenCode registration is available via `mlca mcp install --client opencode --scope project`:
+preview first; only --yes writes configuration.
+
+Each run gets fresh client configuration. Claude disables built-in tools and uses strict MCP
+config; Codex disables command tools with a read-only sandbox; OpenCode denies tools except
+mlca_* and disables project-config discovery. These are client tool permissions, not proof
+that an arbitrarily modified client executable cannot access the host. Client authentication
+must be provided separately; credentials are not copied from existing credential files.
+
+The external agent requests human-only approvals; an independent user:policy/<card hash>
+resolves only declared kinds. Questions use recorded policy answers. CLI flags, prompt and
+redacted raw output are retained. Unknown usage/cost stays unavailable. Client costs are
+reported after the run; MLCA does not independently enforce external monetary limits.
+The wall-clock limit terminates the client process group. Failed and incomplete runs remain.
+
+`mlca usage import opencode <output.jsonl>` imports numbers only. Brain Navigator fallbacks
+are unavailable, not zero. `mlca bench summarize <parent-of-run-outputs>` creates cross-arm
+JSON/CSV tables. `mlca bench export <output> --to <fresh>` also works for bio-bench and excludes
+private vaults, environments and registered data. The native source is ahead of public beta 2;
+no new release or measurement freeze has occurred. MB6/live acceptance remains pending.

@@ -1919,6 +1919,11 @@ Suite: 270 passed, 1 skipped.
 
 ### Remaining work order: finish P17, then P18, in one run (2026-10-14; supersedes the Phase A order above)
 
+**Execution status (14 October):** WP1–WP5 implemented and committed locally; WP6 refreshes
+status documentation. WP7 final suite and offline reference biomedical acceptance are next.
+No measurement freeze, live calls, push, publication or upload in this work order. `master`
+started at f430270; latest implementation is 2ea2506. Older deferral/status notes are historical.
+
 All remaining work, given at once. **P17 is completed first (package 1)**, then the P18 packages 2–7, without waiting between packages. Each package ends with its tests passing and **one local commit** in the repository named. A short progress note after each package (what changed, tests run, blockers) is enough; stop only after package 7 or on a real blocker.
 
 **Limits for every package:**

@@ -472,7 +472,7 @@ Meanwhile, a TUI open in a second terminal updates live, shows "driven by agent"
 
 ## 14. Brain-mode benchmarking: the same tables and studies, driven by an external agent (2026-10-14)
 
-### 14.1 Where MCP stands (checked in code, `f430270`)
+### 14.1 Historical baseline (checked in code, `f430270`; superseded by WP3)
 
 - **Brain and driver modes:** both work. There are 16 tools, including `mlca_questions` and `mlca_answer`. `mlca_options` runs the guided turn (P15), so MCP projects get the P14.4 data questions too. Human cards, study-field approvals (MX1/MX2), journey/messages (MX4) and accounting (MX6) are done.
 - **Not done:**
@@ -533,6 +533,15 @@ The same task cards are used for the six bench tables and the bio-bench studies 
 - One authorised live smoke per client completes or fails with a recorded category; its tokens appear in `mlca usage`.
 
 ## Status
+
+**14 October WP3/WP6:** MB1–MB5 implemented locally in bbc72fd: OpenCode registration,
+private headless configs, task-card brain bench/bio-bench, separately attributed policy approvals,
+client-reported usage and cross-arm summaries. All three installed headless flag sets were
+checked against --help. Offline acceptance: 25 regressions and 12 final focused tests passed.
+No MB6/live model calls. The remote is HawkFranklin-Research/mlcagent; local master began at
+f430270 and now includes WP1–WP4. No measurement freeze exists. Final WP7 acceptance is next.
+Historical status entries below describe their dated commits, not current deficiencies.
+
 
 - **2026-10-13 MX review (`64c7a52`):** suite 202 passed, 1 skipped, reproduced. A live stdio brain-mode session verified MX1–MX4: human cards with `actor`/`how`; the specific refusal; a `study_fields` proposal approved in the CLI, recorded with its proposer; an invalid column refused at request time; journey, messages and phases. MX3 polling and the MX5 guided style are present.
 

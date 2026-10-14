@@ -1,3 +1,30 @@
+# Current work order status — 14 October 2026
+
+Work is on local `master`, fast-forwarded from the former native-onboarding branch at f430270.
+The existing remote is git@github.com:HawkFranklin-Research/mlcagent.git; no remote was changed.
+Moving master was not a measurement freeze. No freeze, new tag, version bump or publication exists.
+
+P13–P16, P14.2/P14.4/P15 are implemented. P17 pacing and its E1/E2 engine additions are now
+implemented by WP1; E3 is deliberately not built. WP2 moves outcome-dependent checks to frozen
+training rows. WP3 adds isolated brain runners for OpenCode, Claude Code and Codex; WP4 adds
+curated exports; WP5 writes experiment preparation/cards and a DRAFT preregistration in
+../mlcagent-experiments (f85fc4d). The latest code implementation commit is 2ea2506.
+
+Validation so far: WP2 full suite 279 passed, 1 skipped; WP3 25 regressions plus 12 focused tests;
+WP4 7 tests; WP5 3 material tests and repeated preparation hashes. Final WP7 suite and reference
+bio-bench acceptance remain pending. No live client/model study was run in this work order.
+No pushes, remotes, publishing, uploads or paper edits are authorized here.
+
+Next: WP7 full suite and offline S1 plus six S2 reference tasks, retaining unsupported/failed
+custom instructions as not achieved, then stop. Follow the experiments AGENTS.md. Never stage
+*.local.md or local path configuration. Live smoke, scientific finalization, freeze, final
+preregistration and measured runs require subsequent author authorization. Activity reconciliation
+still waits for the actual Activity CSV. Older status notes below are historical and superseded.
+
+---
+
+## Historical status
+
 # P16 and revision-cut status — 13 October 2026
 
 P16.1–P16.4 and metadata backfill implemented; Navigator failure recovery (P14.6) implemented.
