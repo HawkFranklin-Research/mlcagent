@@ -33,11 +33,12 @@ class TaskCard(BaseModel):
     measurement_arm: str = "worker"
     guided: bool = False
     data: list[str]
+    data_roles: dict[str, str] = Field(default_factory=dict)
     primary_data: str | None = None
     brief: dict[str, str]
     template: str = "tabular_classification"
     option_policy: str = "default_first"
-    custom_instructions: dict[str, str] = Field(default_factory=dict)
+    custom_instructions: dict[str, str] | list[dict[str, str]] = Field(default_factory=dict)
     approval_policy: ApprovalPolicy = Field(default_factory=ApprovalPolicy)
     per_run_budget_usd: float = Field(default=10, gt=0)
     total_budget_usd: float = Field(default=30, gt=0)
@@ -160,7 +161,7 @@ def charged(root):
     )
 
 
-def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_models=False):
+def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_models=False, bio=False):
     if mode != "driver" or runs < 1:
         raise MlcaUserError("Bench supports driver mode and a positive run count")
     path = Path(task_path).resolve()
@@ -214,6 +215,7 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
                 config,
                 principal=manifest["policy_principal"],
                 primary_data=card.primary_data,
+                data_roles=card.data_roles,
             )
             session = Session.open(
                 project, client="bench", principal=manifest["policy_principal"], policy=True
@@ -243,7 +245,12 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
             if remaining <= 0:
                 session.emit("BudgetStopped", {"reason": "Total benchmark budget exhausted"})
                 raise BudgetError("Total benchmark budget exhausted")
-            drive(session, card, random.Random(seed + index), seed)
+            if bio:
+                from mlca.evaluation.bio_bench import drive as bio_drive
+
+                bio_drive(session, card, random.Random(seed + index), seed)
+            else:
+                drive(session, card, random.Random(seed + index), seed)
             entry["status"] = "completed"
         except Exception as error:
             entry["error_type"] = type(error).__name__

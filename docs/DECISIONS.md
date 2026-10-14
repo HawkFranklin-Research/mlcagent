@@ -623,3 +623,13 @@ The full pre-default-change suite passed 265 tests with 1 PowerShell skip in 993
 ## Final initialization compatibility and split policy
 
 Worker environment creation keeps its existing two-argument call; the reference profile is passed only for explicit reference studies. This preserves the initializer's injected failure/cleanup contract without weakening its tests. Generic class-size checks keep stratification only when the requested fractions give each class nonempty train/validation/test subsets; otherwise the guided protocol records a random split and a plain note. This does not guarantee an estimable metric for arbitrarily small inputs; failures remain results. Twelve data-review/atomic-initialization checks pass. The previous running suite had imported the pre-fix constructor; final verification is rerun from the stabilized source.
+
+## P17 package 1 — sealed external cohorts and ordered biomedical instructions
+
+External table roles are recorded at initialization and encrypted with keys outside the project.
+Generated steps never receive the registered external path. Eligible test/interpret executions
+receive a temporary decrypted input only after test unlock; a frozen model-content hash identifies
+its one exposure across branches and failed attempts. Refitting remains forbidden after unlock.
+Bio-bench executes ordered instructions once, retains refused/failed requests as not achieved,
+and exports their exact text, scope decisions, model, step, outcome and word count. Reference
+custom instructions remain unsupported and are recorded as such, never synthesized with AI.

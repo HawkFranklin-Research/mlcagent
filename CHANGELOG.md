@@ -361,3 +361,8 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 - Add recorded questions, docked answers, guided choices, explicit sensitive decisions and resumable autopilot.
 - Keep model comparisons explicit, human approvals engine-owned, and result summaries tied to recorded outputs.
 - Add two MCP question tools; legacy project snapshots remain unchanged.
+
+### Unreleased P17
+
+- Sealed external-cohort roles and single frozen-variant exposure at execution time.
+- Ordered `mlca bio-bench run` instructions with verbatim outcome exports.

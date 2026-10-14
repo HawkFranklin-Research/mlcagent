@@ -97,6 +97,7 @@ def _build_initialisation(
     column_picker: Callable | None = None,
     principal: str = "user",
     primary_data: str | None = None,
+    data_roles: dict[str, str] | None = None,
 ) -> Path:
     root = path.resolve()
     validated_config = Config.model_validate(config or {})
@@ -122,6 +123,11 @@ def _build_initialisation(
         )
     if not registered:
         raise MlcaUserError("At least one data file is required")
+    data_roles = data_roles or {}
+    for item in registered:
+        item["role"] = data_roles.get(item["name"], data_roles.get(item["original_path"], "discovery"))
+        if item["role"] not in {"discovery", "external"}:
+            raise MlcaUserError("Table role must be discovery or external")
     inventory = [scan(item["name"], Path(item["original_path"])) for item in registered]
     if primary_data is not None:
         primary_data = next(
@@ -136,6 +142,8 @@ def _build_initialisation(
         primary_data = registered[0]["name"]
     if primary_data not in {item["name"] for item in registered}:
         raise MlcaUserError("Choose a main study table by its registered name before initialization")
+    if next(i for i in registered if i["name"] == primary_data)["role"] == "external":
+        raise MlcaUserError("The main study table cannot be external")
     main_inventory = [item for item in inventory if item["name"] == primary_data]
     columns = resolve_columns(brief, main_inventory, template_id, column_picker)
     root.mkdir(parents=True, exist_ok=True)
@@ -170,6 +178,28 @@ def _build_initialisation(
     )
     for item in registered:
         store.append("DataRegistered", item)
+        if item["role"] == "external":
+            import io
+
+            from mlca.sandbox.vault import seal
+
+            from .inventory import read_table
+
+            buffer = io.BytesIO()
+            read_table(Path(item["original_path"])).to_parquet(buffer, index=False)
+            destination = root / ".mlca/vault" / ("external_" + item["name"] + ".enc")
+            key_id = "external_" + item["name"]
+            seal(project_id, key_id, buffer.getvalue(), destination)
+            store.append(
+                "ExternalSealed",
+                {
+                    "name": item["name"],
+                    "key_id": key_id,
+                    "path": str(destination.relative_to(root)),
+                    "sha256": sha256(destination),
+                    "plain_sha256": hashlib.sha256(buffer.getvalue()).hexdigest(),
+                },
+            )
     atomic_json(root / ".mlca/inventory.json", inventory)
     store.append("InventoryRecorded", {"files": inventory, "sha256": sha256(root / ".mlca/inventory.json")})
     store.append(
@@ -218,7 +248,15 @@ def _rebase_environment(staged: Path, destination: Path):
 
 
 def initialise(
-    path, data, template_id, brief, config=None, column_picker=None, principal="user", primary_data=None
+    path,
+    data,
+    template_id,
+    brief,
+    config=None,
+    column_picker=None,
+    principal="user",
+    primary_data=None,
+    data_roles=None,
 ):
     root = Path(path).expanduser().resolve()
     locks = user_data_dir() / "init-locks"
@@ -238,7 +276,15 @@ def initialise(
             with tempfile.TemporaryDirectory(prefix=".mlca-init-", dir=root) as directory:
                 staged = Path(directory)
                 _build_initialisation(
-                    staged, data, template_id, brief, config, column_picker, principal, primary_data
+                    staged,
+                    data,
+                    template_id,
+                    brief,
+                    config,
+                    column_picker,
+                    principal,
+                    primary_data,
+                    data_roles,
                 )
                 _rebase_environment(staged, root)
                 if (root / ".mlca").exists() or (root / ".mlca").is_symlink():

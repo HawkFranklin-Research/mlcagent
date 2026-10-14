@@ -49,6 +49,8 @@ def replay(records: list[Record]) -> ProjectState:
             state.template_id, state.template_version = p["template_id"], p["template_version"]
         elif kind == "DataRegistered":
             state.data[p["name"]] = p
+        elif kind == "ExternalSealed":
+            state.external[p["name"]] = p
         elif kind == "InventoryRecorded":
             state.inventory = p["files"]
         elif kind in {"BriefRecorded", "StudyFieldsResolved"}:

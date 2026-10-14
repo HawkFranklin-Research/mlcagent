@@ -55,6 +55,13 @@ def render_order(session, action, params, inputs, state):
     names = {k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()}
     if action.reads_test:
         names["test"] = {"name": "test.parquet", "format": ".parquet"}
+    if (
+        state.external
+        and action.event in {"test", "interpret"}
+        and (action.reads_test or any(i["ref"] == "external" for i in action.inputs))
+    ):
+        names["external"] = {"name": "external.parquet", "format": ".parquet"}
+        rendered += "\nExternal cohort is available only for this one frozen-variant exposure. Score it without fitting; record metrics with split external."
     outputs = [o.model_dump() for o in action.outputs]
     brief = {
         "answers": state.brief,

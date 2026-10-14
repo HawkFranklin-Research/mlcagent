@@ -70,6 +70,8 @@ PAYLOAD_FIELDS = {
     "SplitFrozen": ["sha256", "manifest", "train", "val", "vault", "parameters", "train_index_sha256"],
     "EnvironmentRecorded": ["lock_sha256", "packages"],
     "ObservationRecorded": ["step_id", "note"],
+    "ExternalSealed": ["name", "key_id", "path", "sha256", "plain_sha256"],
+    "ExternalRead": ["name", "variant", "step_id"],
     "TestRead": ["step_id", "split_sha256"],
     "TurnStarted": ["turn_id"],
     "TurnEnded": ["turn_id"],
@@ -209,6 +211,7 @@ class ProjectState(StrictModel):
     steps: list[dict] = Field(default_factory=list)
     artefacts: dict[str, dict] = Field(default_factory=dict)
     data: dict[str, dict] = Field(default_factory=dict)
+    external: dict[str, dict] = Field(default_factory=dict)
     inventory: list[dict] = Field(default_factory=list)
     brief: dict = Field(default_factory=dict)
     original_brief: dict = Field(default_factory=dict)

@@ -28,6 +28,8 @@ usage_app = typer.Typer(invoke_without_command=True)
 app.add_typer(usage_app, name="usage")
 bench_app = typer.Typer()
 app.add_typer(bench_app, name="bench")
+bio_bench_app = typer.Typer()
+app.add_typer(bio_bench_app, name="bio-bench")
 auth_app = typer.Typer()
 app.add_typer(auth_app, name="auth")
 
@@ -465,6 +467,13 @@ def bench_run(
     from mlca.evaluation.bench import run
 
     output(run(task_card, runs, out, mode, budget_usd, seed, lock_models), True)
+
+
+@bio_bench_app.command("run")
+def bio_bench_run(task_card: Path, runs: int = typer.Option(1), out: Path = typer.Option(...)):
+    from mlca.evaluation.bench import run
+
+    output(run(task_card, runs, out, bio=True), True)
 
 
 @bench_app.command("summarize")

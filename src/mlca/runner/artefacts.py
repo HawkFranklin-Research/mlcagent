@@ -47,8 +47,14 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
             figures.append(entry)
     metrics = manifest.get("metrics", [])
     for metric in metrics:
-        if metric["split"] not in {"train", "val", "test"} or not math.isfinite(float(metric["value"])):
+        if metric["split"] not in {"train", "val", "test", "external"} or not math.isfinite(
+            float(metric["value"])
+        ):
             raise MlcaUserError("Invalid metric in runtime manifest")
+        if metric["split"] == "external" and (
+            not state.test_unlocked or action.event not in {"test", "interpret"}
+        ):
+            raise MlcaUserError("External metric is not permitted", category="test_lock")
         if metric["split"] == "test" and not action.reads_test:
             raise MlcaUserError("Test metric is not permitted for this action", category="test_lock")
     fits = manifest.get("fits", [])

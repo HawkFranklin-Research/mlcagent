@@ -1,7 +1,7 @@
 import re
 import shutil
 import time
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -26,10 +26,19 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
         ref = item["ref"]
         for key, value in params.items():
             ref = ref.replace("{" + key + "}", str(value))
-        if ref == "registered_data" or ref in state.data:
+        if ref == "registered_data" or (ref in state.data and ref != "external"):
             if state.split:
                 raise MlcaUserError("Original registered data are not readable after split freezing")
-            chosen = state.data if ref == "registered_data" else {ref: state.data[ref]}
+            if ref in state.data and state.data[ref].get("role") == "external":
+                raise MlcaUserError(
+                    "External cohorts are sealed; use the external input after test unlock",
+                    category="test_lock",
+                )
+            chosen = (
+                {n: d for n, d in state.data.items() if d.get("role") != "external"}
+                if ref == "registered_data"
+                else {ref: state.data[ref]}
+            )
             if ref == "registered_data" and state.primary_data in chosen:
                 chosen = {state.primary_data: chosen[state.primary_data], **chosen}
             for name, data in chosen.items():
@@ -49,6 +58,9 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
             if sha256(path) != entry["sha256"]:
                 raise IntegrityError("Frozen partition changed")
             paths[ref] = path
+        elif ref == "external":
+            if not state.test_unlocked or action.event not in {"test", "interpret"}:
+                raise MlcaUserError("External cohort is locked", category="test_lock")
         elif ref == "test":
             if not action.reads_test or not state.test_unlocked:
                 raise MlcaUserError("Action cannot read the locked test partition", category="test_lock")
@@ -317,7 +329,16 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
         return None, "\n".join(violations)
     # Exposure lasts for execution only, never while a provider or external agent is thinking.
     context = exposed(session.root, state, step_id, session.emit) if action.reads_test else nullcontext(None)
-    with context as test_path:
+    with ExitStack() as stack:
+        test_path = stack.enter_context(context)
+        if (
+            state.external
+            and action.event in {"test", "interpret"}
+            and (action.reads_test or any(i["ref"] == "external" for i in action.inputs))
+        ):
+            from mlca.sandbox.vault import exposed_external
+
+            inputs.update(stack.enter_context(exposed_external(session, step_id)))
         if test_path:
             inputs["test"] = test_path
         mapping = {k: {"path": str(v), "sha256": sha256(v)} for k, v in inputs.items()}

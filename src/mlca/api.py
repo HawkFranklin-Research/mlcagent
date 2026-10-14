@@ -553,6 +553,8 @@ class Session:
             refs = event.custom_scope.readable_inputs
             if state.split:
                 refs = [r for r in refs if r != "registered_data"]
+            if state.external and event.id in {"test", "interpret"} and state.test_unlocked:
+                refs = [*refs, "external"]
             reads_test = "test" in refs and event.id == "test" and state.test_unlocked
             if not reads_test:
                 refs = [r for r in refs if r != "test"]
