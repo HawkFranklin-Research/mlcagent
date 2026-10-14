@@ -372,3 +372,8 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 - Outcome-dependent review uses frozen training rows only; strong numerical predictors default
   to keep-and-flag with explicit review.
 - CLI validation and engine errors show their actual redacted messages.
+
+### Unreleased P18 brain benchmarking
+
+- Isolated OpenCode, Claude Code and Codex headless runners over MCP.
+- Separate policy approvals, client-reported usage and cross-arm summaries.

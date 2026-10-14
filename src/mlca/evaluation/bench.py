@@ -30,6 +30,10 @@ class ApprovalPolicy(BaseModel):
 
 class TaskCard(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    mode: str = "driver"
+    client: str | None = None
+    model: str | None = None
+    client_timeout_s: int = Field(default=1800, gt=0)
     measurement_arm: str = "worker"
     guided: bool = False
     data: list[str]
@@ -161,15 +165,34 @@ def charged(root):
     )
 
 
-def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_models=False, bio=False):
-    if mode != "driver" or runs < 1:
-        raise MlcaUserError("Bench supports driver mode and a positive run count")
+def run(
+    task_path,
+    runs,
+    out,
+    mode="driver",
+    budget_usd=None,
+    seed=42,
+    lock_models=False,
+    bio=False,
+    client=None,
+    model=None,
+):
+    if mode not in {"driver", "brain"} or runs < 1:
+        raise MlcaUserError("Bench requires driver/brain mode and a positive run count")
     path = Path(task_path).resolve()
     raw = path.read_bytes()
     try:
         card = TaskCard.model_validate(yaml.safe_load(raw))
     except ValueError as error:
         raise MlcaUserError("Invalid task-card fields: " + str(error), category="invalid_request") from error
+    mode = card.mode if mode == "driver" and card.mode == "brain" else mode
+    client, model = client or card.client, model or card.model
+    if mode == "brain" and (
+        client not in {"opencode", "claude", "codex"} or not model or card.measurement_arm != "worker"
+    ):
+        raise MlcaUserError(
+            "Brain runs require a supported client, explicit model and worker arm", category="invalid_request"
+        )
     if card.option_policy not in {"navigator_first", "default_first", "seeded_random"}:
         raise MlcaUserError("Unknown task-card option policy")
     if budget_usd is not None and budget_usd <= 0:
@@ -192,6 +215,10 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
     data = [(path.parent / p).resolve() for p in card.data]
     manifest = {
         "schema_version": "1",
+        "mode": mode,
+        "client": client if mode == "brain" else None,
+        "model": model or config.get("roles", {}).get("worker", {}).get("model"),
+        "task": Path(card.data[0]).stem,
         "kind": "independent_agent_runs" if card.measurement_arm == "worker" else "no_ai_reference_runs",
         "measurement_arm": card.measurement_arm,
         "task_card_sha256": digest,
@@ -199,8 +226,12 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
         "policy_principal": "user:policy/" + digest[:12],
         "runs": [],
     }
-    manifest["model_catalog"] = catalog_record(config, out) if card.measurement_arm == "worker" else None
-    manifest["structured_outputs"] = structured_record(config) if card.measurement_arm == "worker" else {}
+    manifest["model_catalog"] = (
+        catalog_record(config, out) if card.measurement_arm == "worker" and mode == "driver" else None
+    )
+    manifest["structured_outputs"] = (
+        structured_record(config) if card.measurement_arm == "worker" and mode == "driver" else {}
+    )
     atomic_json(out / "bench.json", manifest)
     total = 0.0
     for index in range(runs):
@@ -221,7 +252,7 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
                 data_roles=card.data_roles,
             )
             session = Session.open(
-                project, client="bench", principal=manifest["policy_principal"], policy=True
+                project, client="bench", principal=manifest["policy_principal"], policy=True, mode=mode
             )
             if lock_models:
                 session.lock_models()
@@ -248,7 +279,15 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
             if remaining <= 0:
                 session.emit("BudgetStopped", {"reason": "Total benchmark budget exhausted"})
                 raise BudgetError("Total benchmark budget exhausted")
-            if bio:
+            if mode == "brain":
+                from mlca.evaluation.brain import run as brain_run
+
+                entry["brain_client"] = brain_run(session, card, client, model, card.client_timeout_s)
+                if bio:
+                    from mlca.evaluation.bio_bench import export_instructions
+
+                    export_instructions(session)
+            elif bio:
                 from mlca.evaluation.bio_bench import drive as bio_drive
 
                 bio_drive(session, card, random.Random(seed + index), seed)
@@ -257,11 +296,16 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
             entry["status"] = "completed"
         except Exception as error:
             entry["error_type"] = type(error).__name__
+            entry["message"] = session.redact(str(error)) if session else str(error)
             entry["category"] = getattr(error, "category", "runtime_error:" + type(error).__name__)
             if session:
                 session.emit("Refusal", {"category": entry["category"], "operation": "bench"}, actor="user")
         finally:
             if session:
+                if bio:
+                    from mlca.evaluation.bio_bench import export_instructions
+
+                    export_instructions(session)
                 session.close()
                 generate(session)
                 total += charged(project)
@@ -284,8 +328,28 @@ def distribution(values):
     }
 
 
+def _model_total(metrics, key, mode):
+    if not metrics:
+        return None
+    entries = [
+        r
+        for role, r in metrics["models"].items()
+        if (role == "external_agent") == (mode == "brain") and "calls" in r
+    ]
+    if mode == "brain" and not entries:
+        return None
+    values = [r.get(key, {"value": None}) for r in entries]
+    if any(v["value"] is None or v.get("partial") for v in values):
+        return None
+    return sum(v["value"] for v in values)
+
+
 def summarize(out):
     out = Path(out)
+    if not (out / "bench.json").exists():
+        from mlca.evaluation.cross_arms import summarize as summarize_arms
+
+        return summarize_arms(out)
     manifest = json.loads((out / "bench.json").read_text())
     loaded = []
     for run in manifest["runs"]:
@@ -379,21 +443,7 @@ def summarize(out):
             )
         },
         "tokens": {
-            key: distribution(
-                sum(
-                    r.get(key, {"value": None})["value"]
-                    for role, r in m["models"].items()
-                    if role != "external_agent"
-                )
-                if m
-                and all(
-                    r.get(key, {"value": None})["value"] is not None
-                    for role, r in m["models"].items()
-                    if role != "external_agent"
-                )
-                else None
-                for m in loaded
-            )
+            key: distribution(_model_total(m, key, manifest.get("mode", "driver")) for m in loaded)
             for key in (
                 "input_tokens",
                 "output_tokens",
@@ -409,7 +459,7 @@ def summarize(out):
                 for m in loaded
                 if m
                 for role, model in m["models"].items()
-                if role != "external_agent"
+                if (role == "external_agent") == (manifest.get("mode") == "brain") and "calls" in model
                 for source in model["cost_sources"]
             }
         ),
@@ -448,6 +498,14 @@ def summarize(out):
         },
         "limits": "Sample SD needs at least two available values. Failures are retained; unavailable fields are excluded only from each numeric statistic and counted explicitly. Recovery rate is undefined without failures.",
     }
+    summary.update({key: manifest.get(key) for key in ("mode", "client", "model", "task")})
+    if manifest.get("mode") == "brain":
+        summary["navigator_fallbacks"] = measured(None)
+        summary["navigator_budget_stops"] = measured(None)
+        summary["completed_without_navigator_fallback"] = measured(None)
+        summary["navigator_fallback_rate"] = distribution([None] * count)
+        if not any(m and "calls" in m["models"].get("external_agent", {}) for m in loaded):
+            summary["tokens"] = {key: distribution([None] * count) for key in summary["tokens"]}
     atomic_json(out / "bench_summary.json", summary)
     lines = [
         "# Benchmark summary",

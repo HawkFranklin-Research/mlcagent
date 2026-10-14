@@ -15,7 +15,7 @@ from mlca.paths import atomic_json, resource
 
 from .permissions import claude_block, guidance, merged_settings
 
-CLIENTS = {"claude", "codex", "hermes", "openclaw", "cursor", "json"}
+CLIENTS = {"claude", "codex", "hermes", "openclaw", "cursor", "json", "opencode"}
 
 
 def registration(client, scope="user", mode="brain", project=None):
@@ -65,6 +65,12 @@ def registration(client, scope="user", mode="brain", project=None):
     elif client == "openclaw":
         result["command"] = ["openclaw", "mcp", "set", "mlca", json.dumps(entry)]
         result["config"] = Path(os.environ.get("OPENCLAW_CONFIG_PATH", home / ".openclaw/openclaw.json"))
+    elif client == "opencode":
+        result["config"] = (
+            project / "opencode.json"
+            if scope == "project"
+            else Path(os.environ.get("OPENCODE_CONFIG_DIR", home / ".config/opencode")) / "opencode.json"
+        )
     elif client == "cursor":
         result["config"] = (project if scope == "project" else home) / ".cursor/mcp.json"
     return result
@@ -106,7 +112,20 @@ def install(client, scope="user", mode="brain", project=None, yes=False, with_sk
     if plan["command"]:
         preview = subprocess.list2cmdline(plan["command"]) if os.name == "nt" else shlex.join(plan["command"])
     else:
-        preview = json.dumps({"mcpServers": {"mlca": plan["entry"]}}, indent=2)
+        preview = json.dumps(
+            {
+                "mcp": {
+                    "mlca": {
+                        "type": "local",
+                        "command": [plan["entry"]["command"], *plan["entry"]["args"]],
+                        "codemode": False,
+                    }
+                }
+            }
+            if client == "opencode"
+            else {"mcpServers": {"mlca": plan["entry"]}},
+            indent=2,
+        )
     if target:
         preview += f"\nSkill: {target}"
     if client == "claude":
@@ -136,7 +155,14 @@ def install(client, scope="user", mode="brain", project=None, yes=False, with_sk
             saved = json.loads(config.read_text(encoding="utf-8")) if config.exists() else {}
             if not isinstance(saved, dict) or not isinstance(saved.get("mcpServers", {}), dict):
                 raise ValueError()
-            saved.setdefault("mcpServers", {})["mlca"] = plan["entry"]
+            if client == "opencode":
+                saved.setdefault("mcp", {})["mlca"] = {
+                    "type": "local",
+                    "command": [plan["entry"]["command"], *plan["entry"]["args"]],
+                    "codemode": False,
+                }
+            else:
+                saved.setdefault("mcpServers", {})["mlca"] = plan["entry"]
         except (ValueError, OSError):
             raise MlcaUserError("Client JSON configuration is invalid; no replacement written") from None
         atomic_json(config, saved)

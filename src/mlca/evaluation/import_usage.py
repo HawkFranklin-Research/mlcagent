@@ -144,8 +144,13 @@ def extract(path, client):
 
 
 def import_usage(session, client, reference, since=None, until=None):
+    if client == "opencode":
+        from mlca.evaluation.brain import capture_usage
+
+        count = capture_usage(session, Path(reference), client, None)
+        return {"records_processed": count, "source": "client-reported", "message_text_copied": False}
     if client not in {"claude", "codex"}:
-        raise MlcaUserError("Choose claude or codex")
+        raise MlcaUserError("Choose claude, codex or opencode")
     records = session.branches.records()
     brain_ids = {
         r.session_id for r in records if r.type.value == "RunSnapshot" and r.payload["mode"] == "brain"

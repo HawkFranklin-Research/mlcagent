@@ -463,17 +463,26 @@ def bench_run(
     budget_usd: float | None = typer.Option(None),
     seed: int = typer.Option(42),
     lock_models: bool = typer.Option(False, "--lock-models"),
+    client: str | None = typer.Option(None),
+    model: str | None = typer.Option(None),
 ):
     from mlca.evaluation.bench import run
 
-    output(run(task_card, runs, out, mode, budget_usd, seed, lock_models), True)
+    output(run(task_card, runs, out, mode, budget_usd, seed, lock_models, client=client, model=model), True)
 
 
 @bio_bench_app.command("run")
-def bio_bench_run(task_card: Path, runs: int = typer.Option(1), out: Path = typer.Option(...)):
+def bio_bench_run(
+    task_card: Path,
+    runs: int = typer.Option(1),
+    out: Path = typer.Option(...),
+    mode: str = typer.Option("driver"),
+    client: str | None = typer.Option(None),
+    model: str | None = typer.Option(None),
+):
     from mlca.evaluation.bench import run
 
-    output(run(task_card, runs, out, bio=True), True)
+    output(run(task_card, runs, out, mode=mode, bio=True, client=client, model=model), True)
 
 
 @bench_app.command("summarize")

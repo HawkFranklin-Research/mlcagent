@@ -643,3 +643,21 @@ with an explicit decision. Decisions and a training-review report retain provena
 and CLI failures display their concrete messages, with existing credential redaction.
 Validation: focused review tests 11 passed; full suite 279 passed, 1 skipped (PowerShell absent),
 1047.92 seconds. Ruff and diff checks pass. No live calls or remote operations.
+
+## WP3 — isolated external-client benchmark runners (offline acceptance)
+
+Brain bench/bio-bench initialize the same engine and use a separate user:policy principal for
+only declared approvals. Claude uses strict MCP configuration and no built-in tools; Codex uses
+a fresh CODEX_HOME, read-only sandbox and shell_tool=false; OpenCode uses private standalone
+mode, disabled project-config discovery and deny-all permissions with mlca_* allowed. Each run
+keeps its exact launch arguments, fixed prompt and raw redacted client outputs. Authentication
+is not copied from credential files: external clients require their own authorized environment
+or setup. Wall-clock limits terminate process groups; missing client costs remain unavailable.
+The model's monetary allowance is not independently enforced by MLCA in brain mode.
+Installed --help verified the headless flags for all three clients. OpenCode's local MCP and
+ordered permission-rule schemas were checked in the reference source; Codex configuration was
+checked against https://learn.chatgpt.com/docs/config-file/config-reference .
+Client-reported numeric usage is separate from internal requests; no transcripts enter usage.
+Cross-arm summaries retain unavailable values, including brain Navigator fallbacks. M7/MB6 live
+runs remain unperformed. Validation: 25 brain/usage/install/bench regressions passed, followed
+by 12 final focused checks; all provider execution was mocked. No live calls.
