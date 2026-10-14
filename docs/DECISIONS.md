@@ -672,3 +672,13 @@ the next built-in action. Bio-bench defaults to instructions after the event's p
 `when: before` explicitly supports training-only preparation before fitting. Questions are
 resolved before instructions. A core-complete run with unsuccessful required instructions is
 labelled not_achieved rather than a completed biomedical protocol. Tests: 7 passed; Ruff passes.
+
+## WP7 wide-table review performance — 14 October 2026
+
+Offline reference acceptance exposed repeated state reconstruction and source-table parsing for
+thousands of feature questions. `questions.pending` now reads state once; keep/exclude/group
+answers validate against registered inventory without reloading an unchanged source table.
+Final preparation still verifies the source hash and outcome domain. Two regression tests
+cover these paths; the full suite passes (296 passed, 1 skipped). No scientific rule or default
+was changed. One proteome ER development attempt was interrupted and resumed, with both
+the intervention note and logs retained; it is not a measured independent run.

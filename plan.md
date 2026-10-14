@@ -1,5 +1,14 @@
 # MLCA v2: implementation plan
 
+## Current P17/P18 status — 14 October 2026
+
+WP1–WP7 completed locally. Final suite: **296 passed, 1 skipped**; experiments tests: **7 passed**.
+Seven offline reference attempts recorded zero model requests: S1 core complete with four custom
+instructions not achieved; S2 has four interpretation timeouts and two HER2 bootstrap NaN errors.
+Exports pass hash/exclusion auditing. Full protocols are not claimed successful. No live calls,
+freeze, push, upload, publishing or paper edit. See docs/IMPLEMENTATION_STATUS.md and the
+experiments `bio-bench/acceptance/2026-10-14/` summary. Earlier dated entries are historical.
+
 ## Beta 2 published and beta 1 yanked — 2026-10-13
 
 Published [mlcagent 0.2.0b2](https://pypi.org/project/mlcagent/0.2.0b2/) using the authorized upload token; both public artifact hashes match. Fresh isolated HOME/XDG PyPI install, version, doctor and 14-tool MCP verification pass. Beta 1 is yanked (both files), verified in release management and public PyPI JSON. Local tag v0.2.0b2 records release source bdc2f376ef2b9b2848d5f5ed5b272ee9aad2a311; global mlca was refreshed to 0.2.0b2. No GitHub/npm push or publication occurred. Master and uncommitted browser plans remain untouched.
@@ -1919,10 +1928,12 @@ Suite: 270 passed, 1 skipped.
 
 ### Remaining work order: finish P17, then P18, in one run (2026-10-14; supersedes the Phase A order above)
 
-**Execution status (14 October):** WP1–WP5 implemented and committed locally; WP6 refreshes
-status documentation. WP7 final suite and offline reference biomedical acceptance are next.
-No measurement freeze, live calls, push, publication or upload in this work order. `master`
-started at f430270; latest implementation is 2ea2506. Older deferral/status notes are historical.
+**Execution status (14 October):** WP1–WP7 finished locally. Final code suite: 296 passed,
+1 skipped; experiments: 7 passed. All seven reference attempts recorded zero model calls and
+passed export auditing. S1 core completed with custom instructions not achieved; S2 retained
+four interpretation timeouts and two HER2 bootstrap NaN failures. Stopped after package 7.
+No measurement freeze, live calls, push, publication or upload. `master` began at f430270.
+See docs/IMPLEMENTATION_STATUS.md; older deferral/status notes are historical.
 
 All remaining work, given at once. **P17 is completed first (package 1)**, then the P18 packages 2–7, without waiting between packages. Each package ends with its tests passing and **one local commit** in the repository named. A short progress note after each package (what changed, tests run, blockers) is enough; stop only after package 7 or on a real blocker.
 

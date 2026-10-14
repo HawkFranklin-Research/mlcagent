@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — P17/P18 local implementation (14 October 2026)
+
+- Sealed external cohorts with attributed, bounded exposure; ordered bio-bench custom instructions and retained unsuccessful outcomes.
+- Outcome-dependent integrity review on frozen training rows; wide-feature question review avoids redundant state/table reads.
+- Isolated OpenCode, Claude Code and Codex brain-mode benchmark clients, numeric usage capture and summaries across arms.
+- Curated evidence exports with private/data/environment exclusions; experiment preparation and draft cards live in the experiments repository.
+- Full offline regression suite: 296 passed, 1 skipped. Reference biomedical acceptance and limitations are recorded separately; no live calls, measurement freeze or release in this work order.
+
 ## 0.2.0b2 (beta) — 13 October 2026
 
 - Guided numbered action and human-decision cards, visible progress, a branch journey and literal readable logs.

@@ -273,3 +273,11 @@ are unavailable, not zero. `mlca bench summarize <parent-of-run-outputs>` create
 JSON/CSV tables. `mlca bench export <output> --to <fresh>` also works for bio-bench and excludes
 private vaults, environments and registered data. The native source is ahead of public beta 2;
 no new release or measurement freeze has occurred. MB6/live acceptance remains pending.
+
+## WP7 offline acceptance — 14 October 2026
+
+Final regression suite: 296 passed, 1 skipped. Seven no-AI reference biomedical attempts
+and their curated exports were audited; unsuccessful custom instructions and step failures
+remain recorded. This does not validate live headless clients or constitute MB6.
+See IMPLEMENTATION_STATUS.md and the experiments acceptance summary. No measurement freeze
+or remote action was performed.

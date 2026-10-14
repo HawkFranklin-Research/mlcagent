@@ -72,3 +72,62 @@ def test_invalid_card_reports_field(tmp_path):
     card.write_text(yaml.safe_dump({"data": ["x.csv"], "brief": {}, "max_turns": 0}))
     with pytest.raises(MlcaUserError, match="max_turns"):
         run(card, 1, tmp_path / "out")
+
+
+def test_pending_questions_reads_state_once():
+    from types import SimpleNamespace
+
+    from mlca.engine.questions import pending
+
+    class Session:
+        reads = 0
+
+        @property
+        def state(self):
+            self.reads += 1
+            return SimpleNamespace(questions={str(i): {} for i in range(3000)}, answers={})
+
+    s = Session()
+    assert len(pending(s)) == 3000 and s.reads == 1
+
+
+def test_feature_answers_do_not_reload_unchanged_table(opened_project, monkeypatch):
+    from mlca.engine import data_review, questions
+    from tests.helpers import choose_action
+
+    s = opened_project
+    choose_action(s, "confirm_brief")
+    s.confirm("brief_confirmed", "ready")
+    s.next()
+    s.review_data()
+    original = data_review.source_frame
+    reads = []
+
+    def tracked(state):
+        reads.append(1)
+        return original(state)
+
+    monkeypatch.setattr(data_review, "source_frame", tracked)
+    ids = []
+    for column in ["x1", "x2"]:
+        ids.append(
+            questions.ask(
+                s,
+                {
+                    "header": "Feature",
+                    "question": "Exclude this feature?",
+                    "options": [
+                        {
+                            "label": "Exclude",
+                            "description": "",
+                            "effect": {"kind": "exclude_column", "column": column},
+                        }
+                    ],
+                },
+                key="missing:" + column,
+            )
+        )
+    s.answer_question(ids[0], 0)
+    assert reads == []
+    s.answer_question(ids[1], 0)
+    assert reads == [1]  # Final prepared-table hash/domain validation is retained.

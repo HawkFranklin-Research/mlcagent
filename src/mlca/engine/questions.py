@@ -42,10 +42,11 @@ def ask(session, question, *, asker="engine", key="question"):
 
 
 def pending(session):
+    state = session.state
     return [
         {**q, "how": {"question_id": key, "command": f"mlca questions answer {key} <index>"}}
-        for key, q in session.state.questions.items()
-        if key not in session.state.answers
+        for key, q in state.questions.items()
+        if key not in state.answers
     ]
 
 
@@ -170,6 +171,14 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
                 or effect["column"] == state.columns["target"]
             ):
                 raise MlcaUserError("Choose a real event-status column", category="invalid_request")
+        elif effect["kind"] in {"keep", "exclude_column", "set_group"}:
+            # These decisions cannot change rows or outcome values. Validate their declared
+            # column against inventory; the final prepared-table check still verifies the
+            # source hash and the outcome domain. Avoid parsing a wide table per feature.
+            if effect["kind"] != "keep":
+                main = next(i for i in state.inventory if i["name"] == data_review.primary_for(state))
+                if effect["column"] not in main["columns"] or effect["column"] in set(state.columns.values()):
+                    raise MlcaUserError("Choose a real non-outcome feature", category="invalid_request")
         elif effect["kind"] != "choose_positive":
             candidate, _, _, mode = data_review.apply(
                 data_review.source_frame(state), state.data_decisions + [{"effect": effect}]

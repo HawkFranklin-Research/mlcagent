@@ -539,7 +539,9 @@ private headless configs, task-card brain bench/bio-bench, separately attributed
 client-reported usage and cross-arm summaries. All three installed headless flag sets were
 checked against --help. Offline acceptance: 25 regressions and 12 final focused tests passed.
 No MB6/live model calls. The remote is HawkFranklin-Research/mlcagent; local master began at
-f430270 and now includes WP1–WP4. No measurement freeze exists. Final WP7 acceptance is next.
+f430270 and now includes WP1–WP4. No measurement freeze exists. WP7 now finished: full suite 296 passed, 1 skipped;
+seven zero-call reference attempts and audited exports, with failure/not-achieved outcomes retained.
+No live brain-client validation (MB6); see docs/IMPLEMENTATION_STATUS.md.
 Historical status entries below describe their dated commits, not current deficiencies.
 
 

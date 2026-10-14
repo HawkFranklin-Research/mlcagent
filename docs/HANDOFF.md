@@ -1,25 +1,34 @@
 # Current work order status — 14 October 2026
 
-Work is on local `master`, fast-forwarded from the former native-onboarding branch at f430270.
-The existing remote is git@github.com:HawkFranklin-Research/mlcagent.git; no remote was changed.
-Moving master was not a measurement freeze. No freeze, new tag, version bump or publication exists.
+**WP1–WP7 completed locally; stopped after package 7.** P17 E1/E2 and the P18 packages
+are implemented. E3 was deliberately not built. Work remains on `master`; the existing remote
+HawkFranklin-Research/mlcagent was not changed. No measurement freeze, tag, version bump,
+installed-tool refresh, live model call, push, upload, publication or paper edit occurred.
 
-P13–P16, P14.2/P14.4/P15 are implemented. P17 pacing and its E1/E2 engine additions are now
-implemented by WP1; E3 is deliberately not built. WP2 moves outcome-dependent checks to frozen
-training rows. WP3 adds isolated brain runners for OpenCode, Claude Code and Codex; WP4 adds
-curated exports; WP5 writes experiment preparation/cards and a DRAFT preregistration in
-../mlcagent-experiments (f85fc4d). The latest code implementation commit is 2ea2506.
+Local phase commits before WP7: code 829f2f1 (WP1), f720622 (WP2), bbc72fd (WP3),
+2ea2506 (WP4), cd498a3 (WP6); experiments f85fc4d (WP5).
 
-Validation so far: WP2 full suite 279 passed, 1 skipped; WP3 25 regressions plus 12 focused tests;
-WP4 7 tests; WP5 3 material tests and repeated preparation hashes. Final WP7 suite and reference
-bio-bench acceptance remain pending. No live client/model study was run in this work order.
-No pushes, remotes, publishing, uploads or paper edits are authorized here.
+**Tests:** final code suite **296 passed, 1 skipped in 1146.03 s** (PowerShell unavailable).
+Ruff and diff checks pass. Experiments suite: **7 passed in 10.47 s**, including export audit
+regressions. Repeated deterministic preparation retained input/output hashes and expected counts.
 
-Next: WP7 full suite and offline S1 plus six S2 reference tasks, retaining unsupported/failed
-custom instructions as not achieved, then stop. Follow the experiments AGENTS.md. Never stage
-*.local.md or local path configuration. Live smoke, scientific finalization, freeze, final
-preregistration and measured runs require subsequent author authorization. Activity reconciliation
-still waits for the actual Activity CSV. Older status notes below are historical and superseded.
+**Offline reference acceptance:** all seven attempts finished with zero model requests.
+S1 core completed but its four custom instructions were not achieved. Six S2 attempts failed:
+four interpretation timeouts (RNA/proteome ER and PR), and two HER2 bootstrap NaN/strict JSON
+errors. These are retained development findings, not successful full protocol runs or measured
+AI results. Submitted custom instructions remain verbatim, including refusals. One proteome ER
+attempt was interrupted and resumed after a question-review performance correction; this is
+explicitly labelled, not counted as a fresh measured repetition.
+
+Curated evidence, hash/exclusion audit and summary are in the experiments repository:
+`bio-bench/acceptance/2026-10-14/`. Exports are evidence bundles, not standalone replay archives.
+The sub-agent's timestamped `INTERIM_REPORT.md` is preserved as the interim snapshot.
+
+**Next, only on subsequent author instruction:** live driver/brain smoke (MB6), reference
+bootstrap and interpretation/performance follow-up, scientific finalization, measurement freeze,
+approved preregistration and measured repetitions. Activity reconciliation still needs the real
+Activity CSV. Draft cards and placeholder scientific instructions are not final methods.
+Never stage `*.local.md`, local path configuration, prepared inputs or private/environment data.
 
 ---
 
