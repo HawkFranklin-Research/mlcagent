@@ -87,6 +87,7 @@ def test_bio_instructions_in_order_without_silent_retry(monkeypatch):
             events={"data": object(), "report": object()}, spec=SimpleNamespace(events=["data", "report"])
         ),
         root=None,
+        turn=lambda: {"questions": []},
         mutation=lambda: __import__("contextlib").nullcontext(),
         emit=lambda *a, **k: None,
         custom=lambda text: calls.append(text) or {"decision": "reject"},
@@ -104,7 +105,10 @@ def test_bio_instructions_in_order_without_silent_retry(monkeypatch):
         brief={},
         max_turns=5,
         guided=True,
-        custom_instructions=[{"event": "data", "text": "First"}, {"event": "data", "text": "Second"}],
+        custom_instructions=[
+            {"event": "data", "text": "First", "when": "before"},
+            {"event": "data", "text": "Second", "when": "before"},
+        ],
         approval_policy=ApprovalPolicy(),
     )
     drive(session, card, None, 42)
@@ -124,3 +128,13 @@ def test_scripted_bio_path_keeps_refusal_and_completes(opened_project):
     drive(session, card, None, 42)
     assert session.state.event_statuses["report"] == "done"
     assert export_instructions(session)[0]["scope"]["decision"] == "reject"
+
+
+def test_refusal_does_not_claim_next_builtin_step(opened_project):
+    from tests.helpers import choose_action
+
+    s = opened_project
+    s.custom("Read the test partition before unlock.")
+    choose_action(s, "confirm_brief")
+    item = export_instructions(s)[0]
+    assert item["step"] is None and item["outcome"] == "reject"

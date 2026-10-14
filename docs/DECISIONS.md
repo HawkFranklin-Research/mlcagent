@@ -661,3 +661,14 @@ Client-reported numeric usage is separate from internal requests; no transcripts
 Cross-arm summaries retain unavailable values, including brain Navigator fallbacks. M7/MB6 live
 runs remain unperformed. Validation: 25 brain/usage/install/bench regressions passed, followed
 by 12 final focused checks; all provider execution was mocked. No live calls.
+
+## WP4 — curated exports
+
+Bench/bio-bench export uses a path allowlist and verifies every copied file's SHA-256. Private
+vaults, keys, environments and registered data are excluded; symlinks and root escapes are
+refused; local-only notes are excluded. usage.csv derives from request envelopes. Failed
+initializations remain in bench.json. Instruction exports attribute only custom steps, never
+the next built-in action. Bio-bench defaults to instructions after the event's primary actions;
+`when: before` explicitly supports training-only preparation before fitting. Questions are
+resolved before instructions. A core-complete run with unsuccessful required instructions is
+labelled not_achieved rather than a completed biomedical protocol. Tests: 7 passed; Ruff passes.

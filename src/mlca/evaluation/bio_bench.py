@@ -30,8 +30,34 @@ def export_instructions(session):
         )
         following = records[index + 1 : end]
         scope = [r.payload for r in following if r.type.value == "ScopeDecision"]
-        step = next((r for r in following if r.type.value == "StepStarted"), None)
-        result = next((r for r in following if r.type.value in {"StepCompleted", "StepFailed"}), None)
+        step = next(
+            (r for r in following if r.type.value == "StepStarted" and r.payload["action_id"] == "custom"),
+            None,
+        )
+        result = next(
+            (
+                r
+                for r in following
+                if r.type.value in {"StepCompleted", "StepFailed"}
+                and step
+                and r.payload.get("step_id") == step.payload["step_id"]
+            ),
+            None,
+        )
+        not_achieved = next(
+            (
+                r.payload
+                for r in following
+                if r.type.value == "Note" and r.payload.get("text") == "Custom instruction not achieved"
+            ),
+            None,
+        )
+        request_ids = {
+            r.payload.get("worker_request_id") for r in following if r.type.value == "ScriptWritten"
+        }
+        from mlca.llm.usage import read
+
+        model_calls = [u for u in read(session.root) if u["request_id"] in request_ids]
         decision = scope[-1] if scope else {"decision": "not_checked", "reason": "No scope result recorded"}
         items.append(
             {
@@ -40,10 +66,16 @@ def export_instructions(session):
                 "actor": record.actor,
                 "step": step.payload["step_id"] if step else None,
                 "scope": decision,
-                "model": session.config.roles.get("worker").model
+                "model": next((u.get("model_reported") or u.get("model") for u in model_calls), None)
+                or session.config.roles.get("worker").model
                 if session.config.roles.get("worker")
                 else None,
-                "outcome": result.type.value if result else decision["decision"],
+                "outcome": result.type.value
+                if result
+                else "not achieved"
+                if not_achieved
+                else decision["decision"],
+                "not_achieved_reason": not_achieved.get("reason") if not_achieved else None,
                 "word_count": len(record.payload["text"].split()),
             }
         )
@@ -81,7 +113,16 @@ def drive(session, card, rng, seed):
     try:
         for _ in range(card.max_turns):
             event = session.state.current_event
-            if pending and pending[0]["event"] == event:
+            turn = session.turn()
+            if turn.get("questions"):
+                for question in session.questions():
+                    session.answer_question(question["question_id"], question["recommended"])
+                continue
+            if (
+                pending
+                and pending[0]["event"] == event
+                and (session.state.event_statuses.get(event) == "done" or pending[0].get("when") == "before")
+            ):
                 item = pending.pop(0)  # Never silently retry an instruction.
                 try:
                     result = session.custom(item["text"])

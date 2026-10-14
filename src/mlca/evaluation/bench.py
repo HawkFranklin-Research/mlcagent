@@ -294,6 +294,13 @@ def run(
             else:
                 drive(session, card, random.Random(seed + index), seed)
             entry["status"] = "completed"
+            if bio:
+                from mlca.evaluation.bio_bench import export_instructions
+
+                items = export_instructions(session)
+                entry["not_achieved"] = [item for item in items if item["outcome"] != "StepCompleted"]
+                if entry["not_achieved"]:
+                    entry["status"] = "not_achieved"
         except Exception as error:
             entry["error_type"] = type(error).__name__
             entry["message"] = session.redact(str(error)) if session else str(error)
@@ -356,7 +363,10 @@ def summarize(out):
         file = out / run["project"] / "reports/generated/metrics.json"
         loaded.append(json.loads(file.read_text()) if file.exists() else None)
     count = len(loaded)
-    completed = sum(bool(m and m["run"]["completed"]["value"]) for m in loaded)
+    completed = sum(
+        bool(m and m["run"]["completed"]["value"] and run["status"] == "completed")
+        for run, m in zip(manifest["runs"], loaded)
+    )
     sequences = [
         [(d["event"], d["action_id"], d["params_hash"]) for d in m["decisions"]] if m else None
         for m in loaded

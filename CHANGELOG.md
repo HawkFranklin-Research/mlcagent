@@ -377,3 +377,8 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 - Isolated OpenCode, Claude Code and Codex headless runners over MCP.
 - Separate policy approvals, client-reported usage and cross-arm summaries.
+
+### Unreleased P18 exports
+
+- Curated, checksum-verified bench/bio-bench exports excluding private inputs and environments.
+- Verbatim custom outcomes retain refusals and incomplete protocol status.

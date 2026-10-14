@@ -485,6 +485,14 @@ def bio_bench_run(
     output(run(task_card, runs, out, mode=mode, bio=True, client=client, model=model), True)
 
 
+@bench_app.command("export")
+@bio_bench_app.command("export")
+def bench_export(directory: Path, to: Path = typer.Option(...)):
+    from mlca.evaluation.export import export
+
+    output(export(directory, to), True)
+
+
 @bench_app.command("summarize")
 def bench_summarize(directory: Path):
     from mlca.evaluation.bench import summarize
