@@ -1,3 +1,4 @@
+import ast
 import inspect
 import re
 from typing import Any
@@ -12,13 +13,32 @@ class Worker(Role):
     name = "worker"
 
     def _script(self, result: Any) -> Any:
-        match = re.fullmatch(r"\s*```(?:python)?\s*\n(.*?)\n```\s*", result.text, flags=re.S)
-        if not match:
-            raise MlcaUserError("Worker must return exactly one fenced Python script")
-        return match.group(1) + "\n", result.request_id
+        text = result.text.strip()
+        match = re.fullmatch(r"\s*```(?:python)?\s*\n(.*?)\n```\s*", text, flags=re.S)
+        if match:
+            source = match.group(1)
+            if "```" in source:
+                try:
+                    ast.parse(source)  # Quoted Markdown is valid; multiple fenced scripts are not.
+                except SyntaxError:
+                    raise MlcaUserError("Worker returned ambiguous Python code blocks") from None
+        else:
+            # Fences are a presentation convention. Complete plain Python follows the same
+            # static checks, sandbox and fit rules; prose and ambiguous blocks stay refused.
+            try:
+                tree = ast.parse(text) if "```" not in text else None
+            except SyntaxError:
+                tree = None
+            if tree is None or not any(isinstance(n, (ast.Import, ast.ImportFrom)) for n in tree.body):
+                raise MlcaUserError(
+                    "Worker must return one Python script, fenced or standalone, without prose"
+                )
+            source = text
+        return source + "\n", result.request_id
 
     def write_script(self, action: Any, params: Any, inputs: Any, state: Any, step_id: Any) -> Any:
         order = render_order(self.session, action, params, inputs, state)
+        self._original_order = order["worker_prompt"]
         result = self.session.client.complete(
             self.name,
             [{"role": "user", "content": order["worker_prompt"]}],
@@ -36,6 +56,7 @@ class Worker(Role):
                     "content": prompt(
                         "worker_repair.md",
                         api=runtime_api(),
+                        original_order=getattr(self, "_original_order", ""),
                         script=source,
                         error=error[:4000],
                         scope=action.prompt,
@@ -50,15 +71,34 @@ class Worker(Role):
 
 
 RUNTIME_HELPERS = (
-    "inputs", "output_dir", "set_seed", "fit_record", "save_table", "save_json",
-    "save_figure", "save_model", "record_metric", "record_fact_candidate",
+    "inputs",
+    "output_dir",
+    "set_seed",
+    "fit_record",
+    "save_table",
+    "save_json",
+    "save_figure",
+    "save_model",
+    "record_metric",
+    "record_fact_candidate",
 )
 
 
 def runtime_api():
     """Exact helper signatures, read from mlca_runtime so the prompt cannot drift from the code."""
-    lines = [f"mlca_runtime.{name}{inspect.signature(getattr(mlca_runtime, name))}" for name in RUNTIME_HELPERS]
-    return re.sub(r"pathlib\.(_local\.)?", "", "\n".join(lines))
+    lines = [
+        f"mlca_runtime.{name}{inspect.signature(getattr(mlca_runtime, name))}" for name in RUNTIME_HELPERS
+    ]
+    signatures = re.sub(r"pathlib\.(_local\.)?", "", "\n".join(lines))
+    return signatures + (
+        "\ninputs() returns a dict mapping the declared keys to Path objects, not metadata dicts. "
+        "Read a returned Path directly; its suffix gives the format. "
+        'Read _protocol with json.loads(inputs()["_protocol"].read_text()).'
+        "\nfit_record forwards X, optional y and kwargs to estimator.fit. "
+        "For lifelines CoxPHFitter, X must include the duration/event columns, y stays None, "
+        "and duration_col= and event_col= must name the actual columns from _protocol. "
+        "For sklearn estimators, X is the feature DataFrame and y is the target."
+    )
 
 
 def render_order(session, action, params, inputs, state):
@@ -77,6 +117,11 @@ def render_order(session, action, params, inputs, state):
     ):
         names["external"] = {"name": "external.parquet", "format": ".parquet"}
         rendered += "\nExternal cohort is available only for this one frozen-variant exposure. Score it without fitting; record metrics with split external."
+    rendered += (
+        "\nUse these exact top-level keys with mlca_runtime.inputs(): "
+        + repr(list(names))
+        + ". The name/format fields describe files; filenames are not dictionary keys."
+    )
     outputs = [o.model_dump() for o in action.outputs]
     brief = {
         "answers": state.brief,

@@ -35,7 +35,12 @@ def check(source: str, allow_network: Any = False, require_fit: Any = False) -> 
             if name in {"exec", "eval", "__import__", "system", "popen", "spawn", "fork"}:
                 violations.append(f"line {node.lineno}: forbidden call {name}")
             if require_fit and name in {"fit", "fit_transform", "partial_fit"}:
-                violations.append(f"line {node.lineno}: fit must use mlca_runtime.fit_record")
+                violations.append(
+                    f"line {node.lineno}: fit must use mlca_runtime.fit_record. "
+                    "This includes temporary/univariable models and feature-selection fits. "
+                    "Use fit_record(estimator, training_dataframe, 'train', y=target_if_needed, "
+                    "**fit_kwargs); transform separately. For Cox fits, pass duration_col= and event_col=."
+                )
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
             value = node.value
             if ".mlca/vault" in value or ".mlca/data/splits" in value or "/keys/" in value:

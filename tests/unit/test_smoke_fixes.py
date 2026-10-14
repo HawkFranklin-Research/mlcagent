@@ -14,7 +14,12 @@ def provider_returning(finish_reason, refusal=None):
     provider = CompatibleProvider.__new__(CompatibleProvider)
     response = NS(
         model_dump=lambda: {
-            "choices": [{"message": {"content": "```python\nx = (", "refusal": refusal}, "finish_reason": finish_reason}],
+            "choices": [
+                {
+                    "message": {"content": "```python\nx = (", "refusal": refusal},
+                    "finish_reason": finish_reason,
+                }
+            ],
             "usage": {"prompt_tokens": 10, "completion_tokens": 4096},
         }
     )
@@ -54,7 +59,9 @@ def test_fit_record_rejects_arrays_with_a_repairable_message(monkeypatch):
 
     import mlca_runtime
 
-    with pytest.raises(mlca_runtime.FitRuleError, match="MLCA: fit_record needs the training pandas DataFrame"):
+    with pytest.raises(
+        mlca_runtime.FitRuleError, match="MLCA: fit_record needs the training pandas DataFrame"
+    ):
         mlca_runtime.fit_record(object(), np.zeros((3, 2)), "train")
 
 
@@ -69,7 +76,7 @@ def test_repair_diagnostics_quote_only_mlca_messages():
     text = diagnostics({"stderr": stderr}, allow_samples=False)
     assert "script line 12" in text and "inside mlca_runtime.fit_record" in text
     assert "MLCA: fit_record needs the training pandas DataFrame" in text
-    leaky = 'File "/x/script.py", line 3\nKeyError: \'patient 0042 value 13.1\'\n'
+    leaky = "File \"/x/script.py\", line 3\nKeyError: 'patient 0042 value 13.1'\n"
     assert "0042" not in diagnostics({"stderr": leaky}, allow_samples=False)
 
 
@@ -87,3 +94,22 @@ def test_static_check_allows_slash_separator_but_not_paths():
     assert check('k = "a/b"\nname = k.split("/")[0] if "/" in k else k\n') == []
     for literal in ("/etc/passwd", "~/data.csv", "../secret.csv"):
         assert any("path literal" in v for v in check(f"open({literal!r})\n"))
+
+
+@pytest.mark.parametrize(
+    "stderr, hint",
+    [
+        ("ValueError: columns are missing: {'PATIENT_SECRET'}", "original raw feature columns"),
+        (
+            "ValueError: Specifying the columns using strings is only supported for dataframes. PATIENT_SECRET",
+            "original pandas feature DataFrame",
+        ),
+        ("TypeError: '_Inputs' object is not callable. PATIENT_SECRET", "dictionary of Paths"),
+    ],
+)
+def test_safe_library_hints_do_not_return_values(stderr, hint):
+    from mlca.runner.run_step import diagnostics
+
+    message = diagnostics({"stderr": stderr}, False)
+    assert hint in message
+    assert "PATIENT_SECRET" not in message

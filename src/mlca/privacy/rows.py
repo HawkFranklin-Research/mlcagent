@@ -18,6 +18,12 @@ from mlca.errors import IntegrityError, MlcaUserError
 from mlca.paths import canonical, sha256
 from mlca.project.inventory import read_table
 
+_CELL_MATCH_SQL = (
+    "SELECT row_id, column_name FROM cells WHERE dataset=? AND precision=6 AND digest=? "
+    "UNION ALL "
+    "SELECT row_id, column_name FROM cells WHERE dataset=? AND precision=4 AND digest=?"
+)
+
 
 def normalized(value, precision=6):
     if value is None or (pd.api.types.is_scalar(value) and pd.isna(value)):
@@ -165,9 +171,8 @@ class RowFingerprints:
         candidates = {}
         for position, value in enumerate(values):
             for row_id, column in db.execute(
-                "SELECT row_id, column_name FROM cells WHERE dataset=? AND "
-                "((precision=6 AND digest=?) OR (precision=4 AND digest=?))",
-                (dataset, self._digest(value, 6), self._digest(value, 4)),
+                _CELL_MATCH_SQL,
+                (dataset, self._digest(value, 6), dataset, self._digest(value, 4)),
             ):
                 candidates.setdefault(row_id, {}).setdefault(position, set()).add(column)
         for edges in candidates.values():
@@ -260,7 +265,20 @@ class RowFingerprints:
 
             frames = (batch.to_pandas() for batch in parquet.ParquetFile(path).iter_batches(batch_size=10000))
         elif path.suffix.lower() == ".json":
-            frames = [pd.read_json(path, orient="table")]
+            try:
+                value = json.loads(path.read_text())
+                if isinstance(value, dict) and "schema" in value and "data" in value:
+                    frames = [pd.read_json(path, orient="table")]
+                elif isinstance(value, list) and all(isinstance(row, dict) for row in value):
+                    frames = [pd.DataFrame(value)]
+                else:
+                    raise ValueError("Unsupported table JSON shape")
+            except (ValueError, TypeError, KeyError):
+                raise MlcaUserError(
+                    "Table JSON must be pandas table JSON or a list of row objects; "
+                    "use mlca_runtime.save_table for table outputs",
+                    category="privacy_refusal",
+                ) from None
         else:
             return None
         return any(self.contains_rows(frame) for frame in frames)

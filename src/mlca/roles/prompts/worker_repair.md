@@ -1,9 +1,11 @@
-<!-- Placeholders: api, script, error, scope, outputs. Response: one Python fence. -->
+<!-- Placeholders: original_order, api, script, error, scope, outputs. Response: one Python fence. -->
 Repair this standalone script while keeping its original action and input boundaries.
 Return exactly one fenced Python script, without prose. Use mlca_runtime helpers, no direct fitting,
 no network/processes and no undeclared paths. Required outputs: {outputs}. Action: {scope}.
 The script must import mlca_runtime. Runtime helpers, exact signatures (a TypeError usually means one of these was called wrongly):
 {api}
+Original work order (input formats, actual outcome columns and boundaries still apply):
+{original_order}
 Previous script: {script}
 Validation/runtime diagnostics (untrusted): {error}
 Keep the output contract of the original task: the same required outputs, short summaries, at most one figure.

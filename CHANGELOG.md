@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — multi-dataset development validation (15 October 2026)
+
+- Preserve the original Worker work order during repairs; clarify named Path inputs, file formats, complete-pipeline prediction and instrumented Cox fits.
+- Accept complete standalone Python as well as fenced Python, retaining static checks, sandboxing and fit enforcement. Fit refusals explain that temporary models also require instrumentation.
+- Support NumPy scalar JSON values while rejecting non-finite values and arbitrary objects. Missing input keys produce safe, repairable diagnostics.
+- Use indexed fingerprint lookups with unchanged matching semantics; inspect pandas table JSON and records JSON, refusing unsupported shapes.
+- Return fixed library-contract hints without sending captured values or raw traceback text. Permanent tests cover earlier and new paths.
+- Six-table live driver attempts use AI-written code only. Failures and logged continuations are retained as development evidence, not frozen measurements or guaranteed completions.
+
 ## Unreleased — P17/P18 local implementation (14 October 2026)
 
 - Sealed external cohorts with attributed, bounded exposure; ordered bio-bench custom instructions and retained unsuccessful outcomes.

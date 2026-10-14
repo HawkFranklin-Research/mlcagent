@@ -14,14 +14,28 @@ def _step() -> Path:
     return Path(os.environ["MLCA_STEP_DIR"]).resolve()
 
 
+class InputKeyError(KeyError):
+    """A safe contract error; never includes the attempted key or source values."""
+
+    def __str__(self) -> str:
+        return str(self.args[0])
+
+
+class _Inputs(dict):
+    def __missing__(self, key):
+        raise InputKeyError("MLCA: Use the declared input dictionary keys exactly; filenames are not keys")
+
+
 def inputs() -> dict[str, Path]:
-    return {
-        name: Path(value["path"])
-        for name, value in sorted(
-            json.loads((_step() / "inputs.json").read_text(encoding="utf-8")).items(),
-            key=lambda item: item[0] == "_protocol",
-        )
-    }
+    return _Inputs(
+        {
+            name: Path(value["path"])
+            for name, value in sorted(
+                json.loads((_step() / "inputs.json").read_text(encoding="utf-8")).items(),
+                key=lambda item: item[0] == "_protocol",
+            )
+        }
+    )
 
 
 def output_dir() -> Path:
@@ -38,6 +52,15 @@ def _output(name: str) -> Path:
     return path
 
 
+def _json_scalar(value: Any) -> Any:
+    """Allow scientific scalar values while keeping strict, finite JSON serialization."""
+    import numpy as np
+
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def _record(kind: str, value: dict) -> None:
     path = _step() / "manifest.json"
     data = (
@@ -50,7 +73,7 @@ def _record(kind: str, value: dict) -> None:
     scratch.mkdir(exist_ok=True)
     fd, name = tempfile.mkstemp(dir=scratch)
     with os.fdopen(fd, "w") as stream:
-        json.dump(data, stream, allow_nan=False, sort_keys=True)
+        json.dump(data, stream, allow_nan=False, sort_keys=True, default=_json_scalar)
     os.replace(name, path)
 
 
@@ -101,7 +124,9 @@ def save_model(model: Any, name: str) -> Path:
 
 def save_json(value: object, name: str, kind: str = "report") -> Path:
     path = _output(name)
-    path.write_text(json.dumps(value, sort_keys=True, allow_nan=False), encoding="utf-8")
+    path.write_text(
+        json.dumps(value, sort_keys=True, allow_nan=False, default=_json_scalar), encoding="utf-8"
+    )
     _artifact(path, kind)
     return path
 

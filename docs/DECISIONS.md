@@ -1,5 +1,23 @@
 # Implementation decisions
 
+## Multi-dataset development fixes — 15 October 2026
+
+The author requested the six bundled benchmark tables and warned against fixes specific to one
+dataset breaking another. Generic changes preserve the named-input API (dictionary values remain
+Paths), strict fit/index checks, test exposure rules, sandbox level A and privacy matching criteria.
+Worker repairs retain their original work order; complete plain Python passes through the same
+execution checks as fenced Python. Scalar JSON support still rejects non-finite values and
+arbitrary objects. Fingerprint SQL changes only query planning, with equivalence and index-use
+tests; supported JSON table shapes undergo the same row check. Diagnostic hints contain fixed
+text rather than captured values. No dataset-specific branches or reference scripts were added.
+
+Live attempts are development evidence, not preregistered measurements. Existing failures remain
+in their logs. A single retry through a supported recovery question is labelled a developer
+continuation, records the source patch and policy identity, and does not become an independent
+run or erase the initial benchmark failure. Frozen runtimes/templates and completed generated
+scripts are not edited. Repeated model mistakes and convergence failures remain unsuccessful
+outcomes. No release, commit, push or paper change is part of this work.
+
 ## 2026-10-07 — R-MCP1b
 
 - Reviewer repros at 6103b55 renamed all columns or rounded to four decimals. The row guard now

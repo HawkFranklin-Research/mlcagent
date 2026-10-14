@@ -131,3 +131,46 @@ def test_v1_migration_and_failed_migration_preserves_index(tmp_path):
     with sqlite3.connect(guard.path) as db:
         assert db.execute("SELECT version FROM metadata").fetchone()[0] == 2
     assert guard.contains_rows(frame.round(4).rename(columns=str.upper))
+
+
+def test_cell_lookup_uses_full_index_and_preserves_matches(tmp_path):
+    from mlca.privacy.rows import _CELL_MATCH_SQL
+
+    frame = pd.DataFrame({"a": [1.234567, 0.0], "b": [0.0, 1.234567], "c": ["yes", "no"]})
+    guard, _ = create_guard(tmp_path / "study", frame)
+    old = (
+        "SELECT row_id, column_name FROM cells WHERE dataset=? AND "
+        "((precision=6 AND digest=?) OR (precision=4 AND digest=?))"
+    )
+    with sqlite3.connect(guard.path) as db:
+        for value in [0.0, 1.234567, 1.235, "yes", "absent"]:
+            d6, d4 = guard._digest(value, 6), guard._digest(value, 4)
+            assert sorted(db.execute(old, ("registered:source", d6, d4))) == sorted(
+                db.execute(_CELL_MATCH_SQL, ("registered:source", d6, "registered:source", d4))
+            )
+        plan = [
+            r[3]
+            for r in db.execute(
+                "EXPLAIN QUERY PLAN " + _CELL_MATCH_SQL,
+                ("registered:source", "a", "registered:source", "b"),
+            )
+        ]
+        assert sum("dataset=? AND precision=? AND digest=?" in detail for detail in plan) == 2
+
+
+def test_json_table_and_records_are_checked_equally(tmp_path):
+    import json
+
+    from mlca.errors import MlcaUserError
+
+    frame = pd.DataFrame({"a": [1.234567, 8.876543], "b": [12.34567, 87.65432], "c": [123.4567, 876.5432]})
+    guard, _ = create_guard(tmp_path / "study", frame)
+    path = tmp_path / "table.json"
+    for orient in ["table", "records"]:
+        frame.round(4).rename(columns=str.upper).to_json(path, orient=orient)
+        assert guard.file_contains_rows(path)
+    path.write_text(json.dumps([{"name": "aggregate", "count": 200, "mean": 54.321}]))
+    assert not guard.file_contains_rows(path)
+    path.write_text(json.dumps({"arbitrary": [1, 2, 3]}))
+    with pytest.raises(MlcaUserError, match="Table JSON must"):
+        guard.file_contains_rows(path)
