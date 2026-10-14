@@ -633,3 +633,13 @@ its one exposure across branches and failed attempts. Refitting remains forbidde
 Bio-bench executes ordered instructions once, retains refused/failed requests as not achieved,
 and exports their exact text, scope decisions, model, step, outcome and word count. Reference
 custom instructions remain unsupported and are recorded as such, never synthesized with AI.
+
+## WP2 — training-only outcome checks and readable errors
+
+Outcome mappings and numeric separation are evaluated only against the hashed frozen training
+partition, before preprocessing. Outcome-free checks remain before splitting. Name matches and
+one-to-one mappings recommend exclusion; other numerical separation recommends keep and flag,
+with an explicit decision. Decisions and a training-review report retain provenance. Validation
+and CLI failures display their concrete messages, with existing credential redaction.
+Validation: focused review tests 11 passed; full suite 279 passed, 1 skipped (PowerShell absent),
+1047.92 seconds. Ruff and diff checks pass. No live calls or remote operations.

@@ -707,7 +707,7 @@ def main() -> Any:
 
         Console(stderr=True).print(str(exc), markup=False)
         raise SystemExit(1) from exc
-    except Exception:
+    except Exception as exc:
         # No traceback containing credentials is emitted to stdout; local tracebacks are scrubbed.
         from mlca.config import redact
 
@@ -718,5 +718,5 @@ def main() -> Any:
                 stream.write(text_value)
         from rich.console import Console
 
-        Console(stderr=True).print(text("failed"), markup=False)
+        Console(stderr=True).print(redact(str(exc), load()) or text("failed"), markup=False)
         raise SystemExit(1) from None

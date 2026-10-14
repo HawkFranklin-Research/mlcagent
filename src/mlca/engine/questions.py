@@ -68,6 +68,7 @@ def review(session):
             state.brief.get("repeated_subjects", ""),
             state.outcome_reviewed,
             state.outcome_exclusions,
+            phase="pre",
         ):
             ask(session, finding, key=finding["key"])
     if not pending(session):
@@ -122,6 +123,42 @@ def answer(session, qid, index=None, *, default=False, free_text=None):
         "positive_class",
         "choose_positive",
     }
+    if q.get("key", "").startswith("train:"):
+        if session._ever_unlocked() or not state.split or effect["kind"] not in {"exclude_column", "keep"}:
+            raise MlcaUserError("Training review is closed or the effect is invalid", category="test_lock")
+        session.emit(
+            "QuestionAnswered",
+            {"question_id": qid, "answer": index, "by": "policy" if session.is_policy else "user"},
+            actor="user",
+        )
+        session.emit(
+            "TrainingDecision", {"question_id": qid, "effect": effect, "rule": q["key"]}, actor="user"
+        )
+        excluded = list(state.excluded_columns)
+        if effect["kind"] == "exclude_column":
+            excluded.append(effect["column"])
+        session.emit(
+            "TaskConfigured",
+            {
+                "task": state.task,
+                "excluded_columns": sorted(set(excluded)),
+                "group_column": state.group_column,
+            },
+        )
+        from mlca.paths import atomic_json
+
+        records = session.store.read()
+        atomic_json(
+            session.root / "reports/generated/training_review.json",
+            {
+                "source": "frozen training rows only",
+                "split_id": state.split["split_id"],
+                "decisions": [
+                    {"actor": r.actor, **r.payload} for r in records if r.type.value == "TrainingDecision"
+                ],
+            },
+        )
+        return pending(session)
     if effect["kind"] in data_kinds:
         if state.split or session._ever_unlocked():
             raise MlcaUserError("Data decisions are closed after split freezing", category="test_lock")
@@ -294,4 +331,33 @@ def map_text(session, qid, text):
         asker="navigator",
         key="mapping",
     )
+    return pending(session)
+
+
+def review_training(session):
+    """Outcome-dependent checks see only the immutable frozen training partition."""
+    from mlca.errors import IntegrityError
+    from mlca.paths import sha256
+    from mlca.project.inventory import read_table
+
+    state = session.state
+    split = state.split
+    if not split or session._ever_unlocked():
+        raise MlcaUserError("Training review requires a locked frozen split", category="test_lock")
+    if state.training_review_split == split["split_id"]:
+        return pending(session)
+    path = session.root / split["train"]["path"]
+    if sha256(path) != split["train"]["sha256"]:
+        raise IntegrityError("Frozen training partition changed")
+    frame = read_table(path)
+    session.emit("TrainingReviewStarted", {"split_id": split["split_id"]})
+    for finding in data_review.findings(
+        frame,
+        state.columns,
+        state.template_id,
+        outcome_reviewed=True,
+        excluded=state.excluded_columns,
+        phase="train",
+    ):
+        ask(session, finding, key="train:" + finding["key"])
     return pending(session)

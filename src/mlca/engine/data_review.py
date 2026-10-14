@@ -39,7 +39,7 @@ def context_key(state):
     ).hexdigest()
 
 
-def findings(frame, columns, template, repeated="", outcome_reviewed=False, excluded=()):
+def findings(frame, columns, template, repeated="", outcome_reviewed=False, excluded=(), phase="all"):
     target = columns.get("target")
     if target not in frame:
         raise MlcaUserError("Choose the outcome column before reviewing the table", category="gate_blocked")
@@ -216,7 +216,8 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
                 [keep],
             )
         probable = False
-        for outcome in protected - {None}:
+        categorical_mapping = False
+        for outcome in protected - {None} if phase != "pre" else []:
             complete = frame[[column, outcome]].dropna().copy()
             if template != "survival":
                 complete[outcome] = complete[outcome].map(normalized)
@@ -225,7 +226,11 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
                 and complete[outcome].nunique() > 1
                 and 1 < distinct <= min(50, max(2, len(frame) // 5))
             ):
-                probable |= complete.groupby(column, observed=True)[outcome].nunique().max() == 1
+                mapping = complete.groupby(column, observed=True)[outcome].nunique().max() == 1
+                probable |= mapping
+                categorical_mapping |= (
+                    mapping and complete.groupby(outcome, observed=True)[column].nunique().max() == 1
+                )
             if template != "survival" and len(labels) == 2 and pd.api.types.is_numeric_dtype(values):
                 intervals = complete.groupby(outcome, observed=True)[column].agg(["min", "max"])
                 if len(intervals) == 2:
@@ -234,7 +239,7 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
                         or intervals.iloc[1]["max"] < intervals.iloc[0]["min"]
                     )
         named = any(str(outcome).casefold() in str(column).casefold() for outcome in protected - {None})
-        if probable or named:
+        if probable or (named and phase != "train"):
             add(
                 "leakage:" + column,
                 "Possible outcome source",
@@ -243,6 +248,12 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
                 [keep],
                 True,
             )
+            if probable and not named and not categorical_mapping and pd.api.types.is_numeric_dtype(values):
+                result[-1]["options"].reverse()
+                result[-1]["options"][0]["label"] = "Keep and flag"
+                result[-1]["options"][0]["description"] = (
+                    "Keep this potentially strong predictor and flag the training-only finding in the report."
+                )
         if values.isna().mean() > 0.5:
             add(
                 "missing:" + column,
@@ -322,7 +333,7 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
                 [keep],
                 True,
             )
-    return result
+    return [q for q in result if phase != "train" or q["key"].startswith("leakage:")]
 
 
 def apply(frame, decisions):

@@ -18,6 +18,8 @@ def replay(records: list[Record]) -> ProjectState:
             state.data_review_context = p["context_sha256"]
             state.questions, state.answers, state.data_decisions = {}, {}, []
             state.prepared_data = None
+        elif kind == "TrainingReviewStarted":
+            state.training_review_split = p["split_id"]
         elif kind == "QuestionAsked":
             state.questions[p["question_id"]] = {**p, "event_id": record.event_id}
         elif kind == "QuestionAnswered":

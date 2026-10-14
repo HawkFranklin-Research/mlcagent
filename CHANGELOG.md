@@ -366,3 +366,9 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 - Sealed external-cohort roles and single frozen-variant exposure at execution time.
 - Ordered `mlca bio-bench run` instructions with verbatim outcome exports.
+
+### Unreleased P18 integrity
+
+- Outcome-dependent review uses frozen training rows only; strong numerical predictors default
+  to keep-and-flag with explicit review.
+- CLI validation and engine errors show their actual redacted messages.

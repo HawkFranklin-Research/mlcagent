@@ -17,6 +17,8 @@ PAYLOAD_FIELDS = {
     "TurnPresented": ["situation", "choices"],
     "ResultSummary": ["text"],
     "AutopilotStopped": ["reason"],
+    "TrainingReviewStarted": ["split_id"],
+    "TrainingDecision": ["question_id", "effect", "rule"],
     "DataReviewStarted": ["context_sha256"],
     "QuestionAsked": ["question_id", "header", "question", "options", "recommended", "asker"],
     "QuestionAnswered": ["question_id", "answer", "by"],
@@ -191,6 +193,7 @@ class ProjectState(StrictModel):
     outcome_reviewed: bool = False
     outcome_exclusions: list[str] = Field(default_factory=list)
     guided_enabled: bool = False
+    training_review_split: str | None = None
     data_review_context: str | None = None
     questions: dict[str, dict] = Field(default_factory=dict)
     answers: dict[str, dict] = Field(default_factory=dict)

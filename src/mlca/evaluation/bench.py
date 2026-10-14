@@ -169,7 +169,7 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
     try:
         card = TaskCard.model_validate(yaml.safe_load(raw))
     except ValueError as error:
-        raise MlcaUserError("Invalid task-card fields") from error
+        raise MlcaUserError("Invalid task-card fields: " + str(error), category="invalid_request") from error
     if card.option_policy not in {"navigator_first", "default_first", "seeded_random"}:
         raise MlcaUserError("Unknown task-card option policy")
     if budget_usd is not None and budget_usd <= 0:
@@ -185,7 +185,10 @@ def run(task_path, runs, out, mode="driver", budget_usd=None, seed=42, lock_mode
     for provider in config.get("providers", {}).values():
         if provider.get("script"):
             provider["script"] = str((path.parent / provider["script"]).resolve())
-    Config.model_validate(config)
+    try:
+        Config.model_validate(config)
+    except ValueError as error:
+        raise MlcaUserError("Invalid task-card config: " + str(error), category="invalid_request") from error
     data = [(path.parent / p).resolve() for p in card.data]
     manifest = {
         "schema_version": "1",

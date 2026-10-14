@@ -186,6 +186,9 @@ def present(session):
     if state.current_event == "data" and not state.split:
         questions.review(session)
         state = session.state
+    if state.split and state.current_event == "preprocess" and not session._ever_unlocked():
+        questions.review_training(session)
+        state = session.state
     if questions.pending(session):
         return {
             "situation": "Your answer is needed before the next step.",
