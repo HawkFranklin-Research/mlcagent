@@ -470,6 +470,68 @@ Driver mode over MCP is also affected by G1, G3, G4 and G5.
 
 Meanwhile, a TUI open in a second terminal updates live, shows "driven by agent", and resolves the approvals. All tests green.
 
+## 14. Brain-mode benchmarking: the same tables and studies, driven by an external agent (2026-10-14)
+
+### 14.1 Where MCP stands (checked in code, `f430270`)
+
+- **Brain and driver modes:** both work. There are 16 tools, including `mlca_questions` and `mlca_answer`. `mlca_options` runs the guided turn (P15), so MCP projects get the P14.4 data questions too. Human cards, study-field approvals (MX1/MX2), journey/messages (MX4) and accounting (MX6) are done.
+- **Not done:**
+  - **M7** (an author-run brain-mode study with a real client) has never been run.
+  - **`mlca bench` refuses brain mode** (`evaluation/bench.py` l. 164). There is no headless way to run a task card through Claude Code, Codex or OpenCode.
+  - **`mlca mcp install`** supports `claude`, `codex`, `hermes`, `openclaw`, `cursor`, `json`, but **not `opencode`**.
+  - **`mlca usage import`** reads Claude and Codex session files only.
+  - **Brain-mode token totals** come from client session files after the fact. There is no per-run capture.
+
+### 14.2 Goal: one comparison across modes and models
+
+| Arm | Who decides and writes code | Models | Token source |
+|---|---|---|---|
+| **driver** (`mlca bench`) | MLCA's own Navigator + Worker | the 6 chosen models via OpenRouter | MLCA request ledger |
+| **brain / OpenCode** | OpenCode agent over MCP | **the same OpenRouter models** (like-for-like with driver) | OpenCode run output |
+| **brain / Claude Code** | Claude Code over MCP | `anthropic/claude-haiku-5.5` (and the author's choice) | `claude -p --output-format json` usage |
+| **brain / Codex** | Codex over MCP | `openai/gpt-6-luna` (and the author's choice) | `codex exec --json` usage |
+| **reference** | engine scripts, no AI | — | none |
+
+The same task cards are used for the six bench tables and the bio-bench studies S1–S4. The same metrics are reported: completion, failures by category, recovery, interventions, Navigator fallbacks (driver), scope refusals, time split, tokens, cost.
+
+### 14.3 Work items (MB1–MB6), in order
+
+- **MB1 · `opencode` client.** Add `opencode` to `mcp/install.py`: a project-scope `opencode.json` with a local MCP server entry for `mlca mcp serve --mode brain`. Preview by default; write only with `--yes`. Verify the exact config keys with the installed `opencode` (`opencode --help`, its docs); do not guess.
+- **MB2 · Isolated client sandbox per run.** Every brain-mode run gets a fresh config directory for the client (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, OpenCode config path). It contains only the MLCA MCP server, and the client's own file-write and shell tools are disabled or restricted to the run folder:
+  - Claude: `--allowedTools` limited to `mcp__mlca__*`;
+  - Codex: read-only sandbox;
+  - OpenCode: deny write/bash permissions.
+
+  This closes R-MCP2 for measured runs. Record the exact flags in `bench.json`.
+- **MB3 · `mlca bench run --mode brain --client <opencode|claude|codex> --model <id>`.** For each run:
+  1. Create the project from the task card, as in driver mode.
+  2. Write a fixed prompt file generated from the card: aim, data, template, the ordered custom instructions for bio-bench, and "use only the mlca tools".
+  3. Launch the client headless with a wall-clock limit:
+     - `opencode run`;
+     - `claude -p --output-format json --mcp-config … --model …`;
+     - `codex exec --json …`.
+
+     Verify every flag against each tool's `--help`.
+  4. A **policy approver** thread resolves human-only approvals (brief and validation confirmation, test unlock, packages) exactly as the card's `approval_policy` declares. It records principal `user:policy/<card sha>`; the agent never approves.
+  5. Save the client's raw JSON output and transcript in the run folder.
+  6. Run `mlca metrics`.
+
+  The run is a failure if the client exits without completing the workflow; keep it.
+- **MB4 · Usage capture.** Parse client-reported usage from the saved raw output (input, output, cached and reasoning tokens, cost if reported; unknown stays `null`). Store it as `external_agent` records with `cost_source: client`. Extend `mlca usage import` to OpenCode. MLCA's own requests (none in brain mode except the reference arm) stay separate.
+- **MB5 · `bench summarize` across arms.** Group by arm × client × model × task. Put brain and driver numbers in one table with the same columns. Mark fields unavailable in an arm (e.g. Navigator fallbacks in brain mode) as `n/a`, never `0`.
+- **MB6 · M7 smoke.** One brain-mode run per client on `heart_disease_cleveland_uci.csv`, offline-first with a scripted check, then live **only with the author's go-ahead**. It replaces the manual M7 checklist as the acceptance test.
+
+### 14.4 Acceptance
+
+- Offline tests:
+  - `opencode` registration preview;
+  - the prompt file built from a card;
+  - the policy approver resolves only declared approvals;
+  - usage parsing from recorded client outputs (fixtures);
+  - mixed-arm summarize.
+- A brain-mode project can never be approved by the agent principal (existing invariant; add a test through MB3).
+- One authorised live smoke per client completes or fails with a recorded category; its tokens appear in `mlca usage`.
+
 ## Status
 
 - **2026-10-13 MX review (`64c7a52`):** suite 202 passed, 1 skipped, reproduced. A live stdio brain-mode session verified MX1–MX4: human cards with `actor`/`how`; the specific refusal; a `study_fields` proposal approved in the CLI, recorded with its proposer; an invalid column refused at request time; journey, messages and phases. MX3 polling and the MX5 guided style are present.

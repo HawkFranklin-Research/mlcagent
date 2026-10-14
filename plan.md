@@ -1843,3 +1843,108 @@ The file holds two versions: k 2–10, 100 runs, sizes {2…15}; and k 2–8, 50
 - Bench tables moved into this repository: `benchmarks/datasets/`.
 - Bench cards and runs, and the bio-bench protocols (S1–S4, `STUDY.md`), moved to `../mlcagent-experiments/`. Full private planning versions there are `*.local.md` and are never pushed.
 - The paper repository keeps only curated results and figure scripts.
+
+### P18: wrap-up roadmap: finish MLCA v2, run the comparisons, close the paper (2026-10-14)
+
+**For the implementing agent: start here.**
+- Work on `master` (fast-forwarded to `native-onboarding`, `f430270`).
+- No push, publish, live model call or upload without the author's go-ahead.
+- Runs, cards and protocols live in `../mlcagent-experiments/`; read its `AGENTS.md`, which carries the bio-bench rule and the custom-instruction rule. MCP details are in `plan_mcp.md` §14.
+
+#### State on 2026-10-14
+
+**Done:**
+- P0–P8 core; MCP M0–M6 and MX1–MX6; P10 metrics;
+- P13 guided TUI; P14.2 reference arm; P14.4 data review; P14.6; P15 turn loop;
+- P16 accounting with review fixes; **P17 part 1 only** (pacing, rate-limit waits, cooldown); `mlca models` catalogue snapshots;
+- `benchmarks/datasets/`.
+
+Suite: 270 passed, 1 skipped.
+
+**Not done:**
+- No live model run has completed: the two smoke runs stopped on provider rate limits.
+- M7 has never run.
+- Brain-mode bench does not exist (`plan_mcp.md` §14).
+- **P17 part 2 is not built:** E1 external cohort and E2 bio-bench driver.
+
+#### Phase A: code, before the freeze (order matters)
+
+| # | Item | Why | Done when |
+|---|---|---|---|
+| A1 | **Leakage fix in the data review.** Outcome-dependent checks (feature-outcome mapping, perfect numeric separation) run **after the split on training rows only**. Outcome-free checks (identifiers, duplicates, missingness, label spellings, event coding) stay before the split | Integrity (R2-4); today all checks use all rows, including future test rows | test: a planted leaky column is found from training rows; test rows are never read before the split |
+| A2 | **Perfect-separation default.** Recommend "Exclude" only for name matches or a one-to-one categorical mapping. For a numeric column that separates the classes perfectly, recommend "Keep and flag in the report". Keep the explicit answer | Avoids removing a real strong predictor by default (**author to confirm**) | test per case |
+| A3 | **Readable CLI errors.** `mlca bench run` and other commands print the actual validation message instead of "Action failed" | the first smoke attempt failed silently | test with an invalid card |
+| A4 | **Brain-mode bench MB1–MB5** (`plan_mcp.md` §14) | the driver vs brain × 5-model comparison | §14.4 |
+| A5 | **E1 external cohort.** A second registered table with role `external`, sealed like `test`; readable only after the test unlock by the test/interpret events and their custom instructions; scored once per variant | bio-bench S3, S4 | tests: unreadable before unlock; one exposure recorded |
+| A6 | **E2 `bio-bench` driver.** `mlca bio-bench run <card>` = bench plus `custom_instructions: [{event, text}]` issued in order (driver: `session.custom`; brain: in the prompt file), with questions and approvals as policy. It exports `custom_instructions.md` per run: verbatim text, event, model, scope decision, resulting step, outcome, word count | bio-bench; custom instructions are published research artefacts | test with scripted models |
+| A7 | **Run export.** `mlca bench export <out> --to <dir>` copies the curated subset (scripts, `.mlca/llm`, `log`, `steps`, reports, figures, `metrics.json`, `usage.csv`, `bench.json`, `custom_instructions.md`) and never `.mlca/private|env|data` | experiments repo and paper results | test |
+| A8 | **Smoke runs** (author go-ahead; free models, with a few dollars of credit if rate limits persist): driver on `heart_disease` with `nvidia/nemotron-3-super-120b-a12b:free`, then MB6 brain mode per client | the first proof that the AI path completes | each run completes or fails with a recorded category |
+| A9 | **Freeze.** Version `0.2.0` (or `0.3.0b1`); tag; CHANGELOG; fix the stale PyPI Status paragraph; publish only on request | every reported number comes from one version | tag exists; the experiments repo records the commit |
+
+#### Phase B: evidence runs (after A9; experiments repo)
+
+- **B1.** `PREREGISTRATION.md` committed in `mlcagent-experiments/` before measured runs: models (exact IDs and catalogue snapshot), cards, N, settings, approval policy, budgets, metrics, failure rules.
+- **B2. `mlca bench`, the 6 tables:**
+  - driver arm × 6 models;
+  - brain arm via OpenCode × the same free models;
+  - Claude Code × Haiku 5.5;
+  - Codex × GPT-6 Luna;
+  - reference arm × 1;
+  - N per cell set in B1.
+- **B3. Bio-bench** (each study's data-prep script first; `STUDY.md` protocols):
+  - S1 anemia and S2 receptors (6 tasks) in all arms;
+  - S3 PAM50 and S4 HNSCC after A5/A6.
+
+  A step MLCA cannot achieve is recorded as *not achieved*; that is acceptable.
+- **B4.** `mlca usage backfill`: verify the `/generation` field names on a real response. `mlca usage reconcile` against the author's OpenRouter Activity CSV, ideally with one API key per batch.
+- **B5.** Per-study `summary/` tables; curated copies into the paper's `ES/submission2/experiments/results/`; the results ledger and figure scripts there.
+
+#### Phase C: paper (paper repository; the author decides wording)
+
+- **C1. Author decisions:**
+  - the study order and dropping CS2 / Appendix A;
+  - S4 clustering rule, data scope and repeats;
+  - S1 haemoglobin;
+  - S2 HER2 evaluation;
+  - S3 harmonisation;
+  - the final models;
+  - A2.
+- **C2. Answers to open provenance questions:** producers, the `anemia.csv` source, the 12-gene panel, the Discussion numbers without a file.
+- **C3.** Comment-by-comment edits and responses, E-1 first. Comments that need no runs first (presentation, references, appendices, TCGA definition, Fig. 1, CS4 text corrections).
+- **C4.** New results enter the manuscript only from the ledger.
+- **C5.** Cover letter → portal package → final sweep → author upload. Deadline 4 January 2027.
+
+**Can run in parallel with A:** C1–C3 for comments that need no runs.
+
+
+### P18 work order for the implementing agent (2026-10-14; supersedes the Phase A order above)
+
+Seven packages, in this order. Each package ends with its tests passing and **one local commit** in the repository named. Report after each package: what changed, tests run, and anything that blocked it.
+
+**Limits for every package:**
+- no live model calls, pushes, remotes, publishing or uploads;
+- do not edit the paper repository;
+- never commit `*.local.md`;
+- keep the bio-bench rule (a step MLCA cannot achieve is recorded as *not achieved*) and the custom-instruction rule (verbatim artefacts).
+
+**Decisions already made** (Claude, at the author's request; the author may override):
+- **A2:** recommend "Exclude" only for a name match or a one-to-one categorical mapping; a numeric column that separates the classes perfectly gets "Keep and flag in the report".
+- **E3 is not built.** Within-study repeated splits stay a custom instruction (S2 CI-3, S4 B3): they show custom instructions at work and need no engine change.
+- **Brain-mode clients:** OpenCode (the same OpenRouter models as driver mode), Claude Code and Codex.
+
+| WP | Repository | Content | Acceptance |
+|---|---|---|---|
+| **WP0 · Status docs** | `mlca-revized` | Refresh `docs/HANDOFF.md`, `docs/IMPLEMENTATION_STATUS.md`, `docs/mcp.md` and the status lines in `plan_mcp.md`. The remote is `HawkFranklin-Research/mlcagent`; `master` = `f430270`; P13–P16 and P14.2/P14.4/P15 are done; P17 is half done. **No freeze exists yet:** moving `master` is not a freeze | the docs agree with `git log` and with this work order |
+| **WP1 · Integrity and errors** | `mlca-revized` | **A1:** outcome-dependent data checks after the split, on training rows only; outcome-free checks stay before the split. **A2** as decided. **A3:** the CLI prints the real validation or engine message instead of "Action failed" | tests: a planted leaky column is caught from training rows and test rows are never read before the split; the A2 recommendation per case; an invalid task card shows the field error. Full suite passes |
+| **WP2 · P17 part 2: bio-bench engine** | `mlca-revized` | **E1:** registered table role `external`, sealed like `test`; readable after the test unlock by the test/interpret events, built-in actions and custom instructions; one exposure per variant, logged. **E2:** `mlca bio-bench run <card>` with `custom_instructions: [{event, text}]` issued in order (driver: `session.custom`) and questions and approvals as policy. It writes `custom_instructions.md` per run: verbatim text, event, step, model, scope decision and reason, outcome, word count. A refused or failed instruction is recorded, never retried silently | scripted-model tests for both; E1 unreadable before unlock; refusals appear in the export |
+| **WP3 · Brain-mode bench** | `mlca-revized` | `plan_mcp.md` §14 **MB1–MB5**: OpenCode registration, an isolated client config per run (only MLCA tools), `mlca bench run --mode brain --client …` and `mlca bio-bench run --mode brain …` (custom instructions go into the prompt file), the policy approver, client usage capture, and a summary across arms. Check every client flag with `--help` | §14.4 offline tests using recorded client outputs as fixtures. MB6 (live) is **not** run |
+| **WP4 · Run export** | `mlca-revized` | `mlca bench export <bench-output> --to <dir>` (also for bio-bench): copies scripts, `.mlca/log`, `steps`, `llm`, `requests`, reports, figures, `metrics.json`, `usage.csv`, `bench.json`, `custom_instructions.md`; never `.mlca/private`, `env` or `data` | test: excluded paths are absent; files match their sources |
+| **WP5 · Experiment material** | `mlcagent-experiments` | **Prep scripts:** `bio-bench/S2…S4/prepare_data.py` per each `STUDY.md` (deterministic, no AI). They read `SOURCE_DATA` from `paths.local.yaml`, write to `data_prep/`, and record input/output SHA-256 and counts; S1 gets a checksum-only script. **Task cards:** `bench/cards/` for the 6 tables (driver, plus a brain variant per client) and `bio-bench/S*/task_card.yaml` (driver and brain). **`PREREGISTRATION.md` draft** (models, catalogue snapshot, cards, N, settings, approval policy, budgets, metrics, failure rules), marked DRAFT until the author approves. A summary script skeleton that builds the cross-arm tables from exports | prep scripts reproduce the expected counts (S2 ER 81/39, PR 68/47, HER2 15/107; S4 415/102); all cards validate (`TaskCard` + `Config`) |
+| **WP6 · Offline acceptance, then stop** | both | Full suite. Offline **reference-arm** runs of S1 and S2 (6 tasks) through `mlca bio-bench` with zero model calls, exported with WP4 into `mlcagent-experiments/bio-bench/S*/runs/reference/`. Then **stop and report** | suite passes; the reference runs complete or record *not achieved* steps; zero model requests in `mlca usage` |
+
+**After WP6 (author's go-ahead needed):**
+1. Live smoke runs: driver with `nvidia/nemotron-3-super-120b-a12b:free`, then MB6, one brain-mode run per client.
+2. Fixes from the smoke runs.
+3. The freeze (A9: version, tag, CHANGELOG, PyPI description).
+4. `PREREGISTRATION.md` final and committed.
+5. The measured runs (Phase B).
