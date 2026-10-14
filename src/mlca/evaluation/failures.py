@@ -15,6 +15,8 @@ CATEGORIES = {
     "invalid_options",
     "invalid_request",
     "provider_error",
+    "output_truncated",
+    "client_failure",
     "budget_stop",
     "privacy_refusal",
     "abandoned",

@@ -32,4 +32,4 @@ def test_lazy_snapshot_and_reported_model(project_factory, monkeypatch):
         )
         usage = read(root)[0]
         assert usage["model_reported"] == "actual-model"
-        assert usage["request_settings"]["max_output_tokens"] == 4096
+        assert usage["request_settings"]["max_output_tokens"] == 16384

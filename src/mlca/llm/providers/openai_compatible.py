@@ -40,10 +40,12 @@ class CompatibleProvider:
         }
 
         if message.get("refusal") or choice.get("finish_reason") == "length":
+            # A truncated answer is the model's output, not a provider outage: the step may repair it.
             error = MlcaUserError(
                 "Model refused this request"
                 if message.get("refusal")
-                else "Model response exceeded its token limit"
+                else "Model response exceeded its token limit",
+                category=None if message.get("refusal") else "output_truncated",
             )
             error.accounting = result
             raise error

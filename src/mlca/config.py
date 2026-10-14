@@ -31,7 +31,8 @@ class RoleConfig(ConfigModel):
     provider: str
     model: str
     temperature: float | None = None
-    max_output_tokens: int = Field(default=4096, ge=64, le=65536)
+    # Reasoning models spend most of this on hidden reasoning; 4096 truncated Worker repairs.
+    max_output_tokens: int = Field(default=16384, ge=64, le=65536)
 
 
 class Privacy(ConfigModel):

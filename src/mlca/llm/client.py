@@ -42,6 +42,12 @@ class LLMResult(BaseModel):
     latency_ms: float = 0
 
 
+
+def model_output_category(error):
+    """Truncated output counts as a Worker attempt; everything else from the provider is infrastructure."""
+    return "output_truncated" if getattr(error, "category", None) == "output_truncated" else "provider_error"
+
+
 RATE_LIMIT_WAITS_S = (5, 15, 30, 60)
 FREE_REQUESTS_PER_MINUTE = 16
 
@@ -271,12 +277,13 @@ class Client:
                     record["status"] = "ok"
                 except Exception as exc:
                     error = exc
+                    category = model_output_category(exc)
                     if getattr(exc, "accounting", None):
                         self._record_usage(record, exc.accounting, selected)
                     record.update(
                         status="error",
                         error_type=type(exc).__name__,
-                        category="provider_error",
+                        category=category,
                         status_code=getattr(exc, "status_code", None),
                     )
                     if self.emit:
@@ -284,7 +291,7 @@ class Client:
                             "ProviderFailed",
                             {
                                 "request_id": request_id,
-                                "category": "provider_error",
+                                "category": category,
                                 "error_type": type(exc).__name__,
                             },
                             step_id=context.step_id,
@@ -327,7 +334,9 @@ class Client:
                 if attempt < max_attempts and isinstance(status, int) and status >= 500:
                     time.sleep(min(2 ** (attempt - 1), 4))
                     continue
-                raise MlcaUserError(redact(str(error), self.config), category="provider_error") from error
+                raise MlcaUserError(
+                    redact(str(error), self.config), category=model_output_category(error)
+                ) from error
             return LLMResult(
                 text=redact(result["text"], self.config),
                 request_id=request_id,

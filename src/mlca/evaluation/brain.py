@@ -123,7 +123,8 @@ def client_plan(client, model, root, directory):
                 "share": "disabled",
             },
         )
-        command = ["opencode", "run", "--standalone", "--format", "json", "--model", model]
+        # Server logs go to brain_stderr.txt: they show MCP discovery and whether tools reached the model.
+        command = ["opencode", "run", "--standalone", "--print-logs", "--format", "json", "--model", model]
     if client == "opencode":
         env["OPENCODE_CONFIG"] = str(path)
     return {"command": command, "env": env, "config": str(path), "client": client, "model": model}
