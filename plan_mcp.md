@@ -490,9 +490,8 @@ Meanwhile, a TUI open in a second terminal updates live, shows "driven by agent"
 | **brain / OpenCode** | OpenCode agent over MCP | **the same OpenRouter models** (like-for-like with driver) | OpenCode run output |
 | **brain / Claude Code** | Claude Code over MCP | `anthropic/claude-haiku-5.5` (and the author's choice) | `claude -p --output-format json` usage |
 | **brain / Codex** | Codex over MCP | `openai/gpt-6-luna` (and the author's choice) | `codex exec --json` usage |
-| **reference** | engine scripts, no AI | — | none |
 
-The same task cards are used for the six bench tables and the bio-bench studies S1–S4. The same metrics are reported: completion, failures by category, recovery, interventions, Navigator fallbacks (driver), scope refusals, time split, tokens, cost.
+The no-AI reference arm is not part of the comparison (author, 2026-10-14). The same task cards are used for the six bench tables and the bio-bench studies S1–S4. The same metrics are reported: completion, failures by category, recovery, interventions, Navigator fallbacks (driver), scope refusals, time split, tokens, cost.
 
 ### 14.3 Work items (MB1–MB6), in order
 

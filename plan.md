@@ -2,6 +2,8 @@
 
 ## Current P17/P18 status — 14 October 2026
 
+**Author decision (2026-10-14): the no-AI reference arm is dropped from all bench and bio-bench comparisons.** Only real model runs are measured (driver and brain arms). The reference code stays in the repository unused; the seven offline reference attempts of 14 October are development tests, not experiments.
+
 WP1–WP7 completed locally. Final suite: **296 passed, 1 skipped**; experiments tests: **7 passed**.
 Seven offline reference attempts recorded zero model requests: S1 core complete with four custom
 instructions not achieved; S2 has four interpretation timeouts and two HER2 bootstrap NaN errors.
@@ -1669,7 +1671,7 @@ Then build, in this order, each with its own commit and tests:
    - two-sentence result summaries.
 
    Neutral names in code and documents.
-3. **P14.2 reference scripts as a separate, labelled no-AI baseline arm** (answer 2 stands).
+3. **P14.2 reference scripts as a separate, labelled no-AI baseline arm** (answer 2 stands). *Superseded 2026-10-14: the author dropped the reference arm from the comparisons.*
    - Never substitute them inside a Worker run.
    - Record `measurement_arm: reference | worker` in bench manifests and metrics.
 4. **P14.7 acceptance runs**, offline configuration (a) only, until the author authorises live calls.
@@ -1838,7 +1840,7 @@ The file holds two versions: k 2–10, 100 runs, sizes {2…15}; and k 2–8, 50
    - the case-study protocol (k range, methods, selection rule, N, feature sizes, classifiers);
    - an ordered list of custom instructions for steps outside the template;
    - a legacy-comparison file mapping each reported legacy number to its source, so the run reports agreement or difference per number.
-3. **Arms.** `worker` (the AI writes the code) and `reference` (engine scripts), labelled separately as in P14.2.
+3. **Arms.** `worker` (the AI writes the code). The `reference` arm is dropped (author, 2026-10-14).
 
 **Order.** CS1 (HNSCC) end to end first. Then decide whether CS2 (LUAD transfer), CS3 (BRCA receptors) and CS4 (anemia) follow, or stay legacy-described in the paper.
 
@@ -1898,7 +1900,6 @@ Suite: 270 passed, 1 skipped.
   - brain arm via OpenCode × the same free models;
   - Claude Code × Haiku 5.5;
   - Codex × GPT-6 Luna;
-  - reference arm × 1;
   - N per cell set in B1.
 - **B3. Bio-bench** (each study's data-prep script first; `STUDY.md` protocols):
   - S1 anemia and S2 receptors (6 tasks) in all arms;
