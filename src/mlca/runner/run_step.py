@@ -257,12 +257,17 @@ def diagnostics(execution, allow_samples):
     if allow_samples:
         return execution["stderr"][-4000:] or "Execution failed or script was modified"
     text = execution["stderr"]
-    types = re.findall(r"^([A-Za-z][A-Za-z0-9_]*(?:Error|Exception))(?::|$)", text, re.MULTILINE)
+    types = re.findall(r"^(?:[A-Za-z_]\w*\.)*([A-Za-z][A-Za-z0-9_]*(?:Error|Exception))(?::|$)", text, re.MULTILINE)
     lines = re.findall(r'File "[^"\n]*script.py", line (\d+)', text)
+    # MLCA's own runtime messages are written without data values, so they may leave the machine.
+    helpers = re.findall(r'File "[^"\n]*mlca_runtime[/\\]__init__\.py", line \d+, in (\w+)', text)
+    own = re.findall(r"^(?:[A-Za-z_]\w*\.)*[A-Za-z]\w*(?:Error|Exception): (MLCA: [^\n]{1,300})$", text, re.MULTILINE)
     return (
         "Execution failed: "
         + (types[-1] if types else "runtime failure")
         + ("; script line " + lines[-1] if lines else "")
+        + ("; inside mlca_runtime." + helpers[-1] if helpers else "")
+        + (". " + own[-1] if own else "")
         + ". Detailed diagnostics remain local because sample-row egress is disabled."
     )
 

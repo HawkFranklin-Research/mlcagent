@@ -123,17 +123,24 @@ def index_sha256(index: Any) -> str:
 
 
 class FitRuleError(ValueError):
-    """Frozen-training instrumentation rejected a fit."""
+    """Frozen-training instrumentation rejected a fit. Messages start with "MLCA:" and carry no data,
+    so the repair prompt may quote them."""
 
 
 def fit_record(estimator_or_pipeline: Any, X: Any, partition: str, y: Any = None, **kwargs: Any) -> Any:
     if partition != "train":
-        raise FitRuleError("Fit is allowed only on training data")
+        raise FitRuleError("MLCA: Fit is allowed only on training data")
+    if not hasattr(X, "index"):
+        # The frozen row index is the evidence that only training rows were fitted; arrays lose it.
+        raise FitRuleError(
+            "MLCA: fit_record needs the training pandas DataFrame with its frozen row index; "
+            "pass X itself, not X.values or a NumPy array (put transforms inside a Pipeline)"
+        )
     expected = os.environ.get("MLCA_TRAIN_INDEX_SHA256")
     digest = index_sha256(X.index)
     if not expected or digest != expected:
         raise FitRuleError(
-            f"Fit rows must match the frozen training index: expected {os.environ.get('MLCA_TRAIN_ROW_COUNT', 'unknown')} rows, received {len(X.index)} rows"
+            f"MLCA: Fit rows must match the frozen training index: expected {os.environ.get('MLCA_TRAIN_ROW_COUNT', 'unknown')} rows, received {len(X.index)} rows"
         )
     result = (
         estimator_or_pipeline.fit(X, y, **kwargs) if y is not None else estimator_or_pipeline.fit(X, **kwargs)

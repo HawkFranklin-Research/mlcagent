@@ -47,3 +47,34 @@ def test_worker_prompts_require_the_runtime_import():
 def test_opencode_run_prints_server_logs(tmp_path):
     plan = client_plan("opencode", "openrouter/x", tmp_path / "project", tmp_path / "client")
     assert "--print-logs" in plan["command"]
+
+
+def test_fit_record_rejects_arrays_with_a_repairable_message(monkeypatch):
+    import numpy as np
+
+    import mlca_runtime
+
+    with pytest.raises(mlca_runtime.FitRuleError, match="MLCA: fit_record needs the training pandas DataFrame"):
+        mlca_runtime.fit_record(object(), np.zeros((3, 2)), "train")
+
+
+def test_repair_diagnostics_quote_only_mlca_messages():
+    from mlca.runner.run_step import diagnostics
+
+    stderr = (
+        'Traceback (most recent call last):\n  File "/x/script.py", line 12, in <module>\n'
+        '  File "/x/runtime/mlca_runtime/__init__.py", line 140, in fit_record\n'
+        "mlca_runtime.FitRuleError: MLCA: fit_record needs the training pandas DataFrame\n"
+    )
+    text = diagnostics({"stderr": stderr}, allow_samples=False)
+    assert "script line 12" in text and "inside mlca_runtime.fit_record" in text
+    assert "MLCA: fit_record needs the training pandas DataFrame" in text
+    leaky = 'File "/x/script.py", line 3\nKeyError: \'patient 0042 value 13.1\'\n'
+    assert "0042" not in diagnostics({"stderr": leaky}, allow_samples=False)
+
+
+def test_brain_prompt_forbids_text_tool_calls():
+    from mlca.evaluation.brain import prompt_text
+
+    card = NS(template="tabular_classification", brief={}, custom_instructions=[])
+    assert "Never write a tool call as text" in prompt_text(card, "/p")

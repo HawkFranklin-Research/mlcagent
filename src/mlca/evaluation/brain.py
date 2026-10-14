@@ -33,6 +33,7 @@ def prompt_text(card, root):
                 "Ordered custom instructions (issue each once in its event; retain refusals): "
                 + canonical(instructions(card)),
                 "Use mlca_open, mlca_status and mlca_options; propose validated options and submit scripts as requested.",
+                "Act only through real tool calls. Never write a tool call as text or JSON in your reply; it does nothing.",
                 "Request human-only decisions through approvals; the separate task-card policy resolves only declared approvals.",
                 "Poll long steps. Never read data or key files, use a shell, approve your own requests, change the protocol after test exposure, or replace failed Worker code.",
                 "Stop at completed report or an unrecoverable failure and explain the category.",
