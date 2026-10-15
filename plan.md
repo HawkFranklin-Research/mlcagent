@@ -1,6 +1,45 @@
 # MLCA v2: implementation plan
 
-## Current P17/P18 status — 14 October 2026
+## Organized plan (15 October 2026): an autonomous agent with rails
+
+**This is the organized plan from 15 October 2026 (author decision). Work below it that is not done is stopped:** the P9 remainder, the open parts of P12–P15, the unfinished P17/P18 items (A8 per-client smoke runs, A9 freeze as written, Phases B and C as written), `plan_mcp.md` §14 MB6 and M7, and the browser plans (`plan_web.md`, `plan_web_mcp.md`). Their text is kept as history; nothing is removed. Built features stay in the code.
+
+**Goal.** MLCA becomes an agent that goes from a dataset to a report **autonomously**, inside **rails**: fixed instructions, prompts and engine checks that belong to the agent, not to a study. The evaluation answers: how often does the agent complete steps, where does it fail, how many repairs does it need, what does it cost in tokens and time, and how much human help does it need?
+
+**Design.**
+
+| Phase | Datasets | What happens | Agent may change? |
+|---|---|---|---|
+| 1 · Development | about 10 public tables (UCI and similar), simple and complex: binary, multiclass and multi-label classification, regression, clustering, representation learning (e.g. autoencoders) | autonomous runs with open and closed models; each failure is analysed and fixed as a rail; repeat until the agent completes reliably | yes |
+| Freeze | — | version, rails, prompts and templates tagged; preregistration committed in `../mlcagent-experiments/` | — |
+| 1b · Held-out tables | 2–3 further public tables, never run before the freeze | show that the rails generalise | no |
+| 2 · Evaluation | biomedical studies (`../mlcagent-experiments/bio-bench/`) with a short starting brief each | arm A autonomous; arm B human-on-the-loop; open and closed models | no |
+
+**Survival is outside the rails:** no survival table in development; survival appears only in evaluation. A fix found after the freeze is a later version, and its runs are labelled as such.
+
+**Work items (order to be confirmed after discussion):**
+
+| # | Item | Done when |
+|---|---|---|
+| O1 | **`mlca run <path>`**: one command for a file or folder. With no task card, the agent inspects the data, proposes the task, target and problem type, and records each proposal with its reason. It asks the user only when genuinely unsure, offering its recommendation; in the autonomous arm its recommendation stands | runs from a bare dataset to `report` on a synthetic table with a scripted model; every inferred choice is in the event log |
+| O2 | **Halt window**: each agent decision is shown with a countdown (default 60 s, configurable, recorded in the run snapshot). Halting lets the human choose another option or give an instruction; otherwise the agent's choice stands. Window 0 = autonomous arm | halts, overrides and expired windows are logged with principal and timing; tests with a fake clock |
+| O3 | **Rails layer**: rails are explicit, versioned files (one id per rail: instruction, prompt fragment or engine check; scope; reason), loaded into the Navigator and Worker prompts and the checks. Their hash goes into `RunSnapshot` | the rails set and its hash appear in every run; changing a rail changes the hash |
+| O4 | **Rails ledger**: each rail links to the failure that caused it (dataset, model, run path, step, failure category) and to the commit that added it | ledger entries validate against the run evidence; generated summary table |
+| O5 | **Problem types**: templates for regression, multi-label classification, clustering and representation learning, beside `tabular_classification` (binary/multiclass) and `survival` | each template validated; synthetic end-to-end run per template with a scripted model |
+| O6 | **Development tables**: about 10 in `benchmarks/datasets/` plus 2–3 held-out tables kept apart until the freeze; dataset card, licences, SHA-256, pull script. The 4 current classification tables join; the 2 survival tables move to evaluation | card and hashes complete; held-out files not readable by development runs |
+| O7 | **Measures**: existing `mlca metrics` plus halts, overrides, questions asked, rails version; summary across arm × model × dataset | summary on scripted runs; unknown values never written as zero |
+| O8 | **Development loop** (live, author go-ahead): runs → failure analysis → rail → rerun, every run kept | the agent completes the development tables reliably with the chosen models |
+| O9 | **Freeze** (version, tag, rails hash, CHANGELOG) and preregistration; then held-out tables, then evaluation arms A and B | tag exists; experiments repository records the commit |
+
+**Open decisions:** the development and held-out tables; the name of the development set (today `bench`); how specific the evaluation briefs may be; how survival enters evaluation; models and N; whether brain mode over MCP is evaluated too; a comparison arm.
+
+**Starting state:** `master` at `ad92ebd` (Nemotron development validation fixes; 327 offline tests pass, 1 skipped). No completed live run.
+
+**Limits:** no push, publication, upload or live model call without the author's go-ahead.
+
+---
+
+## Current P17/P18 status — 14 October 2026 (stopped where not done; see the organized plan above)
 
 **Author decision (2026-10-14): the no-AI reference arm is dropped from all bench and bio-bench comparisons.** Only real model runs are measured (driver and brain arms). The reference code stays in the repository unused; the seven offline reference attempts of 14 October are development tests, not experiments.
 

@@ -1,4 +1,10 @@
-# Current work order status — 14 October 2026
+# Handoff — 15 October 2026: organized plan
+
+**Read `plan.md`, section "Organized plan (15 October 2026)", first.** MLCA is now developed as an autonomous agent with rails: `mlca run <path>`, a halt window for the human, an explicit rails layer with a ledger of the failures that caused each rail, and templates for more problem types. Rails are developed on about 10 public tables, frozen, then checked on 2–3 held-out tables and evaluated on the biomedical studies. Unfinished P17/P18 items and `plan_mcp.md` MB6/M7 are stopped. `master` is at `ad92ebd` (327 passed, 1 skipped). No completed live run. Open decisions are listed in the plan; the first is the list of development and held-out tables. No push, publication, upload or live call without the author's go-ahead.
+
+---
+
+# Work order status — 14 October 2026 (historical)
 
 **WP1–WP7 completed locally; stopped after package 7.** P17 E1/E2 and the P18 packages
 are implemented. E3 was deliberately not built. Work remains on `master`; the existing remote

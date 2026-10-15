@@ -1,5 +1,7 @@
 # Benchmarks: datasets for `mlca bench`
 
+> **15 October 2026 (organized plan, `../plan.md`):** these tables start the **development set** on which the agent's rails are built: about 10 tables, simple and complex, covering binary, multiclass and multi-label classification, regression, clustering and representation learning, plus 2–3 **held-out** tables kept apart and run only after the freeze. The four classification tables below join the development set; the two survival tables leave it, because survival is evaluated outside the rails. The final list (and possibly a new folder name) is still to be decided.
+
 Six small public tables (7.7 MB) on which `mlca bench` measures MLCA as an agent with built-in templates and choices. They are copied unchanged (SHA-256 in `datasets/SHA256SUMS.txt`) from the former `mlca-paper-codebases/benchmark_datasets/`, now archived. `datasets/pull_datasets.py` regenerates them.
 
 | File | Template | Rows × columns | Outcome |

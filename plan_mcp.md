@@ -1,5 +1,7 @@
 # MLCA MCP server: implementation plan
 
+> **15 October 2026:** the organized plan is in `plan.md`, section "Organized plan (15 October 2026)". Unfinished MCP work here (§14 MB6 live smoke runs, M7) is stopped; the text is kept as history. The built server (16 tools, brain and driver modes) stays. Whether brain mode over MCP is part of the evaluation is an open decision.
+
 Plan for a coding agent. It adds an **MCP server** to MLCA v2, so that general agents (Claude Code, Codex, Hermes, OpenClaw, Cursor, and any other MCP client) can drive an MLCA project. The engine's rules stay in force whoever is driving.
 
 Written 2026-10-06. Companion to `plan.md`, which covers the core harness; read `plan.md` sections 0, 2 and 3 first. Every rule in `plan.md` section 0 applies here too: new code, offline tests, no hard-coded models, local commits only, nothing published. Record each decision in `docs/DECISIONS.md` and each deviation from this plan, with its reason.

@@ -7,6 +7,8 @@ onboard → data → eda → split 🔒 → preprocess → features → model �
                                      └──────── iteration loop (validation only) ────────┘
 ```
 
+> **In development (from 15 October 2026):** an autonomous mode, `mlca run <path>`. The agent explores the data, infers the task and target, makes each decision itself inside fixed **rails** (instructions, prompts and engine checks) and writes the report. A human can halt any decision within a short window; otherwise the agent's choice stands. Rails are developed on about 10 public tables, then frozen and evaluated on held-out tables and biomedical studies. See [plan.md](plan.md), "Organized plan (15 October 2026)". Not yet released.
+
 ## How a step works
 
 1. **Status:** the engine rebuilds the project state from its event log.
@@ -171,6 +173,8 @@ confidentiality for brain mode.
 
 ## Evaluation runs: `mlca bench` and `mlca bio-bench`
 
+From 15 October 2026 the evaluation follows the organized plan in [plan.md](plan.md): the public tables become the **development set** on which the rails are built (plus 2–3 held-out tables run only after the freeze), and the biomedical studies are the **evaluation**, run autonomously and with a human on the loop. The table below describes the commands as they exist today.
+
 | | `mlca bench` | `mlca bio-bench` |
 |---|---|---|
 | What | Agent metrics on standard public tables, with built-in templates and choices only | Biomedical studies S1–S4: built-in choices, then custom instructions |
@@ -212,9 +216,13 @@ Six public tables for `mlca bench` and hands-on testing are in `benchmarks/datas
 | `lung_cancer_survival.csv` | `survival` | duration `time`, event **`status`** (`event` is all zeros: known defect) |
 | `gbsg2_breast_cancer_survival.csv` | `survival` | duration `time`, event `cens` |
 
-Offline reference-arm acceptance runs on all six completed on 2026-10-13. Live model runs had not completed as of 2026-10-14 (provider rate limits).
+Offline reference-arm acceptance runs on all six completed on 2026-10-13. Live model runs had not completed as of 2026-10-15: Nemotron development runs reached 5–10 of 12 steps.
+
+Under the organized plan, these tables start the development set (about 10 tables, 2–3 more held out); the two survival tables leave development, because survival is evaluated outside the rails.
 
 ## Status
+
+- **Organized plan (15 October 2026):** autonomous agent with rails, `mlca run`, halt window, rails ledger, more problem types; development on public tables, freeze, held-out tables, then biomedical evaluation. Unfinished earlier plan items are stopped. See [plan.md](plan.md). Source at `ad92ebd`: 327 offline tests pass, 1 skipped; no completed live run. The status entries below are earlier.
 
 - **Unpublished MX source:** MCP/TUI alignment MX1–MX6 is implemented; 202 offline tests pass, 1 skipped. Guided human cards, study-field proposals, live TUI observation, phases and attribution metrics are available from the local checkout. Public beta 2 lacks these changes; beta 3 awaits author authorization.
 
