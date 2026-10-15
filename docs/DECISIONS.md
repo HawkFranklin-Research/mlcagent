@@ -714,3 +714,14 @@ A1 execution incidentally copied held-out files into an ignored local sdist. No
 profiling or model exposure occurred. The generated sdist was removed and rebuilt
 with all benchmark datasets excluded; archive names confirm zero dataset paths.
 Future builds exclude these inputs. Held-out source files were not modified.
+
+## Work order 04 A2 — unsupervised agent, external labelled evaluation
+
+Author decision: hidden evaluation labels are removed at registration, not sealed
+and unlocked within a study. The original source remains outside the project;
+only the projected table is registered and mounted. Label-dependent ARI/NMI and
+linear-probe scoring are external, explicitly not agent work. New templates retain
+the existing fit-stage/test-lock restrictions. Per-row outputs are local-only data
+artifacts and must match the frozen population. Autonomous prepared tables retain
+source row indexes in Parquet. Legacy classification and survival paths remain
+compatible; several targets are represented by validated column fields.

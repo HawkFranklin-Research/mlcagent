@@ -68,6 +68,7 @@ class ActionSpec(Spec):
     timeout_s: int = Field(default=300, ge=1, le=86400)
     methods_text: str = ""
     builtin: Literal["split", "report", "inventory"] | None = None
+    prepares_data: str | None = None
 
 
 class TemplateSpec(Spec):

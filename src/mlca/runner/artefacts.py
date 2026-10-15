@@ -42,6 +42,26 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
             matched = guard(root, state).file_contains_rows(path)
             entry["contains_data_rows"] = matched
             entry["row_privacy_checked"] = matched is not None
+        if kind == "data" and path.suffix == ".parquet" and action.event == "test":
+            import pandas as pd
+
+            rows = pd.read_parquet(path)
+            if not {"row_id", "partition"} <= set(rows):
+                raise MlcaUserError("Per-row evaluation outputs require row_id and partition")
+            if rows.row_id.duplicated().any() or rows.row_id.isna().any():
+                raise MlcaUserError("Per-row evaluation identifiers are not unique")
+            membership = pd.read_csv(root / state.split["manifest"]["path"])
+            wanted = membership[membership.partition.isin(["train", "test"])].rename(
+                columns={"row_id": "row_id"}
+            )
+            got = rows[["row_id", "partition"]]
+            if (
+                not got.sort_values("row_id")
+                .reset_index(drop=True)
+                .equals(wanted.sort_values("row_id").reset_index(drop=True))
+            ):
+                raise MlcaUserError("Per-row output populations differ from the frozen train/test split")
+            entry["local_only"] = True
         outputs.append(entry)
         if kind == "figure":
             figures.append(entry)

@@ -1,0 +1,28 @@
+id: score_validation
+event: validate
+title: Score candidates on validation rows
+params: {}
+prompt: 'Do: Silhouette, Calinski-Harabasz, Davies-Bouldin and stability across training
+  resamples. Choose cluster count on training/internal validation only; use a bounded
+  candidate range. No labels exist in this project. Score only val; do not fit. Freeze
+  the validation-selected candidate before test.
+
+  Save: validation_metrics.csv (model, metric, value).
+
+  Record: metric silhouette on val; fact best_validation_score (source validation_metrics.csv).'
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+outputs:
+- name: validation_metrics.csv
+  kind: table
+  required: true
+fact_candidates:
+- best_model
+- best_validation_score
+reads_test: false
+timeout_s: 300
+methods_text: Follow the recorded task and saved model contract; all fitting uses
+  training rows only.
+builtin: null

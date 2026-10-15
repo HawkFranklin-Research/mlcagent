@@ -62,3 +62,24 @@ through Session.resolve_study; it resets Onboard generations/confirmations and p
 brief. Single-table legacy projects retain compatibility; frozen historical templates are not edited.
 Supporting tables are never implicitly merged and original inputs remain inaccessible after split.
 See [native onboarding](native-onboarding.md).
+
+## Autonomous problem types (work order 04 A2)
+
+New initial templates cover regression (including multiple numeric targets), multiple
+categorical outputs, clustering and representation learning. They retain the same
+event graph, training-only fit evidence and final test lock. Regression defaults to
+RMSE; multiple-output metrics are per-output and averaged. Clustering uses internal
+metrics; representation uses reconstruction error. Scientific reliability is not
+established by the scripted fixture tests.
+
+Clustering may choose a generated entity-feature action for transaction tables.
+This deterministic, non-fitted transformation becomes the analysis table before
+the split; fitted transformations still belong after the split.
+
+Evaluation-only columns are excluded at registration, before inventory and step
+inputs. Hidden label values and source files are not copied into the project.
+Unsupervised templates never fit a supervised probe. Required final per-row
+Parquet artifacts contain source row IDs and partition names, plus assignments or
+embeddings; they are local data artifacts, not LLM-readable summary tables.
+Their populations must match the frozen training and test partitions. External
+evaluation lives in the experiments repository and is labelled as researcher code.

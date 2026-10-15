@@ -137,6 +137,11 @@ def load(path: Path) -> Workflow:
                     f"events/{event.id}.yaml: supporting action {identifier} must not be covered by a sub-goal check"
                 )
     for action in actions.values():
+        if action.prepares_data and (
+            action.event not in {"data", "eda"}
+            or action.prepares_data not in {o.name for o in action.outputs if o.kind == "data"}
+        ):
+            raise MlcaUserError("Prepared data must be a declared pre-split data output")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", action.id):
             raise MlcaUserError(f"actions/{action.id}.yaml: unsafe action identifier")
         for parameter in action.params.values():

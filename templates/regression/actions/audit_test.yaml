@@ -1,0 +1,26 @@
+id: audit_test
+event: test
+title: Save test predictions of the frozen model
+params: {}
+prompt: 'Do: per test row: row index, outcome, prediction of the frozen model. No
+  other columns.
+
+  Save: test_predictions.csv.
+
+  '
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+- ref: test
+outputs:
+- name: test_predictions.csv
+  kind: table
+  required: true
+fact_candidates: []
+reads_test: true
+timeout_s: 300
+methods_text: Follow the recorded task and saved model contract; all fitting uses
+  training rows only.
+builtin: null
+role: supporting

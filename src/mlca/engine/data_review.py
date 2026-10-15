@@ -41,6 +41,35 @@ def context_key(state):
 
 def findings(frame, columns, template, repeated="", outcome_reviewed=False, excluded=(), phase="all"):
     target = columns.get("target")
+    if template in {"regression", "multilabel_classification", "clustering", "representation"}:
+        targets = [c for c in columns.values() if c is not None]
+        if phase == "train":
+            return []
+        result = []
+        if targets and frame[targets].isna().any().any():
+            result.append(
+                {
+                    "key": "missing_outcomes",
+                    "header": "Missing outcomes",
+                    "question": "Exclude rows with missing outcomes before the frozen split?",
+                    "recommended": 0,
+                    "explicit": True,
+                    "human_only": True,
+                    "options": [
+                        {
+                            "label": "Exclude missing outcomes",
+                            "description": "Keep complete targets",
+                            "effect": {"kind": "drop_missing", "columns": targets},
+                        },
+                        {
+                            "label": "Keep unchanged",
+                            "description": "Retain missing targets",
+                            "effect": {"kind": "keep"},
+                        },
+                    ],
+                }
+            )
+        return result
     if target not in frame:
         raise MlcaUserError("Choose the outcome column before reviewing the table", category="gate_blocked")
     result = []
@@ -336,7 +365,7 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
     return [q for q in result if phase != "train" or q["key"].startswith("leakage:")]
 
 
-def apply(frame, decisions):
+def apply(frame, decisions, preserve_index=False):
     frame = frame.copy()
     excluded, group, mode = [], None, None
     for decision in decisions:
@@ -371,10 +400,30 @@ def apply(frame, decisions):
             frame[column] = (frame[column].astype(str) == effect["value"]).astype(int)
             mode = "binary"
     # Keep grouping columns in the partitions, but exclude them from prediction through the protocol.
-    return frame.reset_index(drop=True), sorted(set(excluded)), group, mode
+    return (frame if preserve_index else frame.reset_index(drop=True)), sorted(set(excluded)), group, mode
 
 
 def task_for(frame, state, mode=None):
+    if state.template_id in {"regression", "multilabel_classification", "clustering", "representation"}:
+        task = dict(state.task)
+        targets = [c for c in state.columns.values() if c is not None]
+        defaults = {
+            "regression": "rmse",
+            "multilabel_classification": "macro_f1",
+            "clustering": "silhouette",
+            "representation": "reconstruction_error",
+        }
+        kind = (
+            "multioutput_regression"
+            if state.template_id == "regression" and len(targets) > 1
+            else {"multilabel_classification": "multilabel"}.get(state.template_id, state.template_id)
+        )
+        return {
+            **task,
+            "type": kind,
+            "targets": targets,
+            "primary_metric": task.get("primary_metric", defaults[state.template_id]),
+        }
     target = state.columns["target"]
     n = int(frame[target].nunique())
     if state.template_id == "survival":
@@ -402,14 +451,27 @@ def prepared(session):
     if any(qid not in state.answers for qid in state.questions):
         raise MlcaUserError("Answer the data-review questions first", category="gate_blocked")
     raw = source_frame(state)
-    frame, excluded, group, mode = apply(raw, state.data_decisions)
-    excluded = sorted(set(excluded + state.outcome_exclusions))
-    task = task_for(frame, state, mode)
+    frame, excluded, group, mode = apply(
+        raw, state.data_decisions, preserve_index=bool(state.task.get("autonomous"))
+    )
+    group = group or state.group_column
+    excluded = sorted(
+        set(
+            excluded
+            + state.outcome_exclusions
+            + (state.excluded_columns if state.task.get("autonomous") else [])
+        )
+    )
+    task = {**state.task, **task_for(frame, state, mode)}
     frame = frame.drop(columns=[c for c in excluded if c != group], errors="ignore")
     digest = hashlib.sha256(
         canonical({"source": context_key(state), "decisions": state.data_decisions}).encode()
     ).hexdigest()
-    suffix = Path(state.data[primary_for(state)]["original_path"]).suffix.lower()
+    suffix = (
+        ".parquet"
+        if state.task.get("autonomous")
+        else Path(state.data[primary_for(state)]["original_path"]).suffix.lower()
+    )
     path = session.root / ".mlca/data/prepared" / (digest + suffix)
     if state.prepared_data:
         path = session.root / state.prepared_data["path"]
@@ -418,7 +480,7 @@ def prepared(session):
         return path
     path.parent.mkdir(parents=True, exist_ok=True)
     if suffix == ".parquet":
-        frame.to_parquet(path, index=False)
+        frame.to_parquet(path, index=bool(state.task.get("autonomous")))
     else:
         frame.to_csv(path, index=False, sep="\t" if suffix == ".tsv" else ",")
     session.emit("TaskConfigured", {"task": task, "excluded_columns": excluded, "group_column": group})
@@ -444,6 +506,7 @@ def protocol_input(session):
         "task": state.task,
         "excluded_columns": state.excluded_columns,
         "group_column": state.group_column,
+        "targets": [c for c in state.columns.values() if c is not None],
         "seed": 42,
         "bootstrap_resamples": 1000,
     }

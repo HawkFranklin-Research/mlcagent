@@ -82,8 +82,29 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
         path = root / state.prepared_data["path"]
         if sha256(path) != state.prepared_data["sha256"]:
             raise IntegrityError("Prepared input changed")
-    frame = read_table(path).reset_index(drop=True)
-    assignments = partitions(frame, params, column_for(state))
+    frame = read_table(path)
+    if not state.task.get("autonomous"):
+        frame = frame.reset_index(drop=True)
+    if not frame.index.is_unique:
+        raise MlcaUserError("Row identifiers must be unique before freezing partitions")
+    target = column_for(state) if state.template_id not in {"clustering", "representation"} else ""
+    if state.group_column:
+        params = {**params, "method": "group", "group_column": state.group_column}
+    elif state.task.get("time_columns"):
+        time_columns = state.task["time_columns"]
+        # Lexicographic time tuple; use a private temporary sort key without changing data columns.
+        frame = frame.copy()
+        key = "__mlca_time_order__"
+        if key in frame:
+            raise MlcaUserError("Reserved time ordering name conflicts with data")
+        frame[key] = list(map(tuple, frame[time_columns].itertuples(index=False, name=None)))
+        assignments = partitions(frame, {**params, "method": "time", "time_column": key}, target)
+        frame = frame.drop(columns=[key])
+        params = {**params, "method": "time", "time_columns": time_columns}
+    else:
+        assignments = None
+    if state.group_column or not state.task.get("time_columns"):
+        assignments = partitions(frame, params, target)
     if state.group_column:
         frame = frame.drop(columns=[state.group_column])
     from mlca.privacy.rows import guard

@@ -38,7 +38,16 @@ def resolve_columns(
     brief: dict, inventory: list[dict], template_id: str, picker: Callable | None = None
 ) -> dict:
     available = inventory[0]["columns"]
+    if template_id in {"clustering", "representation"}:
+        return {}
     fields = {"target": brief.get("target", "")}
+    if template_id in {"regression", "multilabel_classification"}:
+        import json
+
+        targets = json.loads(brief.get("targets", "[]")) or [brief.get("target", "")]
+        if not isinstance(targets, list) or not all(isinstance(t, str) for t in targets):
+            raise MlcaUserError("Targets must be a JSON list of column names")
+        fields = {("target" if i == 0 else f"target_{i + 1}"): t for i, t in enumerate(targets)}
     if template_id == "survival":
         fields["target"] = brief.get("duration") or brief.get("target", "")
         fields["duration"] = brief.get("duration") or brief.get("target", "")
@@ -60,7 +69,12 @@ def primary_for(state) -> str:
 
 def study_ready(state) -> tuple[bool, str]:
     try:
-        column_for(state)
+        if state.template_id not in {"clustering", "representation"}:
+            column_for(state)
+            for field in state.columns:
+                column_for(state, field)
+        else:
+            primary_for(state)
         if state.template_id == "survival":
             column_for(state, "duration")
             column_for(state, "event_column")
@@ -98,6 +112,8 @@ def _build_initialisation(
     principal: str = "user",
     primary_data: str | None = None,
     data_roles: dict[str, str] | None = None,
+    exclude_columns: tuple[str, ...] = (),
+    final_root: Path | None = None,
 ) -> Path:
     root = path.resolve()
     validated_config = Config.model_validate(config or {})
@@ -107,15 +123,30 @@ def _build_initialisation(
         )
     workflow = get(template_id)
     registered = []
+    local_paths = {}
     for name, file in registrations(discover(data)):
         if not file.is_file():
             raise MlcaUserError(f"Data file does not exist: {file}")
         if name in {item["name"] for item in registered}:
             raise MlcaUserError("Registered data names must be unique")
+        source_digest = sha256(file)
+        if exclude_columns:
+            from .inventory import read_table
+
+            frame = read_table(file)
+            frame = frame.drop(columns=list(exclude_columns), errors="ignore")
+            if frame.empty or not len(frame.columns):
+                raise MlcaUserError("Exclusion leaves no usable data")
+            file = root / ".mlca/data/registered" / (name + ".parquet")
+            file.parent.mkdir(parents=True, exist_ok=True)
+            frame.to_parquet(file, index=True)
+        local_paths[name] = file
+        destination = (final_root / file.relative_to(root)) if exclude_columns else file
         registered.append(
             {
                 "name": name,
-                "original_path": str(file),
+                "original_path": str(destination),
+                "source_sha256": source_digest,
                 "sha256": sha256(file),
                 "size": file.stat().st_size,
                 "read_only": True,
@@ -128,7 +159,7 @@ def _build_initialisation(
         item["role"] = data_roles.get(item["name"], data_roles.get(item["original_path"], "discovery"))
         if item["role"] not in {"discovery", "external"}:
             raise MlcaUserError("Table role must be discovery or external")
-    inventory = [scan(item["name"], Path(item["original_path"])) for item in registered]
+    inventory = [scan(item["name"], local_paths[item["name"]]) for item in registered]
     if primary_data is not None:
         primary_data = next(
             (
@@ -166,7 +197,7 @@ def _build_initialisation(
     (root / ".mlca/project.yaml").write_text(yaml.safe_dump(settings, sort_keys=False), encoding="utf-8")
     from mlca.privacy.rows import RowFingerprints
 
-    RowFingerprints(root).ensure(registered)
+    RowFingerprints(root).ensure([{**i, "original_path": str(local_paths[i["name"]])} for i in registered])
     store = Store(root)
     store.append(
         "ProjectCreated",
@@ -261,6 +292,7 @@ def initialise(
     principal="user",
     primary_data=None,
     data_roles=None,
+    exclude_columns=(),
 ):
     root = Path(path).expanduser().resolve()
     locks = user_data_dir() / "init-locks"
@@ -289,6 +321,11 @@ def initialise(
                     principal,
                     primary_data,
                     data_roles,
+                    **(
+                        {"exclude_columns": tuple(exclude_columns), "final_root": root}
+                        if exclude_columns
+                        else {}
+                    ),
                 )
                 _rebase_environment(staged, root)
                 if (root / ".mlca").exists() or (root / ".mlca").is_symlink():

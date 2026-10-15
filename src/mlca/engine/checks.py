@@ -73,7 +73,14 @@ def evaluate(
             == (
                 state.task.get(
                     "primary_metric",
-                    "roc_auc" if state.template_id == "tabular_classification" else "c_index",
+                    {
+                        "tabular_classification": "roc_auc",
+                        "survival": "c_index",
+                        "regression": "rmse",
+                        "multilabel_classification": "macro_f1",
+                        "clustering": "silhouette",
+                        "representation": "reconstruction_error",
+                    }.get(state.template_id, ""),
                 )
                 if spec["name"] == "primary"
                 else spec["name"]

@@ -101,6 +101,23 @@ def finish(session, action, observation):
                     )
                 except MlcaUserError as exc:
                     session.emit("Note", {"text": "Figure inspection unavailable: " + str(exc)})
+    if action.prepares_data:
+        from mlca.paths import sha256
+        from mlca.project.inventory import read_table
+
+        output = next(o for o in observation["outputs"] if o["name"] == action.prepares_data)
+        frame = read_table(session.root / output["path"])
+        if frame.empty or not frame.index.is_unique:
+            raise MlcaUserError("Prepared analysis table needs nonempty rows and unique row identifiers")
+        session.emit(
+            "DataPrepared",
+            {
+                "path": output["path"],
+                "sha256": output["sha256"],
+                "source_sha256": session.state.data[session.state.primary_data]["sha256"],
+                "decision_sha256": sha256(session.root / output["path"]),
+            },
+        )
     session.rails.run(session, "after_step")
     session.progress("Checking sub-goals")
     checks.run_all(session.state, session.workflow, session.root, session.emit)

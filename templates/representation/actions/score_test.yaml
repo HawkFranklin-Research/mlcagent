@@ -1,0 +1,37 @@
+id: score_test
+event: test
+title: Score the frozen model on test rows
+params: {}
+prompt: 'Do: Mean squared reconstruction error. Choose the lowest validation reconstruction
+  error; never train a supervised probe in this project. For the autoencoder save
+  a complete reconstructing pipeline and extract its bottleneck activations without
+  fitting again. Score only test; do not fit. Freeze the validation-selected candidate
+  before test.
+
+  Save: test_metrics.csv (model, metric, value).
+
+  Record: metric reconstruction_error on test; fact test_score (source test_metrics.csv).
+
+  Save: embeddings.parquet, one row per training and test source row; row_id = original
+  DataFrame index, partition = train/test, and embedding_0, embedding_1, ... numeric
+  dimensions. Use save_row_outputs. These are local-only evaluator artifacts; never
+  expose them to an LLM.'
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+- ref: test
+outputs:
+- name: test_metrics.csv
+  kind: table
+  required: true
+- name: embeddings.parquet
+  kind: data
+  required: true
+fact_candidates:
+- test_score
+reads_test: true
+timeout_s: 300
+methods_text: Follow the recorded task and saved model contract; all fitting uses
+  training rows only.
+builtin: null

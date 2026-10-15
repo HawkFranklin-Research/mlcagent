@@ -182,3 +182,19 @@ def set_seed(seed: int) -> None:
     import numpy as np
 
     np.random.seed(seed)
+
+
+def save_row_outputs(frame: Any, name: str) -> Path:
+    """Save local per-row results for an external evaluator, never an LLM summary."""
+    if not {"row_id", "partition"} <= set(frame.columns):
+        raise ValueError("MLCA: row outputs require row_id and partition")
+    if frame["row_id"].isna().any() or frame["row_id"].duplicated().any():
+        raise ValueError("MLCA: row identifiers must be unique and nonmissing")
+    if not set(frame["partition"]) <= {"train", "val", "test"}:
+        raise ValueError("MLCA: row outputs have invalid partitions")
+    path = _output(name)
+    if path.suffix != ".parquet":
+        raise ValueError("MLCA: per-row outputs must use Parquet")
+    frame.to_parquet(path, index=False)
+    _artifact(path, "data")
+    return path

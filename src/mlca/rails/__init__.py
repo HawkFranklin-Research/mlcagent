@@ -85,10 +85,14 @@ class Rails:
 
 
 def problem_type(state):
-    return state.task.get("kind") or {
-        "tabular_classification": "binary",
-        "multilabel_classification": "multilabel",
-    }.get(state.template_id, state.template_id)
+    return (
+        state.task.get("type")
+        or state.task.get("kind")
+        or {
+            "tabular_classification": "binary",
+            "multilabel_classification": "multilabel",
+        }.get(state.template_id, state.template_id)
+    )
 
 
 def load(path: Path) -> Rails:

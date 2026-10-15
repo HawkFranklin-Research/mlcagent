@@ -79,6 +79,7 @@ RUNTIME_HELPERS = (
     "save_json",
     "save_figure",
     "save_model",
+    "save_row_outputs",
     "record_metric",
     "record_fact_candidate",
 )

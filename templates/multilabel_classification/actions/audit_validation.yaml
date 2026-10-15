@@ -1,0 +1,25 @@
+id: audit_validation
+event: validate
+title: Save validation predictions for error analysis
+params: {}
+prompt: 'Do: per validation row: row index, outcome, predicted value per candidate
+  model. No other columns.
+
+  Save: validation_predictions.csv.
+
+  '
+inputs:
+- ref: train
+- ref: val
+- ref: prior_outputs
+outputs:
+- name: validation_predictions.csv
+  kind: table
+  required: true
+fact_candidates: []
+reads_test: false
+timeout_s: 300
+methods_text: Follow the recorded task and saved model contract; all fitting uses
+  training rows only.
+builtin: null
+role: supporting

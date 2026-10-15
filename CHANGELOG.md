@@ -405,3 +405,10 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 - Add validated, scoped and snapshotted workflow rails with an immutable run hash.
 - Keep historical projects and safeguards unchanged; baseline rails-0.0 has no new rules.
 - Exclude dataset inputs from source distributions as well as wheels.
+
+## Work order 04 A2 (unreleased)
+
+- Add regression, multi-output classification, clustering and representation templates.
+- Remove configured evaluation labels before registration and inventory.
+- Add checked local per-row output artifacts and pre-split entity aggregation actions.
+- Generalize outcome readiness and expose group/time split policies without relaxing test or fitting rules.
