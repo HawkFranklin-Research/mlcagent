@@ -1,0 +1,457 @@
+- id: breast_cancer_diagnostic
+  file: datasets/breast_cancer_diagnostic_uci.csv
+  role: development
+  problem_type: binary
+  level: simple
+  targets:
+  - Diagnosis
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps: []
+  source_url: https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic
+  uci_id: 17
+  licence: CC BY 4.0
+  citation: Wolberg, W., Mangasarian, O., Street, N., & Street, W. (1993). Breast Cancer Wisconsin (Diagnostic)
+    [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5DW2B.
+  route: existing bundled CSV; unchanged
+  conversion: none
+  columns: 31
+  rows: 569
+  bytes: 121248
+  sha256: 5c2238c5d8c38eefbbe1238b1c88f25cdee5299ad5010eb2103dd4b1e6a1c715
+  retrieved: '2026-10-15'
+- id: heart_disease_cleveland
+  file: datasets/heart_disease_cleveland_uci.csv
+  role: development
+  problem_type: binary
+  level: simple
+  targets:
+  - heart_disease_binary
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - heart_disease_binary is derived from source num
+  source_url: https://archive.ics.uci.edu/dataset/45/heart+disease
+  uci_id: 45
+  licence: CC BY 4.0
+  citation: Janosi, A., Steinbrunn, W., Pfisterer, M., & Detrano, R. (1989). Heart Disease [Dataset]. UCI Machine
+    Learning Repository. https://doi.org/10.24432/C52P4X.
+  route: existing bundled CSV; unchanged
+  conversion: none
+  columns: 15
+  rows: 303
+  bytes: 13099
+  sha256: d60c1050744de47db797974b237c3eca6cccb58742b2ccd7c619bb99b581873e
+  retrieved: '2026-10-15'
+- id: adult
+  file: datasets/adult_census_uci.csv
+  role: development
+  problem_type: binary
+  level: complex
+  targets:
+  - income
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - mixed types
+  - missing values
+  - label spelling variants
+  source_url: https://archive.ics.uci.edu/dataset/2/adult
+  uci_id: 2
+  licence: CC BY 4.0
+  citation: Becker, B. & Kohavi, R. (1996). Adult [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5XW20.
+  route: existing bundled CSV; unchanged
+  conversion: none
+  columns: 15
+  rows: 48842
+  bytes: 5291600
+  sha256: 82682cd3606b1c0592975abff21db758baed235950a2a9c02931c56f1b8157ee
+  retrieved: '2026-10-15'
+- id: dry_bean
+  file: datasets/dry_bean_uci.csv
+  role: development
+  problem_type: multiclass
+  level: medium
+  targets:
+  - Class
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - 7 classes
+  source_url: https://archive.ics.uci.edu/dataset/602/dry+bean+dataset
+  uci_id: 602
+  licence: CC BY 4.0
+  citation: Dry Bean (Dataset). (2020). UCI Machine Learning Repository [Dataset]. UCI Machine Learning Repository.
+    https://doi.org/10.24432/C50S4B.
+  route: existing bundled CSV; unchanged
+  conversion: none
+  columns: 17
+  rows: 13611
+  bytes: 2471169
+  sha256: 1330e4ccc5c54a925e43daf60d1409ac62dad2a21de9a25213765bee4b655787
+  retrieved: '2026-10-15'
+- id: covertype
+  file: datasets/covertype_uci.csv
+  role: development
+  problem_type: multiclass
+  level: complex
+  targets:
+  - Cover_Type
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - large table
+  - class imbalance
+  source_url: https://archive.ics.uci.edu/dataset/31/covertype
+  uci_id: 31
+  openml_data_id: 1596
+  amlb_task_id: 7593
+  licence: CC BY 4.0
+  citation: Blackard, J. (1998). Covertype [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C50K5N.
+  route: official archive covtype.data.gz
+  conversion: gzip decompressed; header from UCI variable table
+  columns: 55
+  rows: 581012
+  bytes: 75170064
+  sha256: ea35ca6820fcbe0bdc6707e9ed31e11a9de84f07d88da73b511c737383c271a6
+  retrieved: '2026-10-15'
+- id: anuran_calls
+  file: datasets/anuran_calls_uci.csv
+  role: development
+  problem_type: multilabel
+  level: complex
+  targets:
+  - Family
+  - Genus
+  - Species
+  evaluation_only: []
+  group_column: RecordID
+  time_columns: []
+  known_traps:
+  - group split by recording
+  source_url: https://archive.ics.uci.edu/dataset/406/anuran+calls+mfccs
+  uci_id: 406
+  licence: CC BY 4.0
+  citation: Colonna, J., Nakamura, E., Cristo, M., & Gordo, M. (2015). Anuran Calls (MFCCs) [Dataset]. UCI Machine
+    Learning Repository. https://doi.org/10.24432/C5CC9H.
+  route: official archive Frogs_MFCCs.csv
+  conversion: CSV reserialized with UTF-8 and LF line endings
+  columns: 26
+  rows: 7195
+  bytes: 3181655
+  sha256: 8b161e8d8535b871043cce7ecb7a3496e4b8baef377f1fe9bd4bc91b6effca38
+  retrieved: '2026-10-15'
+- id: abalone
+  file: datasets/abalone_uci.csv
+  role: development
+  problem_type: regression
+  level: simple
+  targets:
+  - Rings
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - categorical Sex feature
+  source_url: https://archive.ics.uci.edu/dataset/1/abalone
+  uci_id: 1
+  openml_data_id: 42726
+  amlb_task_id: 359944
+  licence: CC BY 4.0
+  citation: Nash, W., Sellers, T., Talbot, S., Cawthorn, A., & Ford, W. (1994). Abalone [Dataset]. UCI Machine Learning
+    Repository. https://doi.org/10.24432/C55C7W.
+  route: official archive abalone.data
+  conversion: header from UCI variable table
+  columns: 9
+  rows: 4177
+  bytes: 191962
+  sha256: add76d88a9dd9c7a9f147dd005725ce19dbfdf352877df9d28703486742d35a2
+  retrieved: '2026-10-15'
+- id: bike_sharing_hourly
+  file: datasets/bike_sharing_hourly_uci.csv
+  role: development
+  problem_type: regression
+  level: complex
+  targets:
+  - cnt
+  evaluation_only: []
+  group_column: null
+  time_columns:
+  - dteday
+  - hr
+  known_traps:
+  - casual and registered sum to cnt
+  - time order
+  source_url: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset
+  uci_id: 275
+  licence: CC BY 4.0
+  citation: Fanaee-T, H. (2013). Bike Sharing [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5W894.
+  route: official archive hour.csv
+  conversion: CSV reserialized with UTF-8 and LF line endings
+  columns: 17
+  rows: 17379
+  bytes: 1139356
+  sha256: b03a2d02e8c10f435c43c7f0b358b7e34a003afea53dbc37f0183f2763295133
+  retrieved: '2026-10-15'
+- id: energy_efficiency
+  file: datasets/energy_efficiency_uci.csv
+  role: development
+  problem_type: multioutput_regression
+  level: simple
+  targets:
+  - Y1
+  - Y2
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps: []
+  source_url: https://archive.ics.uci.edu/dataset/242/energy+efficiency
+  uci_id: 242
+  licence: CC BY 4.0
+  citation: Tsanas, A. & Xifara, A. (2012). Energy Efficiency [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C51307.
+  route: official archive ENB2012_data.xlsx
+  conversion: first worksheet exported to CSV; original X1–X8/Y1–Y2 headings retained
+  variables:
+    X1: Relative Compactness
+    X2: Surface Area
+    X3: Wall Area
+    X4: Roof Area
+    X5: Overall Height
+    X6: Orientation
+    X7: Glazing Area
+    X8: Glazing Area Distribution
+    Y1: Heating Load
+    Y2: Cooling Load
+  columns: 10
+  rows: 768
+  bytes: 33489
+  sha256: 88fb36f0eb6f0afdab8602f84e67d0d631790a604d7fe9beeb531be97f4ef553
+  retrieved: '2026-10-15'
+- id: seeds
+  file: datasets/seeds_uci.csv
+  role: development
+  problem_type: clustering
+  level: simple
+  targets: []
+  evaluation_only:
+  - variety
+  group_column: null
+  time_columns: []
+  known_traps:
+  - variety held for evaluation only
+  source_url: https://archive.ics.uci.edu/dataset/236/seeds
+  uci_id: 236
+  licence: CC BY 4.0
+  citation: Charytanowicz, M., Niewczas, J., Kulczycki, P., Kowalski, P., & Lukasik, S. (2010). Seeds [Dataset].
+    UCI Machine Learning Repository. https://doi.org/10.24432/C5H30K.
+  route: official archive seeds_dataset.txt
+  conversion: whitespace parsing; fixed header added from work order
+  columns: 8
+  rows: 210
+  bytes: 9386
+  sha256: e175383dd58fb4d3f8f31a03e992c477c871fdeb4754d7a504f448cdcba2c0a3
+  retrieved: '2026-10-15'
+- id: online_retail
+  file: datasets/online_retail_uci.csv
+  role: development
+  problem_type: clustering
+  level: complex
+  targets: []
+  evaluation_only: []
+  group_column: CustomerID
+  time_columns:
+  - InvoiceDate
+  known_traps:
+  - transactional; customer features must be constructed
+  - cancellation invoice numbers start C
+  source_url: https://archive.ics.uci.edu/dataset/352/online+retail
+  uci_id: 352
+  licence: CC BY 4.0
+  citation: Chen, D. (2015). Online Retail [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5BW33.
+  route: official archive Online Retail.xlsx
+  conversion: first worksheet exported; identifier fields read as text; InvoiceDate ISO 8601
+  columns: 8
+  rows: 541909
+  bytes: 47226068
+  sha256: 4d857902cbcaec35ab41d0d9ea60061c9324d0f04f27c91ffb89467e391f0508
+  retrieved: '2026-10-15'
+- id: optical_digits
+  file: datasets/optical_digits_uci.csv
+  role: development
+  problem_type: representation
+  level: medium
+  targets: []
+  evaluation_only:
+  - digit
+  group_column: null
+  time_columns: []
+  known_traps:
+  - digit held for evaluation only
+  - original train/test split not encoded
+  source_url: https://archive.ics.uci.edu/dataset/80/optical+recognition+of+handwritten+digits
+  uci_id: 80
+  licence: CC BY 4.0
+  citation: Alpaydin, E. & Kaynak, C. (1998). Optical Recognition of Handwritten Digits [Dataset]. UCI Machine Learning
+    Repository. https://doi.org/10.24432/C50P49.
+  route: official archive optdigits.tra followed by optdigits.tes
+  conversion: 64 pixel headers and digit header added; original split column omitted
+  columns: 65
+  rows: 5620
+  bytes: 828924
+  sha256: 930be32b2f41719c00cd6b9f9fa9e5769adb81ac136fe43a0bbbe784425d61a8
+  retrieved: '2026-10-15'
+- id: bank_marketing
+  file: heldout/bank_marketing_uci.csv
+  role: heldout
+  problem_type: binary
+  level: complex
+  targets:
+  - y
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps: []
+  source_url: https://archive.ics.uci.edu/dataset/222/bank+marketing
+  uci_id: 222
+  openml_data_id: 1461
+  amlb_task_id: 359982
+  licence: CC BY 4.0
+  citation: Moro, S., Rita, P., & Cortez, P. (2014). Bank Marketing [Dataset]. UCI Machine Learning Repository.
+    https://doi.org/10.24432/C5K306.
+  route: official archive bank.zip, nested bank-full.csv
+  conversion: semicolon-delimited source reserialized as comma-delimited UTF-8 CSV; unknown retained as text
+  columns: 17
+  rows: 45211
+  bytes: 3706094
+  sha256: b44507c26634736d4a0619ec2d7c4b6ff56a2c63cbeb5176d3134e7b25e416f0
+  retrieved: '2026-10-15'
+- id: steel_plates_faults
+  file: heldout/steel_plates_faults_uci.csv
+  role: heldout
+  problem_type: multiclass
+  level: complex
+  targets:
+  - Pastry
+  - Z_Scratch
+  - K_Scatch
+  - Stains
+  - Dirtiness
+  - Bumps
+  - Other_Faults
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps: []
+  source_url: https://archive.ics.uci.edu/dataset/198/steel+plates+faults
+  uci_id: 198
+  openml_data_id: 40982
+  amlb_task_id: 168784
+  licence: CC BY 4.0
+  citation: Buscema, M., Terzi, S., & Tastle, W. (2010). Steel Plates Faults [Dataset]. UCI Machine Learning Repository.
+    https://doi.org/10.24432/C5J88N.
+  route: official archive Faults.NNA plus Faults27x7_var
+  conversion: whitespace matrix reserialized as CSV; variable names added from official file
+  columns: 34
+  rows: 1941
+  bytes: 298004
+  sha256: 315b45ecd2b7ab441335dc83efa0daed49eb97e6eee59f9612b4b7a1048aeb03
+  retrieved: '2026-10-15'
+- id: wine_quality
+  file: heldout/wine_quality_uci.csv
+  role: heldout
+  problem_type: regression
+  level: medium
+  targets:
+  - quality
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps: []
+  source_url: https://archive.ics.uci.edu/dataset/186/wine+quality
+  uci_id: 186
+  amlb_task_id: 359935
+  licence: CC BY 4.0
+  citation: Cortez, P., Cerdeira, A., Almeida, F., Matos, T., & Reis, J. (2009). Wine Quality [Dataset]. UCI Machine
+    Learning Repository. https://doi.org/10.24432/C56S3T.
+  route: official archive winequality-red.csv followed by winequality-white.csv
+  conversion: semicolon to comma; color inserted before quality
+  columns: 13
+  rows: 6497
+  bytes: 384221
+  sha256: c0fca2ca864220c74a5ce85e63f8ba3cf11c401aa3dedfc4c3cca5f7a29d99cd
+  retrieved: '2026-10-15'
+- id: wholesale_customers
+  file: heldout/wholesale_customers_uci.csv
+  role: heldout
+  problem_type: clustering
+  level: simple
+  targets: []
+  evaluation_only:
+  - Channel
+  - Region
+  group_column: null
+  time_columns: []
+  known_traps: []
+  source_url: https://archive.ics.uci.edu/dataset/292/wholesale+customers
+  uci_id: 292
+  licence: CC BY 4.0
+  citation: Cardoso, M. (2013). Wholesale customers [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5030X.
+  route: official archive Wholesale customers data.csv
+  conversion: CSV reserialized with UTF-8 and LF line endings
+  columns: 8
+  rows: 440
+  bytes: 14580
+  sha256: d0213b7d856bc7f98f2f52a86bedb5cb57d5b8e19959605e75bd4532d4ee0896
+  retrieved: '2026-10-15'
+- id: lung_cancer_survival
+  file: datasets/lung_cancer_survival.csv
+  role: outside_rails
+  problem_type: survival
+  level: medium
+  targets:
+  - time
+  - status
+  evaluation_only: []
+  group_column: null
+  time_columns:
+  - time
+  known_traps:
+  - legacy event column is all zeros; use status
+  source_url: https://lifelines.readthedocs.io/en/latest/lifelines.datasets.html
+  licence: Not recorded in legacy dataset card
+  citation: Legacy bundled dataset citation/license metadata was not recorded; retained unchanged.
+  route: existing bundled CSV; unchanged
+  conversion: none
+  columns: 11
+  rows: 228
+  bytes: 9503
+  sha256: 81ea4657fd9d95cff85c8924792ea0442fd1106f0e318378caddc4fee0982395
+  retrieved: '2026-10-15'
+- id: gbsg2_breast_cancer_survival
+  file: datasets/gbsg2_breast_cancer_survival.csv
+  role: outside_rails
+  problem_type: survival
+  level: medium
+  targets:
+  - time
+  - cens
+  evaluation_only: []
+  group_column: null
+  time_columns:
+  - time
+  known_traps: []
+  source_url: https://lifelines.readthedocs.io/en/latest/lifelines.datasets.html
+  licence: Not recorded in legacy dataset card
+  citation: Legacy bundled dataset citation/license metadata was not recorded; retained unchanged.
+  route: existing bundled CSV; unchanged
+  conversion: none
+  columns: 10
+  rows: 686
+  bytes: 21819
+  sha256: 695954dbed9eaa619f9854f6c945bdccf5b21b12ea3fb46bd28797b9e8284d49
+  retrieved: '2026-10-15'
