@@ -129,7 +129,8 @@ def _model_scene(session, legal):
                 },
                 catalog=legal,
                 schema=Scene.model_json_schema(),
-            ),
+            )
+            + nav.rails_text(),
         }
     ]
     for attempt in range(2):

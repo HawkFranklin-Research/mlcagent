@@ -152,6 +152,9 @@ def _build_initialisation(
     # Freeze workflow content inside each project; user template edits cannot mutate historical studies.
     shutil.copytree(workflow.path, root / ".mlca/template", ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copy2(resource("styles") / "default.mplstyle", root / ".mlca/style.mplstyle")
+    from mlca.rails import snapshot
+
+    rails = snapshot(root / ".mlca/rails")
     project_id = str(ULID())
     settings = {
         "project_id": project_id,
@@ -170,6 +173,7 @@ def _build_initialisation(
         {
             "project_id": project_id,
             "measurement_arm": validated_config.measurement_arm,
+            "rails": rails,
             "mlca_version": __version__,
             "template_id": workflow.spec.id,
             "template_version": workflow.spec.version,

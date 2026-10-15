@@ -65,6 +65,9 @@ class Session:
         created = next((r for r in records if r.type.value == "ProjectCreated"), None)
         if not created or created.payload["template_sha256"] != self.workflow.sha256:
             raise IntegrityError("Project metadata disagrees with immutable log")
+        from mlca.rails import open_snapshot
+
+        self.rails = open_snapshot(self.root, created)
         self.config = load_config(self.root)
         from mlca.llm.switching import replay_configuration
 

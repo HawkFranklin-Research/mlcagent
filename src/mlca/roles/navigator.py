@@ -38,7 +38,8 @@ class Navigator(Role):
                     "navigator_options.md",
                     state=build(state, self.session.workflow),
                     schema=OptionsResponse.model_json_schema(),
-                ),
+                )
+                + self.rails_text(),
             }
         ]
         context = self.context("options")

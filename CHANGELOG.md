@@ -399,3 +399,9 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 - Curated, checksum-verified bench/bio-bench exports excluding private inputs and environments.
 - Verbatim custom outcomes retain refusals and incomplete protocol status.
+
+## Work order 04 A1 (unreleased)
+
+- Add validated, scoped and snapshotted workflow rails with an immutable run hash.
+- Keep historical projects and safeguards unchanged; baseline rails-0.0 has no new rules.
+- Exclude dataset inputs from source distributions as well as wheels.

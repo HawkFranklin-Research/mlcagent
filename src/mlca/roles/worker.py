@@ -102,7 +102,9 @@ def runtime_api():
 
 
 def render_order(session, action, params, inputs, state):
-    rendered = action.prompt
+    from mlca.rails import instructions
+
+    rendered = action.prompt + instructions(session, "worker")
     for key, value in params.items():
         rendered = rendered.replace("{" + key + "}", str(value))
     if state.guided_enabled:

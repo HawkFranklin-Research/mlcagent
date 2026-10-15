@@ -15,6 +15,7 @@ def execute(session: Any, action: Any, params: Any) -> Any:
         raise MlcaUserError(
             "Fitting and split changes are closed after project-wide test exposure", category="test_lock"
         )
+    session.rails.run(session, "before_step")
     session.turn_id = str(ULID())
     session.emit("TurnStarted", {"turn_id": session.turn_id})
     try:
@@ -100,6 +101,7 @@ def finish(session, action, observation):
                     )
                 except MlcaUserError as exc:
                     session.emit("Note", {"text": "Figure inspection unavailable: " + str(exc)})
+    session.rails.run(session, "after_step")
     session.progress("Checking sub-goals")
     checks.run_all(session.state, session.workflow, session.root, session.emit)
     edits = materialise(session.root, session.state, session.emit)

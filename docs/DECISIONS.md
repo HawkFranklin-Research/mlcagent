@@ -700,3 +700,17 @@ Final preparation still verifies the source hash and outcome domain. Two regress
 cover these paths; the full suite passes (296 passed, 1 skipped). No scientific rule or default
 was changed. One proteome ER development attempt was interrupted and resumed, with both
 the intervention note and logs retained; it is not a measured independent run.
+
+## Work order 04 A1 — explicit baseline rails
+
+Project-local rail snapshots are anchored in ProjectCreated and verified on open.
+Historical projects remain on their unchanged baseline. Instruction scopes are
+validated; executable references are restricted to a reviewed registry. No rail
+relaxes an existing engine rule. The baseline is rails-0.0; no historical prompts
+have been extracted without a failure-linked ledger entry.
+
+The existing distribution regression builds an sdist as well as a wheel. Its first
+A1 execution incidentally copied held-out files into an ignored local sdist. No
+profiling or model exposure occurred. The generated sdist was removed and rebuilt
+with all benchmark datasets excluded; archive names confirm zero dataset paths.
+Future builds exclude these inputs. Held-out source files were not modified.

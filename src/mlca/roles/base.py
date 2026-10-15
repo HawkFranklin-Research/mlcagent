@@ -21,6 +21,11 @@ class Role:
     def __init__(self, session: Any) -> None:
         self.session = session
 
+    def rails_text(self):
+        from mlca.rails import instructions
+
+        return instructions(self.session, self.name)
+
     def context(self, purpose: Any, action_id: Any = None, step_id: Any = None) -> Any:
         return RequestContext(
             role=self.name,

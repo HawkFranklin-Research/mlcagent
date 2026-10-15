@@ -12,6 +12,7 @@ class StrictModel(BaseModel):
 
 # Required payload fields, supplemented by independently validated engine contracts.
 PAYLOAD_FIELDS = {
+    "RailFired": ["rail_id", "kind", "point", "detail"],
     "GuidedFlowEnabled": [],
     "ComparisonRequested": [],
     "TurnPresented": ["situation", "choices"],
