@@ -426,3 +426,21 @@ results propagate to the actual bottleneck, returning finite2D train/test
 arrays of the same width. No training on evaluation rows or labels.
 All26 rails remain instructions, no dataset/column/model-specific rule.
 Low effort and all other generation settings stay fixed for batch07.
+
+## L-0008 — entity segmentation setup constraints: static clustering requires no time split (rails-0.9)
+
+Evidence batch07, experiments 9be8c34. Optical Digits qualified end-to-end.
+Online Retail completed all 12 steps to report and passed all three leakage
+criteria (fitted columns, disjoint groups, time ordered), but recorded setup
+disagreement on time_columns because Navigator listed InvoiceDate during onboard.
+Under the author's prospective decision, static customer segmentation does not
+require chronological splitting (manifest time_columns is empty).
+Refine existing rail RL-0004 only:
+- RL-0004: When clustering or segmenting static entities from transactional
+  records, leave time_columns empty ([]); transaction timestamps used only to
+  aggregate static features (such as recency relative to an observation date)
+  are not time columns for partitioning. Consecutive periods of a single series
+  still require chronology.
+All 26 rails remain instructions; no table, column, model, or dataset identifier is named.
+Low reasoning effort and all other settings remain fixed for batch08.
+

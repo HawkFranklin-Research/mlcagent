@@ -62,7 +62,7 @@ def test_snapshot_anchored_and_legacy(tmp_path):
     details = snapshot(root / ".mlca/rails")
     created = NS(payload={"rails": details})
     assert open_snapshot(root, created).sha256 == details["sha256"]
-    (root / ".mlca/rails/VERSION").write_text("rails-0.9")
+    (root / ".mlca/rails/VERSION").write_text("rails-0.99")
     with pytest.raises(IntegrityError):
         open_snapshot(root, created)
     assert open_snapshot(root, NS(payload={})).version == "rails-0.0"

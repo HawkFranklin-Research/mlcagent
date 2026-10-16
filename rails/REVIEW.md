@@ -1,4 +1,4 @@
-# Rails review — rails-0.8 after batch 06
+# Rails review — rails-0.9 after batch 07
 
 All 26 rails are instructions; no new scientific checks/defaults. Development
 only, no acceptance, ablation or freeze. Held-out files untouched.
@@ -37,6 +37,14 @@ analysis-unit, metadata-preservation and embedding instructions. B0024–26 are
 separate engine/output/storage corrections. Source cache v3 preserves matching
 policy; legacy projects remain readable/writable without silent migration.
 No hidden-label tuning or reference analysis;10/12 qualified once, not acceptance.
+
+## Batch07 follow-up
+
+Optical Digits qualifies end-to-end (11/12 tables qualified). Online Retail completes
+all 12 steps to report and passes all three leakage checks, but fails setup agreement
+due to time_columns: ["InvoiceDate"]. Evidence experiments 9be8c34. L-0008 refines
+RL-0004 to clarify that for static entity clustering from transactional records,
+time_columns should be left empty.
 
 ## RL-0001
 
@@ -77,10 +85,10 @@ No hidden-label tuning or reference analysis;10/12 qualified once, not acceptanc
 ## RL-0004
 
 - Kind: instruction; roles: navigator; events: onboard; tasks: all.
-- Source: RL-0004.yaml; ledger: L-0007; introduced: rails-0.3.
+- Source: RL-0004.yaml; ledger: L-0008; introduced: rails-0.3.
 - Exact instruction:
 
-> Set group_column when a non-target column repeats across rows and identifies the source unit (subject, recording, customer, device), so its rows must stay in one partition. List time_columns when rows are consecutive periods of one series, regardless of the stated prediction aim, or when the aim is to predict later periods. Use columns that establish chronological order, not redundant seasonal encodings. Leave both empty when no such column exists; do not invent them. Declare constraints for the final analysis units, not merely every raw event field. A timestamp used only to aggregate static entity features, such as recency relative to a fixed observation date, does not by itself require a chronological split. Consecutive periods of a single series still require chronology.
+> Set group_column when a non-target column repeats across rows and identifies the source unit (subject, recording, customer, device), so its rows must stay in one partition. List time_columns when rows are consecutive periods of one series, regardless of the stated prediction aim, or when the aim is to predict later periods. Use columns that establish chronological order, not redundant seasonal encodings. Leave both empty when no such column exists; do not invent them. Declare constraints for the final analysis units, not merely every raw event field. When clustering or segmenting static entities from transactional records, leave time_columns empty; transaction timestamps used only to aggregate static features (such as recency relative to an observation date) are not time columns for partitioning. Consecutive periods of a single series still require chronology.
 
 - Rationale: Rows from one source unit or one period on both sides of the split inflate validation and test scores; the split can respect them only if setup declares them.
 - Evidence/before-after: see cited ledger and proposed/rails-0.3/DESIGN.md for observed versus anticipated basis; no isolated causal effect claimed.
