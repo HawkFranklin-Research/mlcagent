@@ -1,5 +1,72 @@
 # MLCA v2: implementation plan
 
+## Work order05 — batch02 reviewed; batch03 full gate (16 October2026)
+
+Batch02 finished:3/12 qualifying completions (Heart, Abalone, Energy Efficiency),
+9 retained failures. Frozen code2f04c0b/controller0f8bc4c/rails04, unchanged
+DeepSeek V4.1 Flash. Eleven setups agree; Retail static segmentation omits the
+manifest time column. Clean partial fit/split checks are not study completion.
+362 requests;793836 input+1490998 output (1369764 reasoning INCLUDED),
+$1.468940104; cumulative535 requests/3377610 total tokens/$2.211723952.
+All usage known;25 output-truncated requests, no outage/rate-limit failures.
+Evidence:experiments4a9a60d,2278 hashed text artifacts,12 environment lockfiles,
+215 omitted binary/table hashes. Raw attempts preserved. No unsupervised
+completion, so no external hidden-label score.
+
+Consolidated local commits:
+- 43b7407/B0014–16: Parquet prediction-audit contracts, explicit row_id/partition
+  API, binary/multiclass primary metrics and value-free scoring hints.40 focused
+  new/legacy regressions passed in1.70s.
+- 6b0549b/L0004:rails05,26 instruction rails. Align target/probability types,
+  select existing entity preparation before distribution-only EDA completes,
+  persist feature derivations.34 focused tests/genericity passed in2.49s.
+- 5e1dcfc/B0017:explicit frozen row-partition contracts; audits validate val-only
+  or test-only, while legacy and unsupervised test data retain train+test.
+ 42 focused runtime/collector/metric/rail regressions passed in2.97s.
+No guard weakened, reference script, model or generation setting changed.
+
+Full consolidated offline gate PASSED:445 passed,1 skipped, zero failures/errors
+(all97 test files; slowest partition475.42s). Logs/XML:
+/home/prime/.cache/mlca-batch03-final-gate/ (four logs/XML,exit-codes.json).
+All four exit codes are0; XML totals446 tests including the single skip.
+The earlier gate was explicitly interrupted before the population-contract
+correction; its logs remain in mlca-batch03-parallel-gate/ as superseded.
+Previous native gate416passed1skip. Experiments tests/:18 passed in11.41s against the final source. Never
+run pytest at experiments root because raw analysis scripts are not test files.
+No live batch03 call before all gate results pass.
+
+Next:ensure both tracked trees clean, then launch from experiments:
+../mlca-revized/.venv/bin/python scripts/run_batch.py --batch 3
+--out bench/dev-loop/batch-03 --model deepseek/deepseek-v4.1-flash --concurrency 6
+--tables breast_cancer_diagnostic adult dry_bean covertype anuran_calls
+bike_sharing_hourly seeds optical_digits
+This eight-table list defers Retail pending author choice of temporal versus
+static segmentation. A refreshed async question is pending. If answered first,
+record a prospective criterion revision without rewriting old scores, and
+include Retail as appropriate. Never inject manifest answers into the agent.
+Generation remains temp0/max16384/provider-default reasoning for this engine/
+rails batch. Any effort change belongs at a separate recorded boundary.
+
+Covertype completed full registration/splitting/both fits without implementer
+interruption, then exposed the metric action conflict. Its45GB private cache
+was losslessly archived3.5GB after exit/scoring and round-trip SHA256 checking.
+Seven closed caches archived; batch02/private-cache-archives.json gives restore
+instructions. Restore original cache before reopening archived projects through Session or performing privacy reads.
+No data, model, output, script, log or vault removed.326 dead-PID offline pytest
+scratch folders cleaned (~4GiB); gate logs/XML retained. Free disk~44GiB. Large closed-cache archival may use private RAM scratch,
+with uncompressed SHA verification before reclaiming the redundant cache and
+verified/fsynced durable archive copy before removing scratch. Primary artifacts
+remain intact; record staging/restoration metadata separately.
+No study paused/interrupted/rerun for storage. These are infrastructure records.
+
+O1–O7 built;O8 loop continues;O9freeze NOT started. AcceptanceK3/ablation
+pending;cap10batches/5days. No held-out access, biomedical run, paper edit,
+push/remote/upload/release/tag/package bump. CLI automatic OpenRouter onboarding
+remains deferred. Paid calls authorized; never print credentials. Update this
+checkpoint before any usage-limit stop.
+
+---
+
 ## Work order 05 — batch-01 reviewed; batch-02 regression gate passed (16 October 2026)
 
 Batch-01 ended on unchanged code 6827d09, controller eb70bd3, rails-0.3 and
