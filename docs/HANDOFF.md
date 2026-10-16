@@ -1,3 +1,34 @@
+## Work order 05 — Phase 1 development loop complete (all 12 tables qualified, rails-0.9)
+
+Series 12/12 development tables have now qualified with complete end-to-end runs,
+exact setup agreement, and verified zero leakage:
+- Batch 02: Heart Disease, Abalone, Energy Efficiency qualified.
+- Batch 03: Breast Cancer, Adult, Dry Bean, Covertype (full 581,012 rows) qualified.
+- Batch 04: Anuran Calls, Seeds qualified.
+- Batch 05: Bike Sharing (hourly) qualified.
+- Batch 07: Optical Digits qualified (representation learning, 2D bottleneck array).
+- Batch 08: Online Retail qualified (static customer clustering, RFM aggregation, empty time columns).
+
+Total development accounting across all 8 batches:
+- Requests: 1,265
+- Input tokens: 3,001,991; Output tokens: 4,820,251; Reasoning tokens: 4,425,729
+- Total known cost: $4.7985 USD
+- Zero unknown request costs; model reported: DeepSeek V4.1 Flash (100%).
+
+Key infrastructure and rails achievements:
+- Compact private fingerprint cache v3 (B-0026): 8x–10x reduction on large caches,
+  leaving >38 GB free disk space for acceptance testing.
+- Rails version: rails-0.9 (26 instruction rails, zero hardcoded rules).
+- All unit and contract tests passing (19 unit passed, 18 experiments passed).
+- CLI binary updated and verified via `uv tool install --reinstall --editable .`.
+
+Next exact step:
+Step 5 Acceptance testing: Run all 12 development tables K = 3 times on this frozen
+version (36 studies, same queue) using:
+`python scripts/run_batch.py --out bench/dev-loop/acceptance --model deepseek/deepseek-v4.1-flash --reasoning-effort low --concurrency 6 --replicates 3`
+
+---
+
 ## Work order05 — batch05 reviewed; batch06 final gate passed
 
 Series10/12 tables have qualified at least once; K=3 acceptance/ablation have
