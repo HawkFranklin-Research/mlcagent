@@ -132,3 +132,46 @@ def test_registration_removes_labels_before_inventory_and_inputs(tmp_path, monke
             assert "secret_label" not in file.read_text()
             assert "private-a" not in file.read_text()
     assert pd.read_csv(data).columns.tolist() == ["visible", "secret_label"]
+
+
+def test_excluded_external_table_can_be_sealed_atomically(tmp_path, monkeypatch):
+    import io
+
+    from mlca.paths import sha256
+    from mlca.sandbox import vault
+
+    sealed_columns = []
+    seal = vault.seal
+
+    def spy(project_id, key_id, data, destination):
+        sealed_columns.append(list(pd.read_parquet(io.BytesIO(data)).columns))
+        return seal(project_id, key_id, data, destination)
+
+    monkeypatch.setattr(vault, "seal", spy)
+
+    source, external = tmp_path / "source.csv", tmp_path / "external.csv"
+    for path in [source, external]:
+        pd.DataFrame({"visible": [1, 2, 3, 4], "hidden": ["a", "b", "a", "b"]}).to_csv(path, index=False)
+
+    def environment(root, packages):
+        (root / ".mlca/requirements.lock").write_text("")
+        return {
+            "packages": [],
+            "lock_sha256": sha256(root / ".mlca/requirements.lock"),
+            "runtime_sha256": "unused",
+        }
+
+    monkeypatch.setattr("mlca.project.init.create", environment)
+    root = initialise(
+        tmp_path / "project",
+        [source, external],
+        "clustering",
+        {"unit": "One row"},
+        primary_data="source",
+        data_roles={"external": "external"},
+        exclude_columns=["hidden"],
+    )
+    with Session.open(root) as session:
+        assert any(r.type.value == "ExternalSealed" for r in session.store.read())
+        assert sealed_columns == [["visible"]]
+        assert "hidden" not in json.dumps(session.state.inventory)

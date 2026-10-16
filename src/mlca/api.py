@@ -76,6 +76,11 @@ class Session:
         self.turn_id = None
         self.output_callback = None
         self.progress_callback = None
+        self.decision_window = None
+        self.halt_window_s = next(
+            (r.payload["halt_window_s"] for r in reversed(records) if r.type.value == "AutonomyConfigured"),
+            None,
+        )
         self.timing_context = None
         self.client = Client(self.root, self.config, self.emit)
         self.measurement_arm = created.payload.get("measurement_arm", "worker")
@@ -165,6 +170,42 @@ class Session:
         self, kind: Any, payload: Any, *, step_id: Any = None, actor: Any = "engine", event_id: Any = None
     ) -> Any:
         self._start_session()
+        if (
+            self.principal == "user"
+            and actor == "user"
+            and kind
+            in {
+                "OptionChosen",
+                "CustomInstructionSubmitted",
+                "QuestionAnswered",
+                "UserConfirmed",
+                "TestUnlocked",
+            }
+        ):
+            decisions = [
+                r
+                for r in self.branches.records(self.branch_name)
+                if r.type.value
+                in {
+                    "DecisionWindowOpened",
+                    "DecisionWindowHalted",
+                    "DecisionWindowExpired",
+                    "DecisionOverridden",
+                }
+            ]
+            if decisions and decisions[-1].type.value == "DecisionWindowHalted":
+                from mlca.evaluation.timing import elapsed
+
+                halted = decisions[-1]
+                self.emit(
+                    "DecisionOverridden",
+                    {
+                        "window_id": halted.payload["window_id"],
+                        "selection": kind,
+                        "wait_s": elapsed(halted.ts),
+                    },
+                    actor="user",
+                )
         event_id = event_id if event_id is not None else self.state.current_event
         from mlca.evaluation.timing import enrich
 
@@ -354,6 +395,11 @@ class Session:
         from mlca.engine.guided import drive
 
         return drive(self, max_steps)
+
+    def autonomous(self):
+        from mlca.autonomous.runner import resume
+
+        return resume(self, seconds=60 if self.halt_window_s is None else self.halt_window_s)
 
     def pause_autopilot(self):
         # This flag can be set while a step holds the mutation lock.

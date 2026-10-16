@@ -12,6 +12,13 @@ class StrictModel(BaseModel):
 
 # Required payload fields, supplemented by independently validated engine contracts.
 PAYLOAD_FIELDS = {
+    "InferenceRecorded": ["proposal", "reason", "request_id", "sha256", "setup_session_id"],
+    "AutonomyConfigured": ["halt_window_s", "principal"],
+    "QuestionAutoResolved": ["question_id", "answer", "reason"],
+    "DecisionWindowOpened": ["window_id", "kind", "seconds", "proposed", "principal"],
+    "DecisionWindowHalted": ["window_id", "wait_s"],
+    "DecisionWindowExpired": ["window_id", "wait_s"],
+    "DecisionOverridden": ["window_id", "selection", "wait_s"],
     "RailFired": ["rail_id", "kind", "point", "detail"],
     "GuidedFlowEnabled": [],
     "ComparisonRequested": [],

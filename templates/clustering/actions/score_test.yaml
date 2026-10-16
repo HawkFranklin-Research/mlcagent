@@ -2,9 +2,9 @@ id: score_test
 event: test
 title: Score the frozen model on test rows
 params: {}
-prompt: 'Do: Silhouette, Calinski-Harabasz, Davies-Bouldin and stability across training
-  resamples. Choose cluster count on training/internal validation only; use a bounded
-  candidate range. No labels exist in this project. Score only test; do not fit. Freeze
+prompt: 'Do: Compute Silhouette, Calinski-Harabasz and Davies-Bouldin with saved candidates.
+  Reuse training stability computed during Model; never refit resamples here. No
+  labels exist in this project. Score only test; do not fit. Freeze
   the validation-selected candidate before test.
 
   Save: test_metrics.csv (model, metric, value).

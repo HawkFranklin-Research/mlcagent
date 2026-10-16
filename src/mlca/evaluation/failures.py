@@ -3,6 +3,9 @@
 import re
 
 CATEGORIES = {
+    "invalid_inference",
+    "human_halt",
+    "agent_failure",
     "static_check",
     "sandbox_denied",
     "timeout",

@@ -347,13 +347,36 @@ def drive(session, max_steps=100):
             reason = "decision"
             break
         try:
-            last = session.choose(choice["id"])
+            window = getattr(session, "decision_window", None)
+            human = False
+            if window:
+                from mlca.autonomous.windows import principal
+
+                available = [c for c in turn["choices"] if not c.get("disabled") and c["id"] != "custom"]
+                proposed = next(i for i, c in enumerate(available) if c["id"] == choice["id"])
+                selected, human = window.decide(session, "choice", proposed, available)
+                with principal(session, human):
+                    if isinstance(selected, dict):
+                        last = session.custom(selected["custom"])
+                        if last.get("decision") in {"reject", "other_event"}:
+                            raise MlcaUserError(
+                                "Custom instruction refused; review the scope and resume",
+                                category="human_halt",
+                            )
+                    else:
+                        choice = available[selected]
+                        last = session.choose(choice["id"])
+            else:
+                last = session.choose(choice["id"])
             if last.get("status") == "awaiting_script":
                 reason = "awaiting_script"
                 break
         except IntegrityError:
             raise
         except Exception as exc:
+            if getattr(exc, "category", "") == "human_halt":
+                reason = "paused"
+                break
             reason = "budget" if getattr(exc, "category", "") == "budget_stop" else "failure"
             with session.mutation():
                 if reason == "failure" and not session.questions():

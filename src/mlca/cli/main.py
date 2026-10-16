@@ -737,3 +737,38 @@ def main() -> Any:
 
         Console(stderr=True).print(redact(str(exc), load()) or text("failed"), markup=False)
         raise SystemExit(1) from None
+
+
+@app.command("run")
+def autonomous_run(
+    path: Path,
+    brief: str = typer.Option("", "--brief"),
+    autonomous: bool = typer.Option(False, "--autonomous"),
+    halt_window: float = typer.Option(60, "--halt-window", min=0),
+    out: Path | None = typer.Option(None, "--out"),
+    runs: int = typer.Option(1, "--runs", min=1),
+    config: Path | None = typer.Option(None, "--config"),
+    exclude_columns: list[str] = typer.Option([], "--exclude-columns"),
+):
+    """Infer and execute a study from a table/folder, retaining every failed run."""
+    from datetime import datetime
+
+    from mlca.autonomous.runner import run
+    from mlca.autonomous.windows import cli_window
+
+    seconds = 0 if autonomous else halt_window
+    configuration = yaml.safe_load(config.read_text()) if config else None
+    destination = out or Path.cwd() / ("mlca-run-" + datetime.now().strftime("%Y%m%d-%H%M%S-%f"))
+    result = run(
+        path,
+        destination,
+        brief=brief,
+        runs=runs,
+        config=configuration,
+        exclude_columns=exclude_columns,
+        halt_window=seconds,
+        window=cli_window(seconds),
+    )
+    typer.echo(json.dumps(result, default=str))
+    if any(r["status"] != "completed" for r in result["runs"]):
+        raise typer.Exit(1)

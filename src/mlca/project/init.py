@@ -221,7 +221,7 @@ def _build_initialisation(
             from .inventory import read_table
 
             buffer = io.BytesIO()
-            read_table(Path(item["original_path"])).to_parquet(buffer, index=False)
+            read_table(local_paths[item["name"]]).to_parquet(buffer, index=False)
             destination = root / ".mlca/vault" / ("external_" + item["name"] + ".enc")
             key_id = "external_" + item["name"]
             seal(project_id, key_id, buffer.getvalue(), destination)
