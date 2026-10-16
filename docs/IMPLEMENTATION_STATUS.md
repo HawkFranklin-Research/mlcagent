@@ -1,3 +1,26 @@
+## Work order 05 — batch 07 reviewed; batch 08 launch gate passed
+
+Series 11/12 tables have qualified at least once; Optical Digits qualified end-to-end.
+K=3 acceptance/ablation have not started. Batch 07 on code 5f3d8cb/controller acdffe1/rails-0.8/low reasoning:
+Optical Digits passed all 12 steps, setup agreed, leakage clean (qualified).
+Online Retail completed all 12 steps end-to-end and passed all leakage criteria, but failed
+exact setup agreement because time_columns was declared as ["InvoiceDate"] instead of [].
+87 requests, 250707 input + 202583 output (173463 reasoning), $0.219823268624.
+Cumulative since batch 01: 1214 requests, 7499727 tokens, $4.701877847824.
+
+Consolidated rail d6dc958/rails-0.9:
+- L-0008 / RL-0004: Clarify that for static clustering and entity segmentation from transactional
+  records, time_columns must be left empty ([]); event timestamps used to aggregate static entity
+  features (such as recency relative to an observation date) are not time columns for partitioning.
+
+Offline gates: unit tests 19 passed; experiments 18 passed.
+Ruff check passes on src and tests.
+
+Next: launch fresh batch 08 ONLY online_retail with low reasoning effort,
+rails-0.9, temp 0, max 16384, concurrency 6.
+
+---
+
 ## Work order 05 — batch 06 reviewed; batch 07 launch gate passed
 
 Series 10/12 tables have qualified at least once; K=3 acceptance/ablation have
