@@ -18,4 +18,7 @@ outputs:
 prepares_data: entities.parquet
 reads_test: false
 timeout_s: 300
-methods_text: Deterministic entity-level features were formed before partitioning.
+methods_text: 'Build entity-level features: if the registered table contains repeated
+  transactions, create one row per entity using deterministic aggregation (recency,
+  frequency and monetary summaries as appropriate), with no fitted transform and no
+  outcome. Preserve an explicit entity identifier locally; do not print raw records.'

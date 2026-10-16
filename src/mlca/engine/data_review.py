@@ -1,3 +1,4 @@
+
 """Generic pre-split data review. Findings are heuristics, never proof of leakage."""
 
 import hashlib
@@ -10,6 +11,7 @@ from mlca.errors import IntegrityError, MlcaUserError
 from mlca.paths import atomic_json, canonical, sha256
 from mlca.project.init import primary_for
 from mlca.project.inventory import read_table
+from mlca.task_metrics import default_metric
 
 RULE_VERSION = "1"
 
@@ -407,12 +409,6 @@ def task_for(frame, state, mode=None):
     if state.template_id in {"regression", "multilabel_classification", "clustering", "representation"}:
         task = dict(state.task)
         targets = [c for c in state.columns.values() if c is not None]
-        defaults = {
-            "regression": "rmse",
-            "multilabel_classification": "macro_f1",
-            "clustering": "silhouette",
-            "representation": "reconstruction_error",
-        }
         kind = (
             "multioutput_regression"
             if state.template_id == "regression" and len(targets) > 1
@@ -422,7 +418,7 @@ def task_for(frame, state, mode=None):
             **task,
             "type": kind,
             "targets": targets,
-            "primary_metric": task.get("primary_metric", defaults[state.template_id]),
+            "primary_metric": task.get("primary_metric", default_metric(kind)),
         }
     target = state.columns["target"]
     n = int(frame[target].nunique())
@@ -434,13 +430,13 @@ def task_for(frame, state, mode=None):
                 "Survival requires an explicitly coded event indicator with observed events",
                 category="gate_blocked",
             )
-        return {"type": "survival", "n_classes": None, "primary_metric": "c_index"}
+        return {"type": "survival", "n_classes": None, "primary_metric": default_metric("survival")}
     if n < 2:
         raise MlcaUserError("At least two outcome classes are required", category="gate_blocked")
     return {
         "type": "binary" if n == 2 else "multiclass",
         "n_classes": n,
-        "primary_metric": "roc_auc" if n == 2 else "roc_auc_ovr",
+        "primary_metric": default_metric("binary" if n == 2 else "multiclass"),
     }
 
 

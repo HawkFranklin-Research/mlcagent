@@ -5,9 +5,7 @@ description: Unsupervised clustering with training-only fitting and one final te
   exposure.
 brief_questions:
 - id: aim
-  text: 'Aim in one sentence: what is predicted, for whom, and why?'
-- id: target
-  text: Which column do you want to predict? Leave blank to decide during Onboard.
+  text: What should this unsupervised study investigate?
 - id: unit
   text: What is one row (patient, sample, visit)? Can a subject have several rows?
 events:

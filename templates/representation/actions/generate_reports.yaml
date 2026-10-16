@@ -18,6 +18,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: 'Generate methods, provenance and usage reports: engine report generation
+  from the event log.'
 builtin: report

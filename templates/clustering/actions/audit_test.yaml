@@ -20,7 +20,7 @@ outputs:
 fact_candidates: []
 reads_test: true
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: 'Save test predictions of the frozen model: per test row: row index,
+  outcome, prediction of the frozen model. No other columns.'
 builtin: null
 role: supporting

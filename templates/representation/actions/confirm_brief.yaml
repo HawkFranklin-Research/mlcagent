@@ -16,6 +16,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: 'Record brief and data inventory: record the brief answers, resolved
+  columns and file inventory.'
 builtin: inventory

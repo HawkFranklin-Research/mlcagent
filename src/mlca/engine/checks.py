@@ -5,6 +5,7 @@ from typing import Any
 
 from mlca.log.schema import ProjectState
 from mlca.paths import contained, sha256
+from mlca.task_metrics import default_metric
 
 
 def evaluate(
@@ -73,14 +74,7 @@ def evaluate(
             == (
                 state.task.get(
                     "primary_metric",
-                    {
-                        "tabular_classification": "roc_auc",
-                        "survival": "c_index",
-                        "regression": "rmse",
-                        "multilabel_classification": "macro_f1",
-                        "clustering": "silhouette",
-                        "representation": "reconstruction_error",
-                    }.get(state.template_id, ""),
+                    default_metric(state.task.get("type", state.template_id)),
                 )
                 if spec["name"] == "primary"
                 else spec["name"]

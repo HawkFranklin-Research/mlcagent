@@ -1,6 +1,6 @@
 id: data
 title: Data
-goal: Know what one row is, how each column is typed and how the task is coded.
+goal: Record observations, feature types, missingness and duplicate structure.
 gate:
 - event_done: onboard
 subgoals:
@@ -17,8 +17,8 @@ default_options:
 - audit_schema
 done_when: all_subgoals
 custom_scope:
-  description: Inspect columns, types, missingness, duplicates and target coding.
-    No modelling.
+  description: Inspect columns, feature types, missingness and duplicates. No outcome
+    labels or modelling.
   deny_patterns:
   - (?i)\b(train|fit)\b.*\bmodel\b
   - (?i)\btest (set|split|partition)\b

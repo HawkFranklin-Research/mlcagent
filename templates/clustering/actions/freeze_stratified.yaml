@@ -1,11 +1,10 @@
 id: freeze_stratified
 event: split
-title: Stratified split by target (60/20/20, seed 42)
+title: Random split (60/20/20, seed 42)
 params:
   method:
     type: enum
     enum:
-    - stratified
     - random
     - group
     - time
@@ -44,6 +43,6 @@ outputs:
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: 'Random split (60/20/20, seed 42): engine random split; use group or
+  time ordering when the recorded design requires it.'
 builtin: split

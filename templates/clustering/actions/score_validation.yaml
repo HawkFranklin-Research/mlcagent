@@ -3,9 +3,9 @@ event: validate
 title: Score candidates on validation rows
 params: {}
 prompt: 'Do: Compute Silhouette, Calinski-Harabasz and Davies-Bouldin with saved candidates.
-  Reuse training stability computed during Model; never refit resamples here. No
-  labels exist in this project. Score only val; do not fit. Freeze
-  the validation-selected candidate before test.
+  Reuse training stability computed during Model; never refit resamples here. No labels
+  exist in this project. Score only val; do not fit. Freeze the validation-selected
+  candidate before test.
 
   Save: validation_metrics.csv (model, metric, value).
 
@@ -23,6 +23,8 @@ fact_candidates:
 - best_validation_score
 reads_test: false
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: 'Score candidates on validation rows: Compute Silhouette, Calinski-Harabasz
+  and Davies-Bouldin with saved candidates. Reuse training stability computed during
+  Model; never refit resamples here. No labels exist in this project. Score only val;
+  do not fit. Freeze the validation-selected candidate before test.'
 builtin: null

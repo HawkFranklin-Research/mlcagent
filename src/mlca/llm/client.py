@@ -42,7 +42,6 @@ class LLMResult(BaseModel):
     latency_ms: float = 0
 
 
-
 def model_output_category(error):
     """Truncated output counts as a Worker attempt; everything else from the provider is infrastructure."""
     return "output_truncated" if getattr(error, "category", None) == "output_truncated" else "provider_error"
@@ -250,6 +249,7 @@ class Client:
                     "extra_body": payload.get("extra_body"),
                     "temperature": payload.get("temperature"),
                     "max_output_tokens": payload.get("max_tokens", payload.get("max_completion_tokens")),
+                    "call_deadline_s": provider_config.call_deadline_s,
                 },
                 "input_tokens": None,
                 "output_tokens": None,

@@ -3,7 +3,7 @@ event: eda
 title: Summarise distributions
 params: {}
 prompt: 'Do: numeric columns: mean, sd, min, median, max, n_missing; categorical:
-  n_levels, top-level share. Add one row group per target class where useful.
+  n_levels, top-level share. Summarize features without class labels.
 
   Save: distributions.csv (summary only, no data rows).
 
@@ -21,6 +21,7 @@ fact_candidates:
 - n_categorical
 reads_test: false
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: 'Summarise distributions: numeric columns: mean, sd, min, median, max,
+  n_missing; categorical: n_levels, top-level share. Summarize features without class
+  labels.'
 builtin: null

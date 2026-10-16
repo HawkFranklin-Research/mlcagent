@@ -13,20 +13,10 @@ from mlca.evaluation.bench import summarize
 from mlca.evaluation.metrics import generate
 from mlca.paths import atomic_json, canonical
 from mlca.project.init import initialise
+from mlca.task_metrics import DEFAULT_METRICS as METRICS
 
 from .inference import Inference, infer
 from .windows import DecisionWindow, principal
-
-METRICS = {
-    "binary": "roc_auc",
-    "multiclass": "roc_auc_ovr",
-    "regression": "rmse",
-    "multioutput_regression": "rmse",
-    "multilabel": "macro_f1",
-    "clustering": "silhouette",
-    "representation": "reconstruction_error",
-    "survival": "c_index",
-}
 
 
 def drive(session, max_turns=100, *, cooldown_s=600, max_cooldowns=3, sleep=time.sleep):

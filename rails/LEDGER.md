@@ -72,3 +72,22 @@ event, step, category, value-free diagnosis, files, commit and fresh verificatio
   final baseline full suite runs once at Step 1.7 before any live batch.
 
 Activation gate: 17 focused loader/scope/genericity/setup tests passed in 0.58 s.
+
+## B-0002–B-0005 — work order 05 Step 1.2
+
+- B-0002 / E1: equivalent metric case/aliases normalize before enum validation;
+  unsupported metrics still fail. Evidence: Round 1 regression RMSE spelling.
+- B-0003 / E2: task_metrics.py is the single primary-metric registry used by
+  setup, runner, task review and sub-goal checks; no metric selection changes.
+- B-0004 / E3: optional call_deadline_s runs SDK transport in a trusted process
+  killed and reaped at the hard deadline. Secret-bearing input uses pipes only.
+  Timeout is provider_error and follows existing bounded cooldown recovery.
+  Late upstream billing is unavailable, never zero. SDK idle timeout is separate.
+  Evidence: Round 1 response exceeded 90 seconds of elapsed time.
+- B-0005 / E4: unsupervised brief/action labels no longer request outcomes or
+  call a random split stratified. Stable action IDs remain for replay compatibility.
+  Each action now has its own procedural methods_text rather than shared boilerplate.
+- Regression tests: tests/unit/test_batch_baseline.py; existing setup/inference
+  integration regressions. Final full suite is the Step 1.7 gate before live calls.
+- Activation commit for L-0002: 5ded618. This group commit hash is linked from
+  the next status entry. No scientific safeguard is relaxed.

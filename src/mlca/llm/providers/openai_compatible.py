@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from openai import OpenAI
@@ -12,6 +15,7 @@ class CompatibleProvider:
             config.kind != "openrouter" or config.base_url not in {None, "https://openrouter.ai/api/v1"}
         ):
             raise MlcaUserError("OpenRouter sign-in credentials can only be used at OpenRouter")
+        self.config = config
         key = resolve(config.api_key_env) if config.api_key_env else "local"
         if not key and config.api_key_env == "MLCA_KEYRING_OPENROUTER_KEY":
             raise MlcaUserError("OpenRouter credential unavailable; unlock your OS keyring or sign in again")
@@ -20,8 +24,28 @@ class CompatibleProvider:
         self.client = OpenAI(api_key=key, base_url=config.base_url, timeout=config.timeout_s, max_retries=0)
 
     def complete(self, payload: dict) -> dict:
-        response = self.client.chat.completions.create(**payload)
-        data = response.model_dump()
+        if self.config.call_deadline_s is not None:
+            from mlca.llm.deadline import exchange
+
+            data = exchange(
+                [sys.executable, str(Path(__file__).parents[1] / "request_worker.py")],
+                {
+                    "key": self.client.api_key,
+                    "base_url": str(self.client.base_url),
+                    "timeout_s": self.config.timeout_s,
+                    "payload": payload,
+                },
+                self.config.call_deadline_s,
+            )
+            if "error" in data:
+                error = MlcaUserError(data["error"], category="provider_error")
+                error.status_code = data.get("status_code")
+                error.response = SimpleNamespace(headers={"retry-after": data.get("retry_after")})
+                raise error
+            data = data["data"]
+        else:
+            response = self.client.chat.completions.create(**payload)
+            data = response.model_dump()
         choice = data["choices"][0]
         message = choice["message"]
         usage = data.get("usage") or {}

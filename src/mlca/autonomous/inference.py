@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from ulid import ULID
 
 from mlca.config import Config
@@ -16,6 +16,7 @@ from mlca.log.schema import StrictModel
 from mlca.paths import canonical, resource
 from mlca.project.discovery import discover, registrations
 from mlca.project.inventory import read_table
+from mlca.task_metrics import default_metric, normalize_metric
 
 
 class StudyProposal(StrictModel):
@@ -57,6 +58,11 @@ class StudyProposal(StrictModel):
     reason: str = Field(min_length=1, max_length=800)
     uncertain: bool = False
     question: str | None = Field(default=None, max_length=600)
+
+    @field_validator("primary_metric", mode="before")
+    @classmethod
+    def metric_alias(cls, value):
+        return normalize_metric(value)
 
     @model_validator(mode="after")
     def checked_contract(self, info):
@@ -125,21 +131,12 @@ def validate(proposal, tables):
             "Outcome requirements do not match the problem type", category="invalid_inference"
         )
     if proposal.primary_metric is not None:
-        defaults = {
-            "binary": "roc_auc",
-            "multiclass": "roc_auc_ovr",
-            "regression": "rmse",
-            "multioutput_regression": "rmse",
-            "multilabel": "macro_f1",
-            "clustering": "silhouette",
-            "representation": "reconstruction_error",
-            "survival": "c_index",
-        }
-        allowed = {defaults[proposal.problem_type]}
+        expected_metric = default_metric(proposal.problem_type)
+        allowed = {expected_metric}
         if proposal.problem_type in {"regression", "multioutput_regression"}:
             allowed |= {"mae", "poisson_deviance"}
         if proposal.primary_metric not in allowed or (
-            proposal.primary_metric != defaults[proposal.problem_type] and not proposal.metric_reason.strip()
+            proposal.primary_metric != expected_metric and not proposal.metric_reason.strip()
         ):
             raise MlcaUserError(
                 "Metric change requires an allowed metric and reason", category="invalid_inference"
