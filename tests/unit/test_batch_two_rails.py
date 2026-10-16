@@ -76,3 +76,4 @@ def test_pca_reconstructs_without_a_predict_method():
     text = load(resource("rails")).instructions("worker", "validate", "representation")
     assert "PCA has no predict method" in text
     assert "inverse_transform(transform(X))" in text
+    assert "Metric-only validation must not create embedding files" in text

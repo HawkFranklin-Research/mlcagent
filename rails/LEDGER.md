@@ -361,3 +361,13 @@ known interface errors and schema errors without forwarding captured values.
 No training index, output population, test lock or privacy rule is relaxed.
 Fifteen focused library/API/split/rail tests passed; full gate follows.
 
+## L-0006 — representation interfaces and declared row outputs (rails-0.7)
+
+Evidence batch05 Digits three validation attempts, experiments9447df6. Refine
+existing RL-0022: use the fitted frontend once and the appropriate final decoder;
+MLP does not invert a pipeline. Metric-only validation creates no embedding
+file; declared per-row outputs need row_id and partition columns, not an index.
+All26 rails remain instructions. No dataset/model/column-specific instruction,
+reference implementation, hidden-label tuning or new scientific rule.
+Source contracts B-0021–23 remain a separate commit. Low reasoning effort and
+all other generation settings remain fixed in the next source-revision batch.

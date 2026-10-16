@@ -1,4 +1,4 @@
-# Rails review — rails-0.6 after batch 03
+# Rails review — rails-0.7 after batch 05
 
 All 26 rails are instructions; no new scientific checks/defaults. Development
 only, no acceptance, ablation or freeze. Held-out files untouched.
@@ -15,6 +15,18 @@ basis. Engine fixes and the prospective Retail criterion are separate.
 
 Rejected shortcuts: no dataset-specific columns/targets, relaxed fit/test rules,
 reference-code substitution, hidden-label access or historical rescoring.
+
+## Batch04–05 evidence update
+
+Anuran, Seeds and Bike newly qualify, bringing the series to10/12 once;
+acceptance and ablation remain pending. Batch04/05 source identities match;
+only requested effort changes to low in05. Per-table completion and limitations:
+experiments4a380e1 and9447df6, each REPORT/REVIEW and curated hashes.
+Retail04 completes with clean applicable leakage checks but extra date field;
+Retail05 recommends preparation but invalid auxiliary metadata triggers a bad
+fallback. Digits05 corrects reconstruction then emits an undeclared row file.
+RL0022 is refined inL0006; no isolated rail-effect claim. Seeds external ARI/NMI
+are evaluator measurements, never agent work or a basis for tuning rails.
 
 ## RL-0001
 
@@ -271,10 +283,10 @@ reference-code substitution, hidden-label access or historical rescoring.
 ## RL-0022
 
 - Kind: instruction; roles: worker; events: preprocess, features, model, validate, test, interpret; tasks: representation.
-- Source: RL-0022.yaml; ledger: L-0005; introduced: rails-0.3.
+- Source: RL-0022.yaml; ledger: L-0006; introduced: rails-0.3.
 - Exact instruction:
 
-> There is no outcome in this project: never treat any column as a label. Scale inputs to a common range fitted on training rows, and report reconstruction error in that scaled space, saying so. An autoencoder may be an MLPRegressor trained to reproduce its scaled input; its embedding is the middle hidden layer computed from coefs_ and intercepts_ without refitting. PCA has no predict method: reconstruct with inverse_transform(transform(X)), using the fitted preprocessing once and comparing in the same scaled feature space. An MLPRegressor reconstructs with predict; its middle hidden layer supplies embeddings, not reconstructions. Inspect each candidate separately rather than calling predict on every pipeline. Record the embedding dimension. Required per-row outputs hold the embedding for each row_id.
+> There is no outcome in this project: never treat any column as a label. Fit scaling on training rows only. Inspect each saved pipeline's final estimator and reuse its frontend once; compare reconstruction error in that frontend's feature space, saying so. PCA has no predict method: reconstruct with inverse_transform(transform(X)) on its final PCA component, not an inverse of the whole preprocessing pipeline. An MLPRegressor reconstructs with predict, never inverse_transform. Its embedding is the middle hidden layer computed from coefs_ and intercepts_ without refitting; PCA coordinates come from transform. Record embedding dimension. Only emit embeddings when the action declares a per-row output, with row_id and partition as explicit columns. Metric-only validation must not create embedding files.
 
 - Rationale: Representation steps need a fitted encoder whose embeddings can be extracted without refitting, so that an external scorer can evaluate them.
 - Evidence/before-after: see cited ledger and proposed/rails-0.3/DESIGN.md for observed versus anticipated basis; no isolated causal effect claimed.
