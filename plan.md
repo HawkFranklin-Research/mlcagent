@@ -1,5 +1,59 @@
 # MLCA v2: implementation plan
 
+## Work order 05 — batch-01 reviewed; batch-02 regression gate passed (16 October 2026)
+
+Batch-01 ended on unchanged code 6827d09, controller eb70bd3, rails-0.3 and
+DeepSeek V4.1 Flash: **0/12 completed**, 173 requests, 378,074 input / 714,702
+output tokens, reasoning 664,452 included in output, provider-reported cost
+**$0.742783848**. No unknown core usage fields or provider failures. Experiments
+commit d792b50 preserves curated evidence and every failed/interrupted outcome.
+Covertype was stopped early by the implementing agent for an engine collector
+bottleneck after a successful 1.918 s sandbox audit. It is an infrastructure
+intervention/protocol deviation, not a model failure or measured timeout.
+
+Between-batch corrections:
+- c2b9978 / B-0011–B-0013: explicit setup wire fields with historical decoding
+  preserved; streaming same-verdict privacy matching; actionable, value-free
+  metric/library diagnostic hints. Focused regressions: 22 passed.
+- e433c51 / L-0003: rails-0.4, 25 instruction rails; importable saved objects,
+  one-time named-column frontends, compatible output APIs and numeric-only
+  correlation screens. Focused rails/genericity/repair regressions: 18 passed.
+- The complete native gate passed: **416 passed, 1 skipped**, zero failures
+  or errors, across all 95 test files in four isolated offline processes
+  (slowest partition 521.40 s). Logs/XML and four zero exit codes:
+  /home/prime/.cache/mlca-batch02-parallel-gate/. Experiments: 18 passed.
+  No live batch-02 call occurred before this gate passed.
+
+Exact next step: launch scripts/run_batch.py --batch 2
+--out bench/dev-loop/batch-02 --model deepseek/deepseek-v4.1-flash --concurrency 6
+from the experiments repository. All twelve prior studies failed; use fresh
+projects. Keep generation settings unchanged in this engine/rails batch. Never
+change source during active jobs. Current controllers are stopped; consult
+batch.json before assuming an earlier process is still alive.
+
+One scientific question is pending: Retail's static customer segmentation versus
+the manifest's CustomerID/InvoiceDate temporal requirement. The author was asked;
+researcher expectations stay unchanged meanwhile. They never enter agent input.
+Thirteen batch-01 request errors exhausted the 16,384-token output budget, many
+entirely on reasoning. Official metadata observed during that batch advertises
+high as default and low as supported. Any effort change must be explicit and
+recorded at a later separate batch boundary; none has been made yet.
+
+Finished-batch large private fingerprint caches are losslessly archived with
+SHA-256 verification; raw sources, logs, scripts, model outputs and vaults remain.
+See experiments batch-01/private-cache-archives.json for restoration instructions;
+restore original cache bytes before opening an archived project for privacy reads.
+Original archives stay private/untracked. The author also freed disk space.
+
+O1–O7 built, with offline coverage; live acceptance not established. O8: batch
+loop active, consolidated repairs and full regression gate passed. O9 freeze not started.
+Acceptance K=3, then ablation, or ten-batch/five-day cap, then Part C. No held-out
+access, biomedical run, paper edit, push, upload, release, tag or version bump.
+Automatic CLI OpenRouter onboarding remains a later item. Paid DeepSeek calls
+are authorized without a spending ceiling; never print or persist credentials.
+
+---
+
 ## Work order 05 — 16 October 2026 (baseline validated; batch-01 ready)
 
 Work order 05 replaces the earlier Part B procedure. Round 2 is closed, not

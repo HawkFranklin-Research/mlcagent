@@ -809,3 +809,15 @@ Setup wire fields become explicit rather than silently accepting model omission
 of grouping/time/targets. Historical project decoding retains its defaults.
 Retail's static-vs-temporal interpretation was referred to the author; the
 researcher manifest has not been changed. No model setting has been changed yet.
+
+
+Finished batch-01 fingerprint caches were later archived losslessly (zstd),
+verified against uncompressed SHA-256, and kept privately with restoration
+metadata. Only the redundant uncompressed cache copy was reclaimed. No input,
+scientific output, event log, model artifact or vault was removed. Restore the
+original bytes before privacy reads on an archived project. This is storage
+management after outcomes, not a change to the agent or the privacy rule.
+
+The repaired batch-02 launch gate passed: 416 passed, 1 skipped across all
+95 native test files, four isolated offline partitions, zero failures/errors.
+Generation settings remain unchanged for the next engine/rails batch.
