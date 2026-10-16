@@ -869,3 +869,20 @@ Batch 04 retains provider-default reasoning. Batch 05 isolates explicit low
 reasoning effort: recorded official metadata supports max/high/low/none, not
 medium. Configuration/transport support is added before batch 04 but left unset
 there; batch 05 changes no source or rails. No future-setting result is claimed.
+
+## After batch05 — preserve constraints and distinguish valid choices from fallback
+
+Low effort is retained following the setting-only batch. Grouping must never
+silently override declared chronology. Joint chronological components preserve
+groups and ties; impossible constraints cause a clear refusal, with actual
+partition counts recorded. Single-constraint behavior is retained.
+
+Retail's valid preparation recommendation was lost after invalid goal/question
+metadata; supply exact API contracts without accepting invented parameters or
+ignoring unresolved scientific choices. Representation validation requires only
+its declared metric output; embedding extraction belongs to the declared test
+artifact. All scientific/row-output checks remain strict.
+
+Exact metadata agreement versus compatible extra constraints is still awaiting
+the author's answer for future batches. Existing batch04/05 scores stay fixed.
+No hidden-label score is used for method or rail tuning.

@@ -126,6 +126,24 @@ def _model_scene(session, legal):
                     "task": session.state.task,
                     "brief": session.state.brief,
                     "columns": session.state.columns,
+                    "current_subgoal_ids": [
+                        g.id for g in session.workflow.events[session.state.current_event].subgoals
+                    ],
+                    "action_parameters": {
+                        o["action_id"]: {
+                            k: v.model_dump()
+                            for k, v in session.workflow.actions[o["action_id"]].params.items()
+                        }
+                        for o in legal
+                    },
+                    "action_contracts": {
+                        o["action_id"]: session.workflow.actions[o["action_id"]].prompt for o in legal
+                    },
+                    "question_effect_examples": [
+                        {"kind": "choose_action", "action_id": o["action_id"], "params": o["params"]}
+                        for o in legal
+                    ]
+                    + [{"kind": "pause"}, {"kind": "retry"}],
                 },
                 catalog=legal,
                 schema=Scene.model_json_schema(),

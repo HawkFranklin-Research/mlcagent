@@ -14,6 +14,46 @@ from mlca.project.inventory import read_table
 from mlca.sandbox.vault import seal
 
 
+def group_time_partitions(frame, params):
+    """Split chronological components without separating a group or equal timestamp."""
+    group, times = params["group_column"], params["time_columns"]
+    if not times or not {group, *times} <= set(frame.columns) or frame[[group, *times]].isna().any().any():
+        raise MlcaUserError("Joint group/time split requires complete declared grouping and time columns")
+    keys = pd.Series(list(map(tuple, frame[times].itertuples(index=False, name=None))), index=frame.index)
+    bounds = []
+    for value, rows in frame.groupby(group, sort=False, observed=True):
+        span = keys.loc[rows.index]
+        bounds.append((min(span), max(span), value, len(rows)))
+    # Overlapping group intervals (including ties) must remain in one component.
+    components = []
+    for start, end, value, count in sorted(bounds, key=lambda item: item[0]):
+        if not components or start > components[-1][0]:
+            components.append([end, [value], count])
+        else:
+            components[-1][0] = max(end, components[-1][0])
+            components[-1][1].append(value)
+            components[-1][2] += count
+    if len(components) < 3:
+        raise MlcaUserError(
+            "Declared groups and time intervals cannot form three disjoint chronological partitions",
+            category="gate_blocked",
+        )
+    totals = np.cumsum([c[2] for c in components])
+    a = min(
+        range(1, len(components) - 1),
+        key=lambda i: abs(totals[i - 1] - len(frame) * params["train_fraction"]),
+    )
+    b = min(
+        range(a + 1, len(components)),
+        key=lambda i: abs(totals[i - 1] - len(frame) * (params["train_fraction"] + params["val_fraction"])),
+    )
+    labels = {}
+    for i, (_, groups, _) in enumerate(components):
+        label = "train" if i < a else "val" if i < b else "test"
+        labels.update((value, label) for value in groups)
+    return frame[group].map(labels).astype("object")
+
+
 def partitions(frame: Any, params: Any, target: str) -> Any:
     train, val = float(params["train_fraction"]), float(params["val_fraction"])
     if train <= 0 or val <= 0 or train + val >= 1:
@@ -47,6 +87,8 @@ def partitions(frame: Any, params: Any, target: str) -> Any:
         b = max(a + 1, min(len(groups) - 1, a + int(len(groups) * val)))
         for label, selected in zip(["train", "val", "test"], [groups[:a], groups[a:b], groups[b:]]):
             assignments.loc[frame[column].isin(selected)] = label
+    elif method == "group_time":
+        assignments = group_time_partitions(frame, params)
     elif method == "time":
         column = params.get("time_column", "")
         if column not in frame or frame[column].isna().any():
@@ -88,8 +130,17 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
     if not frame.index.is_unique:
         raise MlcaUserError("Row identifiers must be unique before freezing partitions")
     target = column_for(state) if state.template_id not in {"clustering", "representation"} else ""
-    if state.group_column:
+    if state.group_column and state.task.get("time_columns"):
+        params = {
+            **params,
+            "method": "group_time",
+            "group_column": state.group_column,
+            "time_columns": state.task["time_columns"],
+        }
+        assignments = partitions(frame, params, target)
+    elif state.group_column:
         params = {**params, "method": "group", "group_column": state.group_column}
+        assignments = partitions(frame, params, target)
     elif state.task.get("time_columns"):
         time_columns = state.task["time_columns"]
         # Lexicographic time tuple; use a private temporary sort key without changing data columns.
@@ -102,8 +153,6 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
         frame = frame.drop(columns=[key])
         params = {**params, "method": "time", "time_columns": time_columns}
     else:
-        assignments = None
-    if state.group_column or not state.task.get("time_columns"):
         assignments = partitions(frame, params, target)
     # Retain group values for train-only internal folds; protocol excludes them from features.
     from mlca.privacy.rows import guard

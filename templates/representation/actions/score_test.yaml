@@ -3,9 +3,10 @@ event: test
 title: Score the frozen model on test rows
 params: {}
 prompt: 'Do: Mean squared reconstruction error. Choose the lowest validation reconstruction error;
-  never train a supervised probe in this project. For the autoencoder save a complete reconstructing
-  pipeline and extract its bottleneck activations without fitting again. Score only test; do not
-  fit. Freeze the validation-selected candidate before test.
+  never train a supervised probe in this project. Inspect each candidate separately: PCA uses transform
+  then the final PCA inverse_transform; MLPRegressor uses predict, not inverse_transform. Compare
+  reconstructions with the same fitted frontend-space inputs, without applying preprocessing twice.
+  Score only test; do not fit. Freeze the validation-selected candidate before test.
 
   Save: test_metrics.csv (model, metric, value).
 
@@ -17,7 +18,9 @@ prompt: 'Do: Mean squared reconstruction error. Choose the lowest validation rec
   These are local-only evaluator artifacts; never expose them to an LLM. Read the declared metric
   from _protocol[''task''][''primary_metric'']; compute and record that exact name, not a template
   default. Other listed metrics are supplementary. Use its correct optimization direction and compare
-  candidates only on validation; test scores never select a model.'
+  candidates only on validation; test scores never select a model. Extract PCA coordinates or the
+  autoencoder bottleneck only for the declared embeddings.parquet. Include row_id and partition as
+  explicit columns; an index named row_id is not a row_id column. Never fit an external probe here.'
 inputs:
 - ref: train
 - ref: val

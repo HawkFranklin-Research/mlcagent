@@ -308,6 +308,16 @@ def diagnostics(execution, allow_samples):
             "true/predicted label types. Reuse training-fitted target encoders unchanged; "
             "never fit an encoder during validation or test."
         )
+    if "Pipeline" in text and (
+        "has no attribute 'predict'" in text or "has no attribute 'inverse_transform'" in text
+    ):
+        hints.append(
+            "Inspect each Pipeline's final estimator separately: PCA reconstructs with its final inverse_transform after transform, while MLPRegressor reconstructs with predict. Compare both in the same fitted frontend space, without preprocessing twice."
+        )
+    if "MLCA: row outputs require row_id and partition" in text:
+        hints.append(
+            "Do not create undeclared row artifacts. If a per-row output is required, row_id and partition must be explicit columns, not merely an index; otherwise save only the declared summary outputs."
+        )
     return (
         "Execution failed: "
         + (types[-1] if types else "runtime failure")

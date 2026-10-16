@@ -322,3 +322,42 @@ proves that only validation scoring is recommended, then exhaustion stops with
 a gate refusal. Review caught duplicate validation/test methods text; each
 action now has a distinct report description. Earlier partial gate logs are
 superseded, not a completed suite.
+
+## B-0021 — enforce joint grouping and chronology (batch04)
+
+Evidence experiments4a380e1, Bike SplitFrozen and external leakage-score.json:
+correct date/hour declarations were silently overridden by a day group, causing
+time_ordered=false. Joint group_time splitting now merges overlapping group
+intervals (including equal timestamps) into indivisible chronological components
+and chooses boundaries closest to requested row fractions without dropping rows.
+If fewer than three components exist, refuse clearly rather than reverting to
+random grouping or separating an entity. Existing group-only/time-only paths
+are retained. New freeze and partition regressions use only synthetic rows,
+including overlaps, ties, missing columns and impossible constraints.
+
+## B-0022 — make Navigator question/goal contracts explicit (batch05)
+
+Evidence experiments9447df6, Retail Navigator responses01M526MZAA2THCD3QCFEDSX3RQ
+and01M526N6TG21Y3RE0HY2Y3VTYP. BOTH recommended build_entities. First advanced
+an invalid prefixed goal; repair corrected that but still invented returns_rule
+parameters and omitted effect.kind. Strict validation rejected the scene, then
+the fallback policy recommended distribution-only EDA. Do not blame the model
+for deliberately selecting that action or attribute the failure to word limits.
+
+Current local goal IDs, action parameter schemas/contracts and executable
+question-effect examples are now supplied. Instructions require supported kind
+and fields, declared parameters only, and pause for an unrepresentable essential
+scientific choice. No question is ignored and no undeclared mutation accepted.
+Synthetic scripted Navigator and negative-effect regressions preserve refusals.
+
+## B-0023 — reconstruction output contracts and value-free hints (batch05)
+
+Digits validation repaired predict-on-PCA and inverse_transform-on-MLP, then
+computed its metrics but crashed creating an UNDECLARED validation embedding
+file without explicit row_id/partition. Validation now requests metric summaries
+only; test alone requests the declared per-row embedding artifact. Candidate
+interfaces and fitted frontend space are explicit. Fixed diagnostics explain
+known interface errors and schema errors without forwarding captured values.
+No training index, output population, test lock or privacy rule is relaxed.
+Fifteen focused library/API/split/rail tests passed; full gate follows.
+
