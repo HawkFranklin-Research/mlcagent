@@ -20,6 +20,23 @@ from mlca.task_metrics import default_metric, normalize_metric
 
 
 class StudyProposal(StrictModel):
+    @classmethod
+    def model_json_schema(cls, *args, **kwargs):
+        schema = super().model_json_schema(*args, **kwargs)
+
+        def explicit(node):
+            if isinstance(node, dict):
+                if "properties" in node:
+                    node["required"] = list(node["properties"])
+                for child in node.values():
+                    explicit(child)
+            elif isinstance(node, list):
+                for child in node:
+                    explicit(child)
+
+        explicit(schema)
+        return schema
+
     primary_data: str
     problem_type: Literal[
         "binary",
@@ -69,6 +86,13 @@ class StudyProposal(StrictModel):
     @model_validator(mode="after")
     def checked_contract(self, info):
         # Local validation context is never serialized into provider messages.
+        if info.context and info.context.get("explicit_setup_fields"):
+            missing = set(type(self).model_fields) - self.model_fields_set
+            if missing:
+                raise ValueError(
+                    "Explicit setup fields required, including empty lists/nulls when appropriate: "
+                    + ", ".join(sorted(missing))
+                )
         if info.context and "tables" in info.context:
             try:
                 validate(self, info.context["tables"])
@@ -253,7 +277,7 @@ def infer(paths, brief, config, evidence, exclude_columns=(), *, principal="user
             Inference,
             context,
             ["inventory_summary", "setup_values", "user_text"],
-            validation_context={"tables": tables},
+            validation_context={"tables": tables, "explicit_setup_fields": True},
             invalid_category="invalid_inference",
         )
         proposal = validate(response.parsed, tables)

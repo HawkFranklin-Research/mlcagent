@@ -142,3 +142,37 @@ No engine safeguard is bypassed. The affected accounting/refusal/truncation and
 new baseline tests then passed: 44 passed in 27.68 s. The complete suite then passed in four isolated offline test processes:
 408 passed, 1 skipped, zero failures/errors. Experiments: 18 passed.
 Controller Step 1.6 commit: eb70bd3. No live call occurred before the gate.
+
+## B-0011 — explicit setup wire proposals (batch-01)
+
+Evidence: experiments d792b50, batch-01 Adult, Dry Bean and Abalone setup
+responses omit targets even while naming an outcome in their reason. Successful
+proposals omit defaulted grouping/time/leakage fields as well. The provider JSON
+schema now requires explicit values (including null/empty) for every proposal
+field; context-bound inference validation enforces that contract during bounded
+repair. Historical decoding keeps its defaults. The scripted setup response
+helper now emits the complete published response; no invalid case is removed.
+
+## B-0012 — bounded-memory privacy matching (batch-01)
+
+Covertype audit completed in 1.918 s but collection built common-value matches
+until an implementing-agent infrastructure stop at 1514 s total, RSS 5,762,836
+KiB. Evidence: batch-01/covertype-infrastructure-intervention.json and raw log.
+A bounded existence preflight rejects impossible matches. Eligible matches merge
+row-ordered cursors and retain only one source row's bipartite graph. The three
+cell threshold, name-independent matching and both precisions are unchanged.
+Tests compare the previous algorithm on randomized synthetic cases and verify
+common-value short-circuiting, duplicate-cell rules, renaming and rounding.
+
+## B-0013 — actionable value-free refusals (batch-01)
+
+Retail supplied an event name as a metric partition and repeated it after an
+opaque refusal. The runtime now names the allowed partitions and recommends
+sourced facts for pre-split counts, using MLCA-prefixed value-free messages.
+Existing split/test rules are unchanged. Fixed diagnostic hints explain sklearn
+set_output incompatibility (Heart), missing __main__ definitions in saved
+objects (Energy/Anuran), and renamed columns (Optical). No captured library
+message values are sent. Canary tests prove values remain local.
+
+Focused engine/legacy guard regressions: 22 passed in 0.96 s. All source changes
+are between batches. No hand-written analysis or current-study script changes.

@@ -134,8 +134,13 @@ def save_json(value: object, name: str, kind: str = "report") -> Path:
 def record_metric(name: str, value: float, split: str, ci: Any = None) -> None:
     import math
 
-    if split not in {"train", "val", "test", "external"} or not math.isfinite(float(value)):
-        raise ValueError("Metrics require a finite value and named partition")
+    if split not in {"train", "val", "test", "external"}:
+        raise ValueError(
+            "MLCA: Metric partition must be train, val, test or external; "
+            "use sourced fact candidates for counts before the split, not event names."
+        )
+    if not math.isfinite(float(value)):
+        raise ValueError("MLCA: Metrics require a finite scalar value")
     _record("metrics", {"name": name, "value": float(value), "split": split, "ci": ci})
 
 

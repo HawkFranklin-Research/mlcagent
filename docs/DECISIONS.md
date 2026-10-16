@@ -790,3 +790,22 @@ researcher measurements, not agent achievements.
 Instruction rails can be disabled for the required post-acceptance ablation
 without disabling engine safeguards. CLI automatic OpenRouter sign-in remains
 a later usability task. No reference analyses, held-out access or publication.
+
+## Batch-01 — infrastructure intervention and bounded privacy matching
+
+All twelve development studies ended, with no completed workflow. Covertype was
+stopped early by the implementing agent: its generated audit succeeded in 1.918 s,
+then the engine's privacy collector accumulated large common-value match graphs.
+The stop is a protocol deviation/infrastructure intervention, not a model error
+or a measured timeout; it is explicitly recorded with wall time, RSS and logs.
+No artifact or input was deleted. Batch-01 cost is provider-reported $0.742783848
+for 173 requests; 378,074 input and 714,702 output tokens, including 664,452
+reasoning tokens. Source and rails stayed unchanged during every active job.
+
+The repair streams the same matching graph per source row and preflights whether
+enough returned positions can match at all. Thresholds, precisions and privacy
+policy remain unchanged; synthetic equivalence and canary tests cover it.
+Setup wire fields become explicit rather than silently accepting model omission
+of grouping/time/targets. Historical project decoding retains its defaults.
+Retail's static-vs-temporal interpretation was referred to the author; the
+researcher manifest has not been changed. No model setting has been changed yet.

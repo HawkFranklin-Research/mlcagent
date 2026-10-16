@@ -1,6 +1,7 @@
 """Private salted fingerprints for exact and simple, name-independent row copies."""
 
 import hashlib
+import heapq
 import hmac
 import json
 import math
@@ -167,17 +168,20 @@ class RowFingerprints:
         return bool(possible)
 
     def _match_values(self, db, dataset, values, required):
-        """Count distinct returned cells matched to distinct cells in one source row."""
-        candidates = {}
+        """Same distinct-cell matching, streaming one source row at a time."""
+        eligible = []
         for position, value in enumerate(values):
-            for row_id, column in db.execute(
-                _CELL_MATCH_SQL,
-                (dataset, self._digest(value, 6), dataset, self._digest(value, 4)),
-            ):
-                candidates.setdefault(row_id, {}).setdefault(position, set()).add(column)
-        for edges in candidates.values():
+            parameters = (dataset, self._digest(value, 6), dataset, self._digest(value, 4))
+            if db.execute(_CELL_MATCH_SQL + " LIMIT 1", parameters).fetchone() is not None:
+                eligible.append((position, parameters))
+        # No source row can supply more distinct returned positions than this.
+        # Avoid materializing millions of common-value matches for metadata tables.
+        if len(eligible) < required:
+            return False
+
+        def matching(edges):
             if len(edges) < required:
-                continue
+                return False
             owners = {}
 
             def assign(position, seen):
@@ -195,7 +199,24 @@ class RowFingerprints:
                 count += assign(position, set())
                 if count >= required:
                     return True
-        return False
+            return False
+
+        def stream(position, parameters):
+            # Both digest-index searches are row ordered; SQLite merges the two
+            # precisions, then heapq merges returned positions without a row map.
+            with closing(db.execute(_CELL_MATCH_SQL + " ORDER BY row_id", parameters)) as cursor:
+                for row_id, column in cursor:
+                    yield row_id, column, position
+
+        current, edges = None, {}
+        rows = heapq.merge(*(stream(*item) for item in eligible), key=lambda item: item[0])
+        for row_id, column, position in rows:
+            if row_id != current:
+                if current is not None and matching(edges):
+                    return True
+                current, edges = row_id, {}
+            edges.setdefault(position, set()).add(column)
+        return current is not None and matching(edges)
 
     def contains_rows(self, frame):
         if frame.empty:

@@ -276,6 +276,22 @@ def diagnostics(execution, allow_samples):
         hints.append(
             "A complete saved pipeline expects original raw feature columns; do not preprocess or select a second time before prediction."
         )
+    if "Some column names are not columns of the dataframe" in text:
+        hints.append(
+            "A named-column transformer received renamed or already-transformed features; "
+            "inspect feature_names_in_ and the saved pipeline steps, and avoid applying preprocessing twice."
+        )
+    if "Unable to configure output for" in text and "set_output" in text:
+        hints.append(
+            "A custom transformer does not implement sklearn's set_output interface; "
+            "prefer importable built-in transformers with get_feature_names_out support."
+        )
+    if "AttributeError: Can't get attribute" in text and "__main__" in text:
+        hints.append(
+            "A saved object references a function or class local to an earlier script. "
+            "Use importable built-in estimators; joblib does not fix missing definitions. "
+            "Never invent a dummy class to make an incompatible artifact load."
+        )
     if re.search(r"TypeError: '(?:dict|_Inputs)' object is not callable", text):
         hints.append(
             "inputs() returns a dictionary of Paths; call the helper once, then index the returned dictionary."

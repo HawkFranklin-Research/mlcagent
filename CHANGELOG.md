@@ -441,3 +441,10 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 - Remove configured evaluation labels before registration and inventory.
 - Add checked local per-row output artifacts and pre-split entity aggregation actions.
 - Generalize outcome readiness and expose group/time split policies without relaxing test or fitting rules.
+
+### Batch-01 development corrections (unreleased)
+
+- Require explicit setup decisions on the provider wire while keeping historical decoding.
+- Stream privacy match candidates without changing row-copy verdicts.
+- Explain metric partitions and known library contracts with value-free diagnostics.
+- Retain batch-01 failures and the early infrastructure intervention separately.

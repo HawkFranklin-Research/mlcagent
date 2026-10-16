@@ -11,7 +11,7 @@ from mlca.llm.usage import read
 
 
 def response(**changes):
-    return {
+    base = {
         "primary_data": "sheet",
         "problem_type": "binary",
         "targets": ["label"],
@@ -19,8 +19,8 @@ def response(**changes):
         "repeated_subjects": "No",
         "reason": "Predict an outcome",
         "alternatives": [],
-        **changes,
     }
+    return {**Inference.model_validate(base).model_dump(), **changes}
 
 
 def configuration(tmp_path, replies):
