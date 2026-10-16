@@ -371,3 +371,45 @@ All26 rails remain instructions. No dataset/model/column-specific instruction,
 reference implementation, hidden-label tuning or new scientific rule.
 Source contracts B-0021–23 remain a separate commit. Low reasoning effort and
 all other generation settings remain fixed in the next source-revision batch.
+
+## B-0024 — prepared table preserves declared constraint columns (batch06)
+
+Retail preparation executed but renamed the declared group to entity_id and
+omitted its declared time column. The joint splitter correctly refused. The
+action contract now requires exact declared names as complete explicit columns;
+any entity-level temporal aggregation must be documented and consistent.
+Collection validates these fields and unique/nonempty row IDs before marking
+the step complete, so the existing bounded Worker repair can fix the artifact.
+No group/time constraint is dropped or renamed implicitly. Six synthetic
+collection cases cover renamed/missing/null fields, empty/duplicate index and
+the correct artifact. No original failed script is patched or rerun.
+
+## B-0025 — value-free diagnostic for an expected array returning None
+
+Digits passed validation but private sklearn ACTIVATIONS returned None in its
+test embedding code. Fixed diagnostics explain missing returns/in-place
+functions without sending captured data. The actual numeric API is exercised
+with a tiny synthetic MLP: public activation propagation reaches the true
+middle bottleneck with a finite 2D result. This is a regression fixture, never
+a no-AI research arm or a replacement for Worker analysis code.
+
+## B-0026 — compact private fingerprint cache, unchanged matching policy
+
+Measured Covertype cache reached45GB while free disk is39GB, blocking repeated
+full-size acceptance. New stores use normalized v3 dictionaries for dataset
+names,column names and identical salted value digests, with integer cell
+references and indexed v2-compatible cells/rows views. Both precisions4/6,
+row HMACs, distinct-cell threshold and matching algorithms are unchanged.
+Value-ID cache is bounded65536; tests exercise eviction with limit8.
+Historicalv2 is read/written unchanged, never silently migrated. v1 rebuild
+remains atomic from hash-verified sources; failed migration preserves bytes.
+
+An outside-source prototype was tested while batch06 ran, without changing
+active code or using real benchmark data. Synthetic store13.15MB became1.66MB;
+identical cells/full-row hashes and verdicts, including legacy read/write.
+17 existing synthetic privacy tests passed on prototype, excluding two schema
+fixtures for adaptation. Those are now adapted and included:29 focused
+cache/migration/schema/MCP/privacy/preparation tests pass45.63s. Full gate
+follows before any live run. No claim of actual large-cache savings yet.
+Private archives, salts and scientific artifacts are preserved.
+

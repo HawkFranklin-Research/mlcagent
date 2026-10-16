@@ -886,3 +886,20 @@ artifact. All scientific/row-output checks remain strict.
 Exact metadata agreement versus compatible extra constraints is still awaiting
 the author's answer for future batches. Existing batch04/05 scores stay fixed.
 No hidden-label score is used for method or rail tuning.
+
+## After batch06 — preserve preparation constraints and privacy semantics
+
+Declared group/time metadata must survive preparation with exact names as
+complete columns, or the Worker must repair the output before completion. A
+raw timestamp used only for static entity aggregation is not by itself a
+chronological cohort requirement; final-unit chronology remains enforced.
+
+Embeddings must be actual finite bottleneck arrays; private activation helpers
+that returnNone are not returning numeric transformations. New diagnostics
+remain fixed and value-free; no per-run script is manually repaired.
+
+Normalized private fingerprint v3 is a capacity correction for45GB caches on
+39GB free disk. Both precisions, hashes and matching policy stay unchanged;
+v2 stores remain in their historical format, v1 migration stays atomic.
+Synthetic equivalence/storage tests are regression checks, not a research
+comparison arm. No primary artifact is removed or changed.

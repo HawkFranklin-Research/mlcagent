@@ -318,6 +318,10 @@ def diagnostics(execution, allow_samples):
         hints.append(
             "Do not create undeclared row artifacts. If a per-row output is required, row_id and partition must be explicit columns, not merely an index; otherwise save only the declared summary outputs."
         )
+    if "'NoneType' object has no attribute 'shape'" in text:
+        hints.append(
+            "An expected array is None. Check missing returns and in-place routines: sklearn's private ACTIVATIONS mutate their array and return None. Use public numeric activation results and explicitly return the finite two-dimensional embedding matrix."
+        )
     return (
         "Execution failed: "
         + (types[-1] if types else "runtime failure")

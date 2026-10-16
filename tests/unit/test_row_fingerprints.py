@@ -102,7 +102,29 @@ def test_unnamed_threshold_distinct_cells_and_precisions(tmp_path):
         ]
 
 
+def materialize_v2(guard):
+    """Historical format fixture, with identical salted rows/cells."""
+    with sqlite3.connect(guard.path) as db:
+        if db.execute("SELECT version FROM metadata").fetchone()[0] == 2:
+            return
+        rows = db.execute("SELECT * FROM rows").fetchall()
+        cells = db.execute("SELECT * FROM cells").fetchall()
+        db.executescript("""
+            DROP VIEW rows; DROP VIEW cells; DROP INDEX cell_lookup;
+            DROP TABLE row_records; DROP TABLE cell_records;
+            DROP TABLE dataset_ids; DROP TABLE column_ids; DROP TABLE digest_ids;
+            CREATE TABLE rows (dataset TEXT, row_id INTEGER, digest TEXT, PRIMARY KEY(dataset,row_id));
+            CREATE TABLE cells (dataset TEXT, row_id INTEGER, column_name TEXT, precision INTEGER, digest TEXT,
+                PRIMARY KEY(dataset,row_id,column_name,precision));
+            CREATE INDEX cell_lookup ON cells(dataset,precision,digest,row_id,column_name);
+            UPDATE metadata SET version=2;
+        """)
+        db.executemany("INSERT INTO rows VALUES (?,?,?)", rows)
+        db.executemany("INSERT INTO cells VALUES (?,?,?,?,?)", cells)
+
+
 def downgrade_to_v1(guard):
+    materialize_v2(guard)
     with sqlite3.connect(guard.path) as db:
         db.executescript("""
             DROP INDEX cell_lookup;
@@ -129,7 +151,7 @@ def test_v1_migration_and_failed_migration_preserves_index(tmp_path):
     frame.to_csv(source, index=False)
     guard.ensure(registered)
     with sqlite3.connect(guard.path) as db:
-        assert db.execute("SELECT version FROM metadata").fetchone()[0] == 2
+        assert db.execute("SELECT version FROM metadata").fetchone()[0] == 3
     assert guard.contains_rows(frame.round(4).rename(columns=str.upper))
 
 
@@ -155,7 +177,7 @@ def test_cell_lookup_uses_full_index_and_preserves_matches(tmp_path):
                 ("registered:source", "a", "registered:source", "b"),
             )
         ]
-        assert sum("dataset=? AND precision=? AND digest=?" in detail for detail in plan) == 2
+        assert sum("dataset_id=? AND precision=? AND digest_id=?" in detail for detail in plan) == 2
 
 
 def test_json_table_and_records_are_checked_equally(tmp_path):

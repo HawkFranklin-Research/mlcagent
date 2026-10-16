@@ -49,6 +49,23 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
             partitions = ["train", "test"]
         if kind == "data":
             entry["local_only"] = True
+        if name == getattr(action, "prepares_data", None):
+            from mlca.project.inventory import read_table
+
+            prepared = read_table(path)
+            if prepared.empty or not prepared.index.is_unique:
+                raise MlcaUserError(
+                    "Prepared analysis table needs nonempty rows and unique row identifiers",
+                    category="missing_output",
+                )
+            required = ([state.group_column] if state.group_column else []) + state.task.get(
+                "time_columns", []
+            )
+            if not set(required) <= set(prepared) or prepared[required].isna().any().any():
+                raise MlcaUserError(
+                    "Prepared data must retain the declared group_column and time_columns as complete columns with their exact names; do not rename or silently drop them",
+                    category="missing_output",
+                )
         if kind == "data" and path.suffix == ".parquet" and partitions is not None:
             import pandas as pd
 

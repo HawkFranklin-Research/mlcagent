@@ -9,6 +9,7 @@ import numbers
 import os
 import sqlite3
 import tempfile
+from collections import OrderedDict
 from contextlib import closing
 from pathlib import Path
 
@@ -18,6 +19,8 @@ from filelock import FileLock
 from mlca.errors import IntegrityError, MlcaUserError
 from mlca.paths import canonical, sha256
 from mlca.project.inventory import read_table
+
+VALUE_CACHE_LIMIT = 65536
 
 _CELL_MATCH_SQL = (
     "SELECT row_id, column_name FROM cells WHERE dataset=? AND precision=6 AND digest=? "
@@ -48,7 +51,7 @@ class RowFingerprints:
         self.path = self.directory / "row_fingerprints"
         self._salt = None
 
-    def _connect(self, versions=(2,)):
+    def _connect(self, versions=(2, 3)):
         if self.directory.is_symlink() or self.path.is_symlink() or not self.path.is_file():
             raise IntegrityError(
                 "Private row fingerprints unavailable; rebuild with unchanged registered data"
@@ -71,7 +74,8 @@ class RowFingerprints:
             self._salt, canonical(normalized(value, precision)).encode(), hashlib.sha256
         ).hexdigest()
 
-    def _insert(self, db, name, frame, digest):
+    def _insert_legacy(self, db, name, frame, digest):
+        """Keep historical v2 stores writable without changing their format or hashes."""
         columns = [str(c) for c in frame.columns]
         if len(set(columns)) != len(columns):
             raise MlcaUserError("Row fingerprints require unique column names")
@@ -94,6 +98,58 @@ class RowFingerprints:
                 ),
             )
 
+    def _insert(self, db, name, frame, digest):
+        """Intern repeated metadata/digests; matching views preserve v2 query semantics."""
+        if db.execute("SELECT version FROM metadata").fetchone()[0] == 2:
+            return self._insert_legacy(db, name, frame, digest)
+        columns = [str(c) for c in frame.columns]
+        if len(set(columns)) != len(columns):
+            raise MlcaUserError("Row fingerprints require unique column names")
+        db.execute("INSERT OR IGNORE INTO dataset_ids(name) VALUES (?)", (name,))
+        dataset = db.execute("SELECT id FROM dataset_ids WHERE name=?", (name,)).fetchone()[0]
+        column_ids = []
+        for col in columns:
+            db.execute("INSERT OR IGNORE INTO column_ids(name) VALUES (?)", (col,))
+            column_ids.append(db.execute("SELECT id FROM column_ids WHERE name=?", (col,)).fetchone()[0])
+        db.execute("DELETE FROM cell_records WHERE dataset_id=?", (dataset,))
+        db.execute("DELETE FROM row_records WHERE dataset_id=?", (dataset,))
+        db.execute("INSERT OR REPLACE INTO datasets VALUES (?,?,?)", (name, canonical(columns), digest))
+        cache = OrderedDict()
+
+        def value_id(hashed):
+            found = cache.get(hashed)
+            if found is not None:
+                cache.move_to_end(hashed)
+                return found
+            db.execute("INSERT OR IGNORE INTO digest_ids(digest) VALUES (?)", (hashed,))
+            found = db.execute("SELECT id FROM digest_ids WHERE digest=?", (hashed,)).fetchone()[0]
+            cache[hashed] = found
+            if len(cache) > VALUE_CACHE_LIMIT:
+                cache.popitem(last=False)
+            return found
+
+        ordered = sorted(range(len(columns)), key=lambda i: columns[i])
+        for row_id, row in enumerate(frame.itertuples(index=False, name=None)):
+            cells = [self._digest(value) for value in row]
+            full = hmac.new(
+                self._salt, canonical([[columns[i], cells[i]] for i in ordered]).encode(), hashlib.sha256
+            ).hexdigest()
+            db.execute("INSERT INTO row_records VALUES (?,?,?)", (dataset, row_id, full))
+            db.executemany(
+                "INSERT INTO cell_records VALUES (?,?,?,?,?)",
+                (
+                    (
+                        dataset,
+                        row_id,
+                        col,
+                        precision,
+                        value_id(cells[i] if precision == 6 else self._digest(value, 4)),
+                    )
+                    for i, (col, value) in enumerate(zip(column_ids, row))
+                    for precision in (6, 4)
+                ),
+            )
+
     def ensure(self, registered):
         """Build/migrate once, from registered source files whose hashes still match."""
         if self.directory.is_symlink():
@@ -103,13 +159,13 @@ class RowFingerprints:
         with FileLock(str(self.directory / "row_fingerprints.lock")):
             expected = {"registered:" + item["name"]: item["sha256"] for item in registered}
             if self.path.exists():
-                with closing(self._connect(versions=(1, 2))) as db:
+                with closing(self._connect(versions=(1, 2, 3))) as db:
                     stored = dict(
                         db.execute("SELECT name, source_sha256 FROM datasets WHERE name LIKE 'registered:%'")
                     )
                     if stored != expected:
                         raise IntegrityError("Private row fingerprints disagree with registered inputs")
-                    if db.execute("SELECT version FROM metadata").fetchone()[0] == 2:
+                    if db.execute("SELECT version FROM metadata").fetchone()[0] in (2, 3):
                         return self
                 # V1 hashes cannot be reduced to four digits. Rebuild atomically from verified
                 # registered rows, which already cover every historical split; never unseal test.
@@ -120,13 +176,17 @@ class RowFingerprints:
                     db.executescript("""
                         CREATE TABLE metadata (version INTEGER, salt BLOB);
                         CREATE TABLE datasets (name TEXT PRIMARY KEY, columns TEXT, source_sha256 TEXT);
-                        CREATE TABLE rows (dataset TEXT, row_id INTEGER, digest TEXT, PRIMARY KEY(dataset,row_id));
-                        CREATE TABLE cells (dataset TEXT, row_id INTEGER, column_name TEXT, precision INTEGER, digest TEXT,
-                            PRIMARY KEY(dataset,row_id,column_name,precision));
-                        CREATE INDEX cell_lookup ON cells(dataset,precision,digest,row_id,column_name);
+                        CREATE TABLE dataset_ids (id INTEGER PRIMARY KEY, name TEXT UNIQUE);
+                        CREATE TABLE column_ids (id INTEGER PRIMARY KEY, name TEXT UNIQUE);
+                        CREATE TABLE digest_ids (id INTEGER PRIMARY KEY, digest TEXT UNIQUE);
+                        CREATE TABLE row_records (dataset_id INTEGER, row_id INTEGER, digest TEXT, PRIMARY KEY(dataset_id,row_id)) WITHOUT ROWID;
+                        CREATE TABLE cell_records (dataset_id INTEGER, row_id INTEGER, column_id INTEGER, precision INTEGER, digest_id INTEGER, PRIMARY KEY(dataset_id,row_id,column_id,precision)) WITHOUT ROWID;
+                        CREATE INDEX cell_lookup ON cell_records(dataset_id,precision,digest_id,row_id,column_id);
+                        CREATE VIEW rows AS SELECT d.name AS dataset,r.row_id,r.digest FROM row_records r JOIN dataset_ids d ON r.dataset_id=d.id;
+                        CREATE VIEW cells AS SELECT d.name AS dataset,c.row_id,n.name AS column_name,c.precision,v.digest FROM cell_records c JOIN dataset_ids d ON c.dataset_id=d.id JOIN column_ids n ON c.column_id=n.id JOIN digest_ids v ON c.digest_id=v.id;
                     """)
                     self._salt = os.urandom(32)
-                    db.execute("INSERT INTO metadata VALUES (?,?)", (2, self._salt))
+                    db.execute("INSERT INTO metadata VALUES (?,?)", (3, self._salt))
                     for item in registered:
                         file = Path(item["original_path"])
                         if not file.is_file() or sha256(file) != item["sha256"]:
