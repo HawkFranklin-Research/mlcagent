@@ -289,3 +289,19 @@ ablation. Batch 04 leaves it unset; batch 05 will isolate explicit low effort.
 No captured error values, reference code, model change or silent historical
 rescoring. Focused contracts/sandbox:44 passed; final full gate follows.
 
+## L-0005 — batch-03 instruction revisions (rails-0.6)
+
+RL-0004: consecutive periods of one series require time columns regardless of
+stated prediction aim; do not substitute seasonal encodings for chronology.
+Bike's temporal requirement is retained by author decision.
+RL-0018: categorical multi-output metrics operate on each target then average;
+subset accuracy is an exact row-wise comparison, never an unsupported matrix
+metric call. Anuran still failed after the previous instruction.
+RL-0022: PCA uses inverse_transform(transform(X)), not predict; MLP reconstructor
+uses predict and its middle hidden layer supplies embeddings. Optical Digits
+failed validation by calling predict on its PCA Pipeline.
+
+No new rail or hard-coded dataset/column. All26 active rails remain instructions.
+Source fixes B-0018–20 are separate. Batch04 model settings remain unchanged;
+output budget intervention is reserved for setting-only batch05. Before/after
+results are pending; no rail effect is inferred from wording tests.

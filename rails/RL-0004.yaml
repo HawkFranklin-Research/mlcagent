@@ -6,11 +6,12 @@ events:
 - onboard
 problem_types:
 - all
-text: Set group_column when a non-target column repeats across rows and identifies the source
-  unit (subject, recording, customer, device), so its rows must stay in one partition. List
-  time_columns when rows carry timestamps or calendar parts and the aim is to predict later
-  periods. Leave both empty when no such column exists; do not invent them.
-reason: Rows from one source unit or one period on both sides of the split inflate validation
-  and test scores; the split can respect them only if setup declares them.
-ledger: L-0002
+text: Set group_column when a non-target column repeats across rows and identifies the source unit
+  (subject, recording, customer, device), so its rows must stay in one partition. List time_columns
+  when rows are consecutive periods of one series, regardless of the stated prediction aim, or when
+  the aim is to predict later periods. Use columns that establish chronological order, not redundant
+  seasonal encodings. Leave both empty when no such column exists; do not invent them.
+reason: Rows from one source unit or one period on both sides of the split inflate validation and
+  test scores; the split can respect them only if setup declares them.
+ledger: L-0005
 added_in: rails-0.3

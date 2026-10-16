@@ -53,3 +53,26 @@ def test_categorical_output_metric_uses_matching_vectors_per_target():
     text = load(resource("rails")).instructions("worker", "validate", "multilabel")
     assert "one-dimensional true and predicted labels" in text
     assert "Never fit an encoder during validation or test" in text
+
+
+def test_temporal_rail_does_not_depend_on_a_forecasting_aim():
+    text = load(resource("rails")).instructions("navigator", "onboard", "regression")
+    assert "consecutive periods of one series, regardless of the stated prediction aim" in text
+
+
+def test_pca_reconstructs_without_a_predict_method():
+    from sklearn.decomposition import PCA
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    X = np.array([[0.0, 1.0, 2.0], [1.0, 2.0, 4.0], [2.0, 3.0, 5.0], [3.0, 5.0, 8.0]])
+    frontend = StandardScaler().fit(X)
+    pca = PCA(n_components=2).fit(frontend.transform(X))
+    pipe = Pipeline([("scale", frontend), ("pca", pca)])
+    assert not hasattr(pipe, "predict")
+    reconstructed = pca.inverse_transform(pipe.transform(X))
+    assert reconstructed.shape == X.shape
+    assert np.isfinite(np.mean((reconstructed - frontend.transform(X)) ** 2))
+    text = load(resource("rails")).instructions("worker", "validate", "representation")
+    assert "PCA has no predict method" in text
+    assert "inverse_transform(transform(X))" in text
