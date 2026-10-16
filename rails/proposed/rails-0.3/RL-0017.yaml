@@ -1,0 +1,20 @@
+id: RL-0017
+kind: instruction
+roles:
+- worker
+events:
+- model
+- validate
+- test
+problem_types:
+- binary
+- multiclass
+text: 'For roc_auc take the probability column of the positive label: predict_proba(X)[:,
+  list(model.classes_).index(positive)], with the positive label from _protocol or else model.classes_[1].
+  For roc_auc_ovr pass the full probability matrix with labels=model.classes_, multi_class=''ovr'',
+  average=''macro''. Keep outcome labels as stored. When the smallest outcome category is
+  under 10% of training rows, set class_weight=''balanced'' where supported.'
+reason: Probability columns misaligned with labels silently invert or break ROC AUC; rare
+  categories are otherwise ignored by default losses.
+ledger: L-0002
+added_in: rails-0.3

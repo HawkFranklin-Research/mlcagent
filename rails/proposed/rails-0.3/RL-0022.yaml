@@ -1,0 +1,23 @@
+id: RL-0022
+kind: instruction
+roles:
+- worker
+events:
+- preprocess
+- features
+- model
+- validate
+- test
+- interpret
+problem_types:
+- representation
+text: 'There is no outcome in this project: never treat any column as a label. Scale inputs
+  to a common range fitted on training rows, and report reconstruction error in that scaled
+  space, saying so. An autoencoder may be an MLPRegressor trained to reproduce its scaled
+  input; its embedding is the middle hidden layer computed from coefs_ and intercepts_ without
+  refitting. Record the embedding dimension. Required per-row outputs hold the embedding for
+  each row_id.'
+reason: Representation steps need a fitted encoder whose embeddings can be extracted without
+  refitting, so that an external scorer can evaluate them.
+ledger: L-0002
+added_in: rails-0.3

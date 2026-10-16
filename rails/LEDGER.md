@@ -52,3 +52,23 @@ event, step, category, value-free diagnosis, files, commit and fresh verificatio
   instruction or reason. Valid for any study setup; no safeguard is changed.
 - Offline verification: genericity and actual inference-request injection tests.
   Fresh live verification pending; do not relabel Round 1 as successful.
+
+## L-0002 — 16 October 2026 — consolidated design pass (RL-0002–RL-0024)
+
+- Proposed by Claude Code; source and the observed (O)/anticipated (A) basis per
+  rail are retained in rails/proposed/rails-0.3/DESIGN.md. Author review at Part C.
+- Observed causes: rounds 1–2 setup contracts, ambiguous task inference, wrong
+  protocol keys, double preprocessing/named-array mismatches, mixed-type tables,
+  truncated scripts and repeated unsuccessful repairs. Evidence in experiments
+  bench/dev-loop/round-01/REVIEW.md and round-02/REVIEW.md, with original attempts.
+- Anticipated rails are prospective design choices, not fabricated observed failures.
+- Instructions only; no train-index, sandbox, test-lock, scope or evidence check
+  is weakened. Six prior review points are addressed in the revised proposal.
+- Active set: rails-0.3, 24 instruction rails including unchanged provisional RL-0001.
+- The work-order-05 baseline deliberately changes engine, model and rails relative
+  to exploratory rounds. No causal comparison with those rounds is claimed.
+- Commit: resolve from the activation commit introducing this entry; exact hash
+  is added to the next status update. Focused regression results recorded below;
+  final baseline full suite runs once at Step 1.7 before any live batch.
+
+Activation gate: 17 focused loader/scope/genericity/setup tests passed in 0.58 s.

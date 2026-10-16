@@ -1,0 +1,17 @@
+id: RL-0020
+kind: instruction
+roles:
+- worker
+events:
+- eda
+problem_types:
+- clustering
+text: 'If rows are transactions rather than entities, build one row per entity in the entity-building
+  step, before the split, never after partitioning: drop rows without an entity key, handle
+  reversing rows (negative amounts, returns) by an explicit rule printed in one line, and
+  aggregate deterministically (recency against the last date in the table, frequency, total
+  and mean value), with no fitted transform.'
+reason: Clustering raw transactions segments receipts, not entities; aggregating after the
+  split would change row identities and conflict with the frozen training index.
+ledger: L-0002
+added_in: rails-0.3

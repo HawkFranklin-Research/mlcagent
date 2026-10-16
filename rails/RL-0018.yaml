@@ -1,0 +1,20 @@
+id: RL-0018
+kind: instruction
+roles:
+- worker
+events:
+- model
+- validate
+- test
+- interpret
+problem_types:
+- multilabel
+text: The targets are several categorical columns predicted together. Wrap single-output estimators
+  in MultiOutputClassifier, or use one that supports several outputs, and fit on the target
+  DataFrame in _protocol['targets'] order. predict_proba then returns one array per target.
+  For macro_f1 compute f1_score(average='macro') per target from predict, and report the unweighted
+  mean over targets as the headline value, with per-target values in the saved table.
+reason: Multi-output predictions have a different shape from single-output ones; metric code
+  written for one target fails or scores only the first.
+ledger: L-0002
+added_in: rails-0.3
