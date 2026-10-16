@@ -21,6 +21,8 @@
   bytes: 121248
   sha256: 5c2238c5d8c38eefbbe1238b1c88f25cdee5299ad5010eb2103dd4b1e6a1c715
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: heart_disease_cleveland
   file: datasets/heart_disease_cleveland_uci.csv
   role: development
@@ -45,6 +47,9 @@
   bytes: 13099
   sha256: d60c1050744de47db797974b237c3eca6cccb58742b2ccd7c619bb99b581873e
   retrieved: '2026-10-15'
+  leakage_columns:
+  - num
+  identifier_columns: []
 - id: adult
   file: datasets/adult_census_uci.csv
   role: development
@@ -70,6 +75,8 @@
   bytes: 5291600
   sha256: 82682cd3606b1c0592975abff21db758baed235950a2a9c02931c56f1b8157ee
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: dry_bean
   file: datasets/dry_bean_uci.csv
   role: development
@@ -94,6 +101,8 @@
   bytes: 2471169
   sha256: 1330e4ccc5c54a925e43daf60d1409ac62dad2a21de9a25213765bee4b655787
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: covertype
   file: datasets/covertype_uci.csv
   role: development
@@ -120,6 +129,8 @@
   bytes: 75170064
   sha256: ea35ca6820fcbe0bdc6707e9ed31e11a9de84f07d88da73b511c737383c271a6
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: anuran_calls
   file: datasets/anuran_calls_uci.csv
   role: development
@@ -146,6 +157,9 @@
   bytes: 3181655
   sha256: 8b161e8d8535b871043cce7ecb7a3496e4b8baef377f1fe9bd4bc91b6effca38
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns:
+  - RecordID
 - id: abalone
   file: datasets/abalone_uci.csv
   role: development
@@ -172,6 +186,8 @@
   bytes: 191962
   sha256: add76d88a9dd9c7a9f147dd005725ce19dbfdf352877df9d28703486742d35a2
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: bike_sharing_hourly
   file: datasets/bike_sharing_hourly_uci.csv
   role: development
@@ -198,6 +214,11 @@
   bytes: 1139356
   sha256: b03a2d02e8c10f435c43c7f0b358b7e34a003afea53dbc37f0183f2763295133
   retrieved: '2026-10-15'
+  leakage_columns:
+  - casual
+  - registered
+  identifier_columns:
+  - instant
 - id: energy_efficiency
   file: datasets/energy_efficiency_uci.csv
   role: development
@@ -232,6 +253,8 @@
   bytes: 33489
   sha256: 88fb36f0eb6f0afdab8602f84e67d0d631790a604d7fe9beeb531be97f4ef553
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: seeds
   file: datasets/seeds_uci.csv
   role: development
@@ -256,6 +279,8 @@
   bytes: 9386
   sha256: e175383dd58fb4d3f8f31a03e992c477c871fdeb4754d7a504f448cdcba2c0a3
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: online_retail
   file: datasets/online_retail_uci.csv
   role: development
@@ -280,6 +305,10 @@
   bytes: 47226068
   sha256: 4d857902cbcaec35ab41d0d9ea60061c9324d0f04f27c91ffb89467e391f0508
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns:
+  - InvoiceNo
+  - CustomerID
 - id: optical_digits
   file: datasets/optical_digits_uci.csv
   role: development
@@ -305,6 +334,8 @@
   bytes: 828924
   sha256: 930be32b2f41719c00cd6b9f9fa9e5769adb81ac136fe43a0bbbe784425d61a8
   retrieved: '2026-10-15'
+  leakage_columns: []
+  identifier_columns: []
 - id: bank_marketing
   file: heldout/bank_marketing_uci.csv
   role: heldout
