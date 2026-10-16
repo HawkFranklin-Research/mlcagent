@@ -220,7 +220,7 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
                 progress_callback=None,
                 emit=lambda kind, payload, **kw: setup_windows.append((kind, payload, kw)),
             )
-            options = [proposal, *[Inference.model_validate(p) for p in proposal.alternatives]]
+            options = [proposal, *[Inference.model_validate(p.model_dump()) for p in proposal.alternatives]]
             selected, inference_human = controller.decide(
                 setup_session,
                 "inference",
@@ -332,7 +332,7 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
                         for kind, payload, kw in setup_windows
                     ],
                 )
-                if setup_windows and session is None:
+                if session is None:
                     from types import SimpleNamespace
 
                     from mlca.evaluation.autonomy import build as autonomy

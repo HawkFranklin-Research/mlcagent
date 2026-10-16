@@ -15,7 +15,7 @@ from mlca.api import Session
 from mlca.config import Config
 from mlca.errors import BudgetError, MlcaUserError
 from mlca.evaluation.metrics import actor_kind, generate, measured
-from mlca.llm.usage import read
+from mlca.llm.usage import measured_total, read
 from mlca.paths import atomic_json, canonical
 from mlca.project.init import initialise
 
@@ -395,7 +395,16 @@ def summarize(out):
             failures[run["category"]] += 1
 
     def values(section, key):
-        return [m[section][key]["value"] if m else None for m in loaded]
+        result = []
+        for m, run in zip(loaded, manifest["runs"]):
+            if m:
+                result.append(m[section][key]["value"])
+            elif section == "time" and key == "llm_s" and run.get("setup_usage"):
+                latency = measured_total(run["setup_usage"]["totals"], "latency_ms")["value"]
+                result.append(latency / 1000 if latency is not None else None)
+            else:
+                result.append(None)
+        return result
 
     metrics = {
         split: distribution(m["results"][split]["value"]["value"] if m else None for m in loaded)
@@ -454,7 +463,14 @@ def summarize(out):
             )
         },
         "tokens": {
-            key: distribution(_model_total(m, key, manifest.get("mode", "driver")) for m in loaded)
+            key: distribution(
+                _model_total(m, key, manifest.get("mode", "driver"))
+                if m
+                else measured_total(run["setup_usage"]["totals"], key)["value"]
+                if run.get("setup_usage")
+                else None
+                for m, run in zip(loaded, manifest["runs"])
+            )
             for key in (
                 "input_tokens",
                 "output_tokens",

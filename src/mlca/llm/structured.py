@@ -11,12 +11,26 @@ def decode(text: str) -> Any:
     return json.loads(text)
 
 
-def complete(client: Any, role: Any, messages: Any, schema: Any, context: Any, categories: Any) -> Any:
+def complete(
+    client: Any,
+    role: Any,
+    messages: Any,
+    schema: Any,
+    context: Any,
+    categories: Any,
+    *,
+    validation_context=None,
+    invalid_category=None,
+) -> Any:
     last = ""
     for attempt in range(2):
         response = client.complete(role, messages, schema=schema, context=context, categories=categories)
         try:
-            parsed = schema.model_validate(decode(response.text))
+            parsed = (
+                schema.model_validate(decode(response.text), context=validation_context)
+                if validation_context is not None
+                else schema.model_validate(decode(response.text))
+            )
             response.parsed = parsed
             return response
         except (ValueError, TypeError) as exc:
@@ -30,4 +44,4 @@ def complete(client: Any, role: Any, messages: Any, schema: Any, context: Any, c
                         "content": f"Correct the JSON to match the supplied schema. Validation: {last}",
                     },
                 ]
-    raise MlcaUserError("Structured response invalid after one repair: " + last)
+    raise MlcaUserError("Structured response invalid after one repair: " + last, category=invalid_category)

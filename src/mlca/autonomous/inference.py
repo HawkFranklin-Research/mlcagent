@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from ulid import ULID
 
 from mlca.config import Config
@@ -18,7 +18,7 @@ from mlca.project.discovery import discover, registrations
 from mlca.project.inventory import read_table
 
 
-class Inference(StrictModel):
+class StudyProposal(StrictModel):
     primary_data: str
     problem_type: Literal[
         "binary",
@@ -31,7 +31,20 @@ class Inference(StrictModel):
         "survival",
     ]
     targets: list[str] = Field(default_factory=list)
-    primary_metric: str | None = None
+    primary_metric: (
+        Literal[
+            "roc_auc",
+            "roc_auc_ovr",
+            "macro_f1",
+            "rmse",
+            "mae",
+            "poisson_deviance",
+            "silhouette",
+            "reconstruction_error",
+            "c_index",
+        ]
+        | None
+    ) = None
     metric_reason: str = ""
     unit: str = Field(min_length=1, max_length=200)
     repeated_subjects: str = Field(max_length=200)
@@ -42,9 +55,18 @@ class Inference(StrictModel):
     duration: str | None = None
     event_column: str | None = None
     reason: str = Field(min_length=1, max_length=800)
-    alternatives: list[dict] = Field(default_factory=list, max_length=3)
     uncertain: bool = False
     question: str | None = Field(default=None, max_length=600)
+
+    @model_validator(mode="after")
+    def checked_contract(self, info):
+        # Local validation context is never serialized into provider messages.
+        if info.context and "tables" in info.context:
+            try:
+                validate(self, info.context["tables"])
+            except MlcaUserError as exc:
+                raise ValueError(str(exc)) from exc
+        return self
 
     @property
     def template(self):
@@ -54,6 +76,10 @@ class Inference(StrictModel):
             "multilabel": "multilabel_classification",
             "multioutput_regression": "regression",
         }.get(self.problem_type, self.problem_type)
+
+
+class Inference(StudyProposal):
+    alternatives: list[StudyProposal] = Field(default_factory=list, max_length=3)
 
 
 def inventory(paths, exclude_columns=()):
@@ -124,6 +150,10 @@ def validate(proposal, tables):
         raise MlcaUserError(
             "Binary inference requires exactly two observed categories", category="invalid_inference"
         )
+    if proposal.problem_type == "multiclass" and frame[proposal.targets[0]].nunique() < 3:
+        raise MlcaUserError(
+            "Multiclass inference requires at least three observed categories", category="invalid_inference"
+        )
     if proposal.problem_type in {"multilabel", "multioutput_regression"} and len(proposal.targets) < 2:
         raise MlcaUserError("Multi-output task needs at least two targets", category="invalid_inference")
     if proposal.problem_type in {"regression", "multioutput_regression"} and not all(
@@ -156,6 +186,8 @@ def infer(paths, brief, config, evidence, exclude_columns=(), *, principal="user
         "Select a main table, problem type, target(s) or no target, row meaning, grouping/time fields, "
         "and identifier/leakage suspects. Choose classification for categorical outcomes, regression for numeric "
         "outcomes, clustering for natural groups, representation for embeddings/reconstruction. "
+        "Use the workflow metric by leaving primary_metric null; only numeric-outcome tasks may override it "
+        "with mae or poisson_deviance and a reason. Metric identifiers are exact lowercase schema values. "
         "Give a reason. Include up to three complete alternative proposals when another scientific aim is plausible. Mark uncertain and ask one short question only when the scientific aim is ambiguous; "
         "the recorded recommendation is used in the autonomous arm. Never invent columns or outcomes. "
         "No raw rows or researcher manifest are available. Return JSON matching: "
@@ -179,12 +211,12 @@ def infer(paths, brief, config, evidence, exclude_columns=(), *, principal="user
             Inference,
             context,
             ["inventory_summary", "user_text"],
+            validation_context={"tables": tables},
+            invalid_category="invalid_inference",
         )
         proposal = validate(response.parsed, tables)
         for alternative in proposal.alternatives:
-            if alternative.get("alternatives"):
-                raise MlcaUserError("Inference alternatives cannot nest", category="invalid_inference")
-            validate(Inference.model_validate(alternative), tables)
+            validate(alternative, tables)
     finally:
         (evidence / "setup-events.json").write_text(json.dumps(records, default=str, indent=2) + "\n")
     digest = hashlib.sha256(canonical(proposal.model_dump()).encode()).hexdigest()

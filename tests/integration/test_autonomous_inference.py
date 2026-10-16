@@ -113,7 +113,10 @@ def test_bare_csv_scripted_run(tmp_path):
     assert metrics["models"]["navigator"]["calls"]["value"] == sum(
         r.get("role") == "navigator" for r in read(project)
     )
-    assert metrics["autonomy"]["rails"]["version"] == "rails-0.0"
+    from mlca.paths import resource
+    from mlca.rails import load as load_rails
+
+    assert metrics["autonomy"]["rails"]["version"] == load_rails(resource("rails")).version
     assert any(r["type"] == "DecisionWindowOpened" and r["payload"]["kind"] == "approval" for r in records)
     assert any(r["type"] == "DecisionWindowOpened" and r["payload"]["kind"] == "choice" for r in records)
     assert {r["actor"] for r in records if r["type"] == "UserConfirmed"} == {result["policy_principal"]}
