@@ -1,6 +1,6 @@
-# Rails review — work order 05 baseline, live batch pending
+# Rails review — rails-0.4 after batch-01
 
-This is a review draft, not acceptance or a freeze. All 24 active rails are
+This is a review draft, not acceptance or a freeze. All 25 active rails are
 instructions; engine enforcement is listed separately. No held-out data was
 inspected. Rounds 1–2 are exploratory evidence, not a comparison against the
 DeepSeek baseline, which also changes the engine.
@@ -8,7 +8,9 @@ DeepSeek baseline, which also changes the engine.
 RL-0001 remains provisional: its output-budget evidence is one setup failure.
 The remaining rails are a consolidated design pass, mixing observed failures
 and anticipated task-type issues as individually documented in DESIGN.md.
-The post-acceptance ablation is still pending.
+The post-acceptance ablation is still pending. Batch-01 completed zero workflows;
+its failures and the infrastructure intervention are retained in experiments
+commit d792b50. Rails-0.4 has not run live yet; no improvement is claimed.
 
 ## RL-0001
 
@@ -104,27 +106,27 @@ The post-acceptance ablation is still pending.
 ## RL-0008
 
 - Kind: instruction; roles: worker; events: preprocess; problem types: all.
-- Executable source: RL-0008.yaml; ledger: L-0002 in LEDGER.md.
+- Executable source: RL-0008.yaml; ledger: L-0003 in LEDGER.md.
 - Exact instruction:
 
-> Before fitting preprocessing, screen the candidate features on training rows without fitting a model. Exclude, in the saved preprocessing, only features that are confirmed derivations of a target: exact equality with it, or a row sum of up to three non-negative columns that equals it on every training row. Features with absolute correlation of 0.98 or more with a target are a warning, not proof: keep them and print one line with their names. Print one line naming any excluded feature and the reason.
+> Before fitting preprocessing, screen the candidate features on training rows without fitting a model. Exclude, in the saved preprocessing, only features that are confirmed derivations of a target: exact equality with it, or a row sum of up to three non-negative columns that equals it on every training row. Features with absolute correlation of 0.98 or more with a target are a warning, not proof: keep them and print one line with their names. Print one line naming any excluded feature and the reason. Correlation warnings apply only to numeric outcomes; never coerce categorical labels to floats for Pearson correlation. Skip that numeric screen for categorical outcomes and retain exact-derivation checks.
 
 - Rationale: Setup sees only the schema, so leakage visible only in values must be caught on training rows; high correlation alone can be a legitimate strong predictor, so only exact derivations are removed.
 - Cause/basis: individual row in proposed/rails-0.3/DESIGN.md (O = observed rounds 1–2, A = anticipated from development task types).
-- Before/after: earlier exploratory evidence retained; new batch-01 pending. No measured improvement claimed.
+- Before/after: batch-01 source uses rails-0.3, zero completed workflows; rails-0.4 pending. See L-0003 for the individual failure cause. No measured improvement claimed.
 - Genericity: the instruction concerns data types, model interfaces or workflow boundaries; it contains no development dataset/column identifier or model ID.
 
 ## RL-0009
 
 - Kind: instruction; roles: worker; events: preprocess, features, model; problem types: all.
-- Executable source: RL-0009.yaml; ledger: L-0002 in LEDGER.md.
+- Executable source: RL-0009.yaml; ledger: L-0003 in LEDGER.md.
 - Exact instruction:
 
-> Keep feature names through preprocessing. When the encoded output has at most 300 columns, call set_output(transform='pandas') on ColumnTransformer and Pipeline objects and use OneHotEncoder(handle_unknown='ignore', sparse_output=False). When it would be wider, keep sparse output inside one Pipeline that starts from the raw feature DataFrame, take names from get_feature_names_out(), and never pass that output to a transformer that selects columns by name.
+> Keep feature names through preprocessing. When the encoded output has at most 300 columns, call set_output(transform='pandas') on ColumnTransformer and Pipeline objects and use OneHotEncoder(handle_unknown='ignore', sparse_output=False). When it would be wider, keep sparse output inside one Pipeline that starts from the raw feature DataFrame, take names from get_feature_names_out(), and never pass that output to a transformer that selects columns by name. Use set_output only with components that support it; prefer built-in sklearn transformers with get_feature_names_out rather than custom components.
 
 - Rationale: Transformers that output NumPy arrays lose column names and the next name-based transformer fails; dense output of very wide encodings exhausts memory on large tables.
 - Cause/basis: individual row in proposed/rails-0.3/DESIGN.md (O = observed rounds 1–2, A = anticipated from development task types).
-- Before/after: earlier exploratory evidence retained; new batch-01 pending. No measured improvement claimed.
+- Before/after: batch-01 source uses rails-0.3, zero completed workflows; rails-0.4 pending. See L-0003 for the individual failure cause. No measured improvement claimed.
 - Genericity: the instruction concerns data types, model interfaces or workflow boundaries; it contains no development dataset/column identifier or model ID.
 
 ## RL-0010
@@ -143,14 +145,14 @@ The post-acceptance ablation is still pending.
 ## RL-0011
 
 - Kind: instruction; roles: worker; events: features, model, validate, test, interpret; problem types: all.
-- Executable source: RL-0011.yaml; ledger: L-0002 in LEDGER.md.
+- Executable source: RL-0011.yaml; ledger: L-0003 in LEDGER.md.
 - Exact instruction:
 
-> Saved transformers from earlier steps may already contain the earlier preprocessing. Before combining them, check isinstance(obj, Pipeline) and obj.named_steps to see whether the later object includes the earlier one; build on the most complete saved pipeline that accepts the raw feature DataFrame and append only the new estimator. Never place a saved pipeline after a step it already contains, and never pass NumPy arrays to a transformer that selects columns by name.
+> Saved transformers from earlier steps may already contain the earlier preprocessing. Before combining them, check isinstance(obj, Pipeline) and obj.named_steps to see whether the later object includes the earlier one; build on the most complete saved pipeline that accepts the raw feature DataFrame and append only the new estimator. Never place a saved pipeline after a step it already contains, and never pass NumPy arrays to a transformer that selects columns by name. Inspect feature_names_in_ for each loaded object and preserve its exact input columns and order. A saved selector may already wrap preprocessing: use that selector as the only frontend, or chain preprocessing once before a bare selector. Never feed derived or renamed columns back into a raw-column frontend.
 
 - Rationale: Model steps chained a saved preprocessor before a saved selector that already contained it, applying preprocessing twice and failing on arrays.
 - Cause/basis: individual row in proposed/rails-0.3/DESIGN.md (O = observed rounds 1–2, A = anticipated from development task types).
-- Before/after: earlier exploratory evidence retained; new batch-01 pending. No measured improvement claimed.
+- Before/after: batch-01 source uses rails-0.3, zero completed workflows; rails-0.4 pending. See L-0003 for the individual failure cause. No measured improvement claimed.
 - Genericity: the instruction concerns data types, model interfaces or workflow boundaries; it contains no development dataset/column identifier or model ID.
 
 ## RL-0012
@@ -322,6 +324,17 @@ The post-acceptance ablation is still pending.
 - Before/after: earlier exploratory evidence retained; new batch-01 pending. No measured improvement claimed.
 - Genericity: the instruction concerns data types, model interfaces or workflow boundaries; it contains no development dataset/column identifier or model ID.
 
+## RL-0025
+
+- Kind: instruction; Worker fitting stages; all problem types.
+- Cause: L-0003, Energy/Anuran saved local-object loading failures in batch-01.
+- Exact instruction:
+
+> Save objects that can load in a fresh Python interpreter using installed packages alone. Prefer built-in sklearn estimators, selectors and transformers. Never pickle locally defined estimators, functions or lambdas: they depend on an earlier script's __main__ and cannot be loaded reliably later. For an identity selector use an importable built-in passthrough transformer, not a custom wrapper. Switching to joblib does not restore missing definitions. Never fabricate replacement behavior to make an incompatible saved object load.
+
+- Genericity: persistence between fresh interpreters, with no dataset or model identifier.
+- Before: rails-0.3, those two runs stopped at model; after rails-0.4 pending.
+
 ## Offline gate
 
 Native full gate: 408 passed, 1 skipped; experiments: 18 passed; Ruff passes.
@@ -329,6 +342,10 @@ The initial deadline-adapter compatibility regression was fixed and retained
 as B-0010. Live batch-01 remains pending at this baseline commit.
 
 ## Engine changes (not rails)
+
+B-0011–B-0013 (c2b9978): explicit setup wire fields, bounded-memory matching and
+value-free diagnostic guidance after batch-01. Existing policy stays authoritative.
+
 
 - B-0001: setup response contract and failed-setup accounting (c5ea681).
 - B-0002–B-0005 / E1–E4: aliases, metric registry, hard call deadline and unsupervised template wording (d48b0f8).

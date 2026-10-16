@@ -448,3 +448,6 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 - Stream privacy match candidates without changing row-copy verdicts.
 - Explain metric partitions and known library contracts with value-free diagnostics.
 - Retain batch-01 failures and the early infrastructure intervention separately.
+
+- Rails-0.4 adds importable-object persistence guidance and clarifies named
+  pipeline frontends, compatible output interfaces and categorical screens.

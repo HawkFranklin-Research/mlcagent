@@ -176,3 +176,20 @@ message values are sent. Canary tests prove values remain local.
 
 Focused engine/legacy guard regressions: 22 passed in 0.96 s. All source changes
 are between batches. No hand-written analysis or current-study script changes.
+
+## L-0003 — batch-01 consolidated instruction repairs (rails-0.4)
+
+- Cause/evidence: experiments d792b50, curated batch-01 step scripts, diagnostics,
+  request envelopes and REVIEW.md. Engine corrections B-0011–B-0013 are separate
+  (c2b9978); no model/generation setting changes in this instruction revision.
+- RL-0008: numeric correlation only for numeric outcomes (Anuran string-outcome
+  conversion failure). Exact derivation checks and warning-only correlation stay.
+- RL-0009: named output requires compatible components (Heart set_output error).
+- RL-0011: inspect fitted feature names and apply the saved frontend only once
+  (Optical transformed columns into a raw-column pipeline).
+- New RL-0025: persist importable package objects rather than local __main__
+  definitions (Energy/Anuran cross-script unpickling failures). No dummy behavior.
+- All wording is generic. No dataset/column/model identifier appears in the rails.
+- Output-budget failures remain recorded. Hidden reasoning is not controlled by
+  a shorter visible-script instruction; explicit effort changes, if needed,
+  belong at a recorded batch boundary with model/rails changes separated.

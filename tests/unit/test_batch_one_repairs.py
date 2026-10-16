@@ -138,3 +138,14 @@ def test_common_values_are_bounded_before_materialization(tmp_path):
         assert all("LIMIT 1" in sql for sql in traced.calls)
         assert guard._match_values(db, "registered:source", [0, 0, 0], 3)
         assert not guard._match_values(db, "registered:source", [0] * 7, 7)
+
+
+def test_serialization_rail_reaches_fitting_work_orders():
+    from mlca.paths import resource
+    from mlca.rails import load
+
+    rails = load(resource("rails"))
+    assert rails.version != "rails-0.0"
+    text = rails.instructions("worker", "features", "regression")
+    assert "[RL-0025]" in text and "__main__" in text
+    assert "[RL-0025]" not in rails.instructions("navigator", "onboard", "regression")
