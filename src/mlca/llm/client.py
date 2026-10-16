@@ -261,6 +261,8 @@ class Client:
                 "reserved_cost_usd": self._bound(payload, selected, provider_config),
             }
             entry = {**digest, **{k: record[k] for k in ["request_id", "role", "provider", "model", "ts"]}}
+            if "setup_values" in categories:
+                entry["setup_inventory"] = getattr(self, "setup_inventory", [])
             with FileLock(str(self.root / ".mlca/model_requests.lock")):
                 self._budget(payload, selected, provider_config, context)
                 usage.persist(self.root, record, entry)  # Reserve the attempt before network I/O.

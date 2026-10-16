@@ -7,6 +7,7 @@ CATEGORIES = {
     "template_spec",
     "facts",
     "inventory_summary",
+    "setup_values",
     "script",
     "traceback",
     "figure_image",

@@ -113,6 +113,8 @@ def _build_initialisation(
     primary_data: str | None = None,
     data_roles: dict[str, str] | None = None,
     exclude_columns: tuple[str, ...] = (),
+    label_map: dict | None = None,
+    label_map_reason: str = "",
     final_root: Path | None = None,
 ) -> Path:
     root = path.resolve()
@@ -130,18 +132,23 @@ def _build_initialisation(
         if name in {item["name"] for item in registered}:
             raise MlcaUserError("Registered data names must be unique")
         source_digest = sha256(file)
-        if exclude_columns:
+        project_labels = bool(label_map) and primary_data in {None, name}
+        if exclude_columns or project_labels:
             from .inventory import read_table
 
             frame = read_table(file)
             frame = frame.drop(columns=list(exclude_columns), errors="ignore")
+            if project_labels:
+                from .labels import apply_label_map
+
+                frame = apply_label_map(frame, label_map, list(label_map), label_map_reason)
             if frame.empty or not len(frame.columns):
                 raise MlcaUserError("Exclusion leaves no usable data")
             file = root / ".mlca/data/registered" / (name + ".parquet")
             file.parent.mkdir(parents=True, exist_ok=True)
             frame.to_parquet(file, index=True)
         local_paths[name] = file
-        destination = (final_root / file.relative_to(root)) if exclude_columns else file
+        destination = (final_root / file.relative_to(root)) if (exclude_columns or project_labels) else file
         registered.append(
             {
                 "name": name,
@@ -150,6 +157,7 @@ def _build_initialisation(
                 "sha256": sha256(file),
                 "size": file.stat().st_size,
                 "read_only": True,
+                **({"label_map": label_map, "label_map_reason": label_map_reason} if project_labels else {}),
             }
         )
     if not registered:
@@ -293,6 +301,8 @@ def initialise(
     primary_data=None,
     data_roles=None,
     exclude_columns=(),
+    label_map=None,
+    label_map_reason="",
 ):
     root = Path(path).expanduser().resolve()
     locks = user_data_dir() / "init-locks"
@@ -322,8 +332,13 @@ def initialise(
                     primary_data,
                     data_roles,
                     **(
-                        {"exclude_columns": tuple(exclude_columns), "final_root": root}
-                        if exclude_columns
+                        {
+                            "exclude_columns": tuple(exclude_columns),
+                            "label_map": label_map,
+                            "label_map_reason": label_map_reason,
+                            "final_root": root,
+                        }
+                        if (exclude_columns or label_map)
                         else {}
                     ),
                 )

@@ -237,6 +237,8 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
                 principal=policy,
                 primary_data=proposal.primary_data,
                 exclude_columns=exclude_columns,
+                label_map=proposal.label_map,
+                label_map_reason=proposal.label_map_reason,
             )
             # Inference requests are retained with their original identity and egress evidence.
             for name in ("usage.jsonl", "egress.jsonl"):

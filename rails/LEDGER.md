@@ -91,3 +91,20 @@ Activation gate: 17 focused loader/scope/genericity/setup tests passed in 0.58 s
   integration regressions. Final full suite is the Step 1.7 gate before live calls.
 - Activation commit for L-0002: 5ded618. This group commit hash is linked from
   the next status entry. No scientific safeguard is relaxed.
+
+## B-0006 — work order 05 E5, author-approved setup values and spelling maps
+
+- Every visible column exposes at most twenty distinct values/counts, or numeric
+  min/max/mean/quartiles; high-cardinality nonnumeric summaries are unavailable.
+  Hidden evaluation columns are removed first. No cross-column raw rows are sent.
+- Each setup egress envelope records the exact setup_inventory and its payload
+  hash. This is an explicit author-approved expansion beyond schema-only setup.
+- Optional target label_map needs a reason and observed source/destination values.
+  Only whitespace/case/trailing-period variants may merge. Original inputs are
+  unchanged; project-owned projections record mapping, reason and source hash.
+  Cardinality validation uses the mapped proposal, never a silently normalized input.
+- Evidence: documented label spellings in Adult; four raw categories qualify the
+  earlier claim that its multiclass setup was inherently incorrect.
+- Tests: setup values/egress/exclusion, map validation, atomic registration and
+  source preservation. Final full suite remains Step 1.7.
+- Prior engine E1–E4 commit: d48b0f8. This entry's commit is linked next.

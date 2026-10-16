@@ -57,7 +57,7 @@ def configuration(tmp_path, replies):
         response(problem_type="multiclass", primary_metric="roc_auc_ovr"),
     ],
 )
-def test_invalid_contract_is_repaired_locally_without_sending_rows(tmp_path, bad):
+def test_invalid_contract_repairs_with_authorized_column_values_not_rows(tmp_path, bad):
     data = tmp_path / "sheet.csv"
     pd.DataFrame({"measure": ["RAW_SENTINEL_ONE", "RAW_SENTINEL_TWO"] * 2, "label": [0, 1, 0, 1]}).to_csv(
         data, index=False
@@ -76,7 +76,9 @@ def test_invalid_contract_is_repaired_locally_without_sending_rows(tmp_path, bad
     assert isinstance(result.alternatives[0], StudyProposal)
     assert len(read(evidence)) == 2
     requests = [json.loads(f.read_text())["request"] for f in (evidence / ".mlca/llm").glob("*.json")]
-    assert all("RAW_SENTINEL" not in json.dumps(r) for r in requests)
+    assert all("RAW_SENTINEL_ONE" in json.dumps(r) for r in requests)
+    egress = [json.loads(line) for line in (evidence / ".mlca/egress.jsonl").read_text().splitlines()]
+    assert all("setup_values" in row["categories"] and row["setup_inventory"] for row in egress)
     assert all("validation_context" not in r for r in requests)
 
 
