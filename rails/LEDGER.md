@@ -35,3 +35,21 @@ event, step, category, value-free diagnosis, files, commit and fresh verificatio
 - Verification: synthetic invalid metric, incomplete alternative, unknown-column
   and task-cardinality responses repair once or fail with invalid_inference;
   zero raw-row context sent. Fresh live verification pending.
+
+## L-0001 — 16 October 2026 — RL-0001 (instruction)
+
+- Evidence: `../mlcagent-experiments/bench/dev-loop/round-01/covertype/setup-001/`;
+  hashed copies in round-01/setup-evidence/covertype/setup-001/.
+- Actual model: poolside/laguna-s-2.1:free. Event: onboard; step: none;
+  failure category: output_truncated. A 16,384-token output allocation was
+  exhausted before a usable study proposal; no Worker execution occurred.
+- Generic cause: unnecessary setup elaboration can consume the response budget.
+  Ask for one concise proposal, adding alternatives only for actual unresolved
+  scientific ambiguity. This cannot guarantee control over hidden reasoning or
+  provider truncation; preserve any further truncation as failure evidence.
+- Change: rails/RL-0001.yaml, scoped to Navigator/onboard/all problem types;
+  rails-0.2. Commit: recorded after local commit in the review package.
+- Genericity: no table, filename, column, observed value, model or domain in
+  instruction or reason. Valid for any study setup; no safeguard is changed.
+- Offline verification: genericity and actual inference-request injection tests.
+  Fresh live verification pending; do not relabel Round 1 as successful.

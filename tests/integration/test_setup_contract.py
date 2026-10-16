@@ -109,3 +109,14 @@ def test_alternative_schema_is_complete_and_nonrecursive():
             Inference.model_validate(response(problem_type="multiclass")),
             {"sheet": pd.DataFrame({"label": [0, 1]})},
         )
+
+
+def test_setup_brevity_rail_reaches_actual_inference_request(tmp_path):
+    data = tmp_path / "sheet.csv"
+    pd.DataFrame({"measure": [1, 2, 3, 4], "label": [0, 1, 0, 1]}).to_csv(data, index=False)
+    evidence = tmp_path / "setup"
+    infer([data], "", configuration(tmp_path, [response()]), evidence)
+    request = next((evidence / ".mlca/llm").glob("*.json"))
+    text = json.dumps(json.loads(request.read_text())["request"])
+    assert "[RL-0001]" in text
+    assert "one concise proposal" in text
