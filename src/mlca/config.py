@@ -26,6 +26,7 @@ class ProviderConfig(ConfigModel):
     # Requests per minute across all processes. None: 16 for OpenRouter free models (their
     # account limit is 20/min), otherwise unpaced.
     requests_per_minute: float | None = Field(default=None, gt=0)
+    rate_limit_dir: str | None = None
 
 
 class RoleConfig(ConfigModel):
@@ -44,8 +45,8 @@ class Privacy(ConfigModel):
 
 
 class Budgets(ConfigModel):
-    turn_max_usd: float = Field(default=1.0, gt=0)
-    session_max_usd: float = Field(default=10.0, gt=0)
+    turn_max_usd: float | None = Field(default=1.0, gt=0)
+    session_max_usd: float | None = Field(default=10.0, gt=0)
     worker_max_attempts: int = Field(default=3, ge=1, le=10)
 
 
@@ -74,6 +75,7 @@ class CatalogConfig(ConfigModel):
 
 class Config(ConfigModel):
     measurement_arm: Literal["worker", "reference"] = "worker"
+    rails_enabled: bool = True
     catalog: CatalogConfig = Field(default_factory=CatalogConfig)
     chatgpt_auth: ChatGPTAuth = Field(default_factory=ChatGPTAuth)
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)

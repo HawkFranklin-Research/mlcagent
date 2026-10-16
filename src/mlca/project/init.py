@@ -193,7 +193,7 @@ def _build_initialisation(
     shutil.copy2(resource("styles") / "default.mplstyle", root / ".mlca/style.mplstyle")
     from mlca.rails import snapshot
 
-    rails = snapshot(root / ".mlca/rails")
+    rails = snapshot(root / ".mlca/rails", enabled=validated_config.rails_enabled)
     project_id = str(ULID())
     settings = {
         "project_id": project_id,

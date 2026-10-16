@@ -76,7 +76,10 @@ def pace(provider_config, model, now=time.time, sleep=time.sleep):
             provider_config.kind + (provider_config.base_url or "") + (provider_config.api_key_env or "")
         ).encode()
     ).hexdigest()[:24]
-    path = user_config_dir() / "rate" / (key + ".json")
+    rate_directory = (
+        Path(provider_config.rate_limit_dir) if provider_config.rate_limit_dir else user_config_dir() / "rate"
+    )
+    path = rate_directory / (key + ".json")
     path.parent.mkdir(parents=True, exist_ok=True)
     waited = 0.0
     with FileLock(str(path) + ".lock"):
@@ -384,6 +387,8 @@ class Client:
         )
 
     def _budget(self, payload: Any, role: Any, provider: Any, context: Any) -> Any:
+        if self.config.budgets.session_max_usd is None and self.config.budgets.turn_max_usd is None:
+            return  # Explicit author-selected unlimited mode; actual unknown costs stay unknown.
         bound = self._bound(payload, role, provider)
         if bound is None:
             raise BudgetError("Set pricing or request_cost_bound_usd before real model requests")
@@ -397,8 +402,11 @@ class Client:
             charged(r) for r in records if r.get("turn_id") == context.turn_id and context.turn_id
         )
         if (
-            session_cost + bound > self.config.budgets.session_max_usd
-            or turn_cost + bound > self.config.budgets.turn_max_usd
+            self.config.budgets.session_max_usd is not None
+            and session_cost + bound > self.config.budgets.session_max_usd
+        ) or (
+            self.config.budgets.turn_max_usd is not None
+            and turn_cost + bound > self.config.budgets.turn_max_usd
         ):
             reason = "Configured model request budget would be exceeded"
             if self.emit:

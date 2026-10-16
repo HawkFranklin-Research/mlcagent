@@ -260,7 +260,9 @@ def run(
             remaining = card.total_budget_usd - total
             session.config.budgets.session_max_usd = min(
                 budget_usd or card.per_run_budget_usd,
-                session.config.budgets.session_max_usd,
+                session.config.budgets.session_max_usd
+                if session.config.budgets.session_max_usd is not None
+                else float("inf"),
                 max(remaining, 1e-12),
             )
             session.emit(

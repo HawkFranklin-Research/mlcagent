@@ -240,7 +240,8 @@ def infer(paths, brief, config, evidence, exclude_columns=(), *, principal="user
     )
     from mlca.rails import load as load_rails
 
-    text += load_rails(resource("rails")).instructions("navigator", "onboard", "all")
+    if config.rails_enabled:
+        text += load_rails(resource("rails")).instructions("navigator", "onboard", "all")
     context = RequestContext(
         role="navigator", session_id=str(ULID()), event_id="onboard", purpose="inference"
     )

@@ -132,14 +132,18 @@ def load(path: Path) -> Rails:
     return Rails(version, items, digest.hexdigest())
 
 
-def snapshot(destination):
+def snapshot(destination, enabled=True):
     source = resource("rails")
-    baseline = load(source)
     destination.mkdir(parents=True)
-    shutil.copy2(source / "VERSION", destination / "VERSION")
-    for file in source.glob("*.yaml"):
-        shutil.copy2(file, destination / file.name)
-    return {"version": baseline.version, "sha256": baseline.sha256}
+    if enabled:
+        load(source)
+        shutil.copy2(source / "VERSION", destination / "VERSION")
+        for file in source.glob("*.yaml"):
+            shutil.copy2(file, destination / file.name)
+    else:
+        (destination / "VERSION").write_text("rails-0.0\n")
+    actual = load(destination)
+    return {"version": actual.version, "sha256": actual.sha256}
 
 
 def open_snapshot(root, created):

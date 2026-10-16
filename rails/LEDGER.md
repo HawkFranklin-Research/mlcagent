@@ -122,3 +122,12 @@ The frozen partitions retain group columns for internal folds; protocol and rail
 exclude them from predictors. Group-disjoint outer splitting remains enforced.
 Two focused regressions cover value-free fitted-column records and train groups.
 E5 prior commit: 9026276. Final full suite remains the Step 1.7 gate.
+
+## B-0009 — shared batch controls and explicit ablation
+
+Work order 05 Step 1.6: explicitly configured shared request pacing across isolated
+process configuration directories; unset spending ceilings remain unlimited, not
+unknown-price refusals. Unknown usage is still unavailable, never fabricated as
+zero. rails_enabled=false snapshots rails-0.0 for the specified ablation only.
+Default native configuration stays unchanged. Twelve focused tests passed.
+E6/E7 implementation: bf8814b; researcher-only manifest fields: 99b415b.
