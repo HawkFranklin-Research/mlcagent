@@ -1,3 +1,62 @@
+## Work order05 — batch05 reviewed; batch06 final gate passed
+
+Series10/12 tables have qualified at least once; K=3 acceptance/ablation have
+not started. Batch04 on codeafe46c3/controller1344fc8/rails06/defaultreasoning:
+Anuran and Seeds newly qualified; Bike and Retail completed but setup disagreed
+(Bike also failed chronological leakage). Digits failed EDA truncation.
+184requests,1203454tokens,$0.74417513. Batch05 changed ONLY requested effort
+to low, with exact same source/rails/model/limits: Bike qualified, Digits failed
+validation, Retail failed split after invalid Navigator metadata triggered the
+wrong fallback.84requests,416642tokens,$0.2442439458. Cumulative sincebatch01:
+1082requests,6813806tokens,$4.3661140112; core usage known. Raw provider
+reasoning details have an observed per-request inconsistency, preserved, not
+guessed or added again to completion. No randomized causal effect claimed.
+
+Experiments evidence4a380e1/9447df6:1086/535 hashed text artifacts respectively,
+127/52 omitted binary/table hashes, private data excluded, locks included.
+Seeds external test-onlyARI.3387861089/NMI.4850069866 on42 test rows, with126
+training assignments retained; NOT agent work and never used to tune rails.
+
+Consolidated source aa66fac,rail3f76c3f/rails07:
+- Joint group_time splitting preserves groups AND chronology by merging
+ overlapping intervals/ties into components, using near-requested row fractions,
+ or refusing impossible three-way constraints. No rows dropped, no random
+ fallback. Existing single-constraint paths preserved.
+- Navigator sees bare local goal IDs, exact parameter schemas/action contracts
+ and supported question-effect examples. Invalid mutation effects remain
+ refused; essential unsupported decisions pause for the human. Retail05 BOTH
+ model replies recommended preparation; fallback chose distributions only
+ after goal/question metadata failed. Do not misattribute it to the model
+ ignoring preparation or to presentation word counts.
+- Representation validation requests metrics only; explicit PCA vs MLP final
+ decoder interfaces and fixed value-free diagnostics. Digits05 computed its
+ metrics after repairs but crashed saving an UNDECLARED validation embedding
+ without explicit row_id/partition. Runtime guards unchanged. RL0022 refined;
+ still26 instruction rails, no new checks/defaults.
+
+Final full offline gate:476passed,1skipped,100files,zero failures/errors; four
+exitcodes0,slowest323.54s. Logs/XML ~/.cache/mlca-batch06-final-gate/.
+Previous complete gate467passed1skip. Focused28passed57.68s including guided
+and training-review integration;latest16 focused passed1.66s. Experiments
+18passed12.38s. Ruff passes; no real-data reference analysis or live tests.
+
+Next: launch fresh batch06 ONLYoptical_digits,online_retail; fixed DeepSeek
+V4.1Flash,LOW effort,temp0,max16384,concurrency6,shared60rpm,one large atonce,
+A only,300s call/script,5400s study,three Worker attempts. Check live PID/log
+~/.cache/mlca-05-batch-controller.json; never edit source during active jobs.
+Author question about future compatible extra constraints remains pending.
+Current strict metadata scores and previous outcomes are unchanged. Bike
+chronology stays mandatory; Retail static segmentation is approved prospectively.
+
+Disk~39GiB; old closed derived caches losslessly archived, restore before old
+project Session/privacy reads. Covertype's45GB raw cache will need capacity or
+generic compaction before full36-study acceptance. Compaction is proposed only,
+NOT implemented; no primary data/model/log/vault removed.
+O1–O7 built,O8continues,O9freezeNOTstarted. Noheldout,biomedical,paper edits,
+push,remote,upload,tag,version bump or publication. CLI automatic sign-in deferred.
+
+---
+
 ## Work order 05 — batch03 reviewed; batch04 launch gate passed
 
 Batch03: four new qualifying completions (Breast Cancer, Adult, Dry Bean,

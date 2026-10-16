@@ -2,6 +2,15 @@
 
 ## Unreleased — work order 05 (16 October 2026)
 
+- Batches04–05 add qualifying Anuran, Seeds and Bike runs:10/12 tables have
+  qualified once; unchanged-version acceptance is still pending.
+- Joint grouping/time splitting enforces both constraints or refuses clearly.
+- Explicit Navigator goal, parameter and question-effect contracts preserve
+  strict validation while making valid recommendations executable.
+- Representation validation emits metrics only; final decoder interfaces and
+  declared embedding outputs are clarified in rails-0.7 and fixed diagnostics.
+- Full offline gate476passed,1skipped; all100 test files, no live test calls.
+
 - Batch-03: four new qualifying completions, seven tables qualified across the
   series; acceptance and ablation remain pending.
 - Author-approved static customer segmentation for future Online Retail runs;
