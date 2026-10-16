@@ -1,4 +1,3 @@
-
 """Generic pre-split data review. Findings are heuristics, never proof of leakage."""
 
 import hashlib
@@ -494,12 +493,19 @@ def prepared(session):
 
 def protocol_input(session):
     state = session.state
-    if not state.guided_enabled:
-        return None
+    task = dict(state.task)
+    task.setdefault(
+        "type",
+        {"tabular_classification": "binary", "multilabel_classification": "multilabel"}.get(
+            state.template_id, state.template_id
+        ),
+    )
+    if not task.get("primary_metric"):
+        task["primary_metric"] = default_metric(task["type"])
     data = {
         "primary_data": state.primary_data,
         "columns": state.columns,
-        "task": state.task,
+        "task": task,
         "excluded_columns": state.excluded_columns,
         "group_column": state.group_column,
         "targets": [c for c in state.columns.values() if c is not None],

@@ -305,3 +305,12 @@ No new rail or hard-coded dataset/column. All26 active rails remain instructions
 Source fixes B-0018–20 are separate. Batch04 model settings remain unchanged;
 output budget intervention is reserved for setting-only batch05. Before/after
 results are pending; no rail effect is inferred from wording tests.
+
+### B-0020 compatibility follow-up before batch 04
+
+Review found unguided native sessions did not receive _protocol. All action
+input resolution now supplies the same immutable protocol snapshot, filling
+a missing task metric from the existing registry without changing recorded
+state or an explicit override. This keeps the new instructions usable on
+older native projects. The first partial gate was deliberately interrupted
+before this source change; its exit2 logs are retained as superseded.

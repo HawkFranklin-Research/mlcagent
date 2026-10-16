@@ -85,13 +85,11 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
                         paths["latest_model"] = path
         else:
             raise MlcaUserError(f"Unknown action input reference: {ref}")
-    if state.guided_enabled:
-        from types import SimpleNamespace
+    from types import SimpleNamespace
 
-        from mlca.engine.data_review import protocol_input
+    from mlca.engine.data_review import protocol_input
 
-        path = protocol_input(SimpleNamespace(root=root, state=state))
-        paths["_protocol"] = path
+    paths["_protocol"] = protocol_input(SimpleNamespace(root=root, state=state))
     return paths
 
 

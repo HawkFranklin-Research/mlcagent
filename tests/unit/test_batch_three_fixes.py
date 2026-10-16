@@ -59,3 +59,31 @@ def test_missing_primary_metric_retries_scoring_once_without_reopening_fit():
         validate([Option.model_validate(option)], current, workflow)
     current.steps[-1]["metrics"] = [{"name": "poisson_deviance", "split": "val", "value": 0.2}]
     assert not missing_validation_metric(current)
+
+
+@pytest.mark.parametrize(
+    "guided,task,expected",
+    [
+        (False, {}, "rmse"),
+        (True, {"type": "regression", "primary_metric": "poisson_deviance"}, "poisson_deviance"),
+    ],
+)
+def test_protocol_exposes_same_metric_contract_to_older_native_sessions(tmp_path, guided, task, expected):
+    import json
+
+    from mlca.engine.data_review import protocol_input
+
+    current = NS(
+        guided_enabled=guided,
+        task=task,
+        template_id="regression",
+        primary_data="toy",
+        columns={"target": "outcome"},
+        excluded_columns=[],
+        group_column=None,
+    )
+    session = NS(root=tmp_path, state=current)
+    path = protocol_input(session)
+    assert json.loads(path.read_text())["task"]["primary_metric"] == expected
+    assert current.task == task
+    assert protocol_input(session) == path

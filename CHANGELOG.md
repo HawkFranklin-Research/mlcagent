@@ -2,6 +2,20 @@
 
 ## Unreleased — work order 05 (16 October 2026)
 
+- Batch-03: four new qualifying completions, seven tables qualified across the
+  series; acceptance and ablation remain pending.
+- Author-approved static customer segmentation for future Online Retail runs;
+  preserve earlier scoring and Bike's chronological requirement.
+- Permit exactly read-only /proc/self/maps for numerical-library introspection,
+  with a real sandbox KMeans/denial regression; no broader /proc access.
+- All six templates score their declared primary metric; one bounded validation
+  retry avoids reopening preprocessing for missing scoring evidence.
+- Rails-0.6 clarifies consecutive-period time declarations, categorical output
+  metrics and PCA reconstruction; no dataset-specific instruction.
+- Optional recorded reasoning effort supports a separate setting-only batch;
+  default behavior remains unchanged. Native and guided actions receive the
+  same declared-metric protocol snapshot.
+
 - Batch-02: three qualifying development successes; preserve all nine failures.
 - Validate exact declared frozen populations for per-row artifacts while
   preserving historical train/test requirements and local-only access.
