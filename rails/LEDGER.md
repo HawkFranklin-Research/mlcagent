@@ -224,3 +224,27 @@ probability alignment, per-output categorical scoring and reuse of training-only
 encoders. No captured error values or labels leave the machine. Fit refusals
 remain enforced. Focused new/legacy Worker and contract regressions:40 passed
 in1.70s; the full gate follows consolidated rail changes before another batch.
+
+## L-0004 — batch-02 consolidated instruction repairs (rails-0.5)
+
+Evidence: experiments4a9a60d, batch-02 curated step scripts and request envelopes.
+Engine/template contracts B-0014–B-0016 are separate (43b7407). Model and
+reasoning/output settings remain unchanged for this instruction revision.
+- RL-0017: Adult's unsupported AUC pos_label argument; align a binary indicator
+  and probability column while preserving labels for other metrics.
+- RL-0018: Anuran's unsupported matrix metric, mixed label types and attempted
+  validation-time encoder fitting; evaluate per output and reuse training mappings.
+- RL-0020 now reaches Navigator as well as Worker: Retail chose distribution-only
+  EDA and never selected its existing build_entities preparation action. Its raw
+  missing entity keys correctly blocked the group split. Recommend preparation
+  before EDA completes, retaining the existing prepared-data and fit contracts.
+  The author still decides the external static-versus-temporal criterion.
+- RL-0026: Bike's saved frontend depended on transient date-derived columns;
+  preserve all feature derivations inside the reusable training-fitted pipeline.
+
+No dataset, column or provider/model identifier appears in rail text. No
+sampling, altered target, leaked manifest answer or relaxed engine safeguard.
+Output-budget failures remain measured; no reasoning-setting change yet.
+
+Focused rail/genericity/metric-contract regressions:34 passed in2.49s.
+The full consolidated native suite is required before the next live batch.

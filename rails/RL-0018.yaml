@@ -9,12 +9,15 @@ events:
 - interpret
 problem_types:
 - multilabel
-text: The targets are several categorical columns predicted together. Wrap single-output estimators
-  in MultiOutputClassifier, or use one that supports several outputs, and fit on the target
-  DataFrame in _protocol['targets'] order. predict_proba then returns one array per target.
-  For macro_f1 compute f1_score(average='macro') per target from predict, and report the unweighted
-  mean over targets as the headline value, with per-target values in the saved table.
-reason: Multi-output predictions have a different shape from single-output ones; metric code
-  written for one target fails or scores only the first.
-ledger: L-0002
+text: Several categorical targets need MultiOutputClassifier or an estimator supporting multiple outputs,
+  with the target DataFrame in _protocol['targets'] order. predict_proba returns one array per target.
+  Do not pass a multiclass-multioutput matrix to a single-output metric. Compute f1_score(average='macro')
+  separately on each target's one-dimensional true and predicted labels, then report the unweighted mean
+  and per-target values. Both vectors must have the same native label type; an object array of encoded
+  integers can be rejected as unknown. Preserve categorical labels directly, or save the training-fitted
+  target encoders with the model and reuse their unchanged mappings. Never fit an encoder during validation
+  or test.
+reason: Multi-output predictions have a different shape from single-output ones; metric code written for
+  one target fails or scores only the first.
+ledger: L-0004
 added_in: rails-0.3

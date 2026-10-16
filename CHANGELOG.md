@@ -6,6 +6,8 @@
 - Align local prediction audits with the Parquet row-output schema and make
   classification scoring task-aware without weakening metric or fit checks.
 - Fixed value-free repair hints cover observed categorical-scoring API errors.
+- Rails-0.5 clarifies probability/label alignment, persists feature derivations
+  and guides entity preparation before clustering EDA completes.
 
 - Activate consolidated rails-0.3; retain exploratory rounds separately.
 - Normalize metric aliases against one task registry and bound model calls.

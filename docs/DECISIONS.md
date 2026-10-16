@@ -832,3 +832,11 @@ not edited. Binary/multiclass action text now agrees with the task's primary
 metric; roc_auc and roc_auc_ovr are not conflated. Repair hints remain fixed and
 value-free. Retail's temporal-vs-static interpretation is still the author's
 choice; no manifest change or weakened fit/group rule is made.
+
+Rails-0.5 is a separate instruction revision:26 instructions, no new engine
+checks/defaults. Entity preparation uses the already implemented prepares_data
+handoff and action; the Navigator now receives the rail before EDA completes.
+No new entity algorithm, reference script or relaxed training-index rule was
+introduced. Primary-script recovery and whole-event completion are reported
+separately; Covertype's repaired validation script did not satisfy its primary
+metric check under the old action contract.
