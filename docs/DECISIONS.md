@@ -821,3 +821,14 @@ management after outcomes, not a change to the agent or the privacy rule.
 The repaired batch-02 launch gate passed: 416 passed, 1 skipped across all
 95 native test files, four isolated offline partitions, zero failures/errors.
 Generation settings remain unchanged for the next engine/rails batch.
+
+## Batch-02 — repair contracts rather than bypassing safeguards
+
+Three complete studies passed external setup/leakage scoring (Heart, Abalone,
+Energy). Nine failures remain; evidence is experiments4a9a60d. Prediction-audit
+CSV requirements conflicted with the local per-row Parquet helper; templates
+now declare data artifacts with explicit row_id/partition. Frozen projects are
+not edited. Binary/multiclass action text now agrees with the task's primary
+metric; roc_auc and roc_auc_ovr are not conflated. Repair hints remain fixed and
+value-free. Retail's temporal-vs-static interpretation is still the author's
+choice; no manifest change or weakened fit/group rule is made.

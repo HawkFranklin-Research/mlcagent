@@ -1,12 +1,11 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: score_test
 event: test
 title: Score the frozen model on test rows
 params: {}
 prompt: |
-  Do: frozen model = best validation ROC AUC unless the author chose otherwise; ROC AUC with 95% bootstrap CI (1000 resamples, seed), PR AUC, balanced accuracy, sensitivity and specificity at the frozen threshold, Brier score.
+  Do: evaluate the validation-selected frozen model once with the declared task.primary_metric and a 95% bootstrap CI (1000 resamples, seed). Binary: ROC AUC, PR AUC, balanced accuracy, Brier score, sensitivity and specificity at the frozen validation threshold. Multiclass: macro one-vs-rest ROC AUC and macro F1 with aligned model classes; no binary threshold.
   Save: test_metrics.csv (metric, value, ci_low, ci_high).
-  Record: metric roc_auc on test with ci; fact test_roc_auc (source test_metrics.csv).
+  Record: the exact declared primary_metric name on test with ci; fact test_roc_auc only for the corresponding test AUC, citing test_metrics.csv.
 inputs:
 - ref: train
 - ref: val
@@ -20,6 +19,7 @@ fact_candidates:
 - test_roc_auc
 reads_test: true
 timeout_s: 300
-methods_text: The frozen model and threshold were evaluated once on the locked test partition with bootstrap confidence
-  intervals.
+methods_text: The validation-selected frozen model was evaluated once on test rows by the declared task-specific
+  primary metric with bootstrap confidence intervals; binary thresholds stayed frozen and multiclass scoring
+  used macro one-vs-rest AUC.
 builtin: null

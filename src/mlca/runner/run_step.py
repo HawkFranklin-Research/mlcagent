@@ -296,6 +296,20 @@ def diagnostics(execution, allow_samples):
         hints.append(
             "inputs() returns a dictionary of Paths; call the helper once, then index the returned dictionary."
         )
+    if "unexpected keyword argument 'pos_label'" in text and "roc_auc_score" in text:
+        hints.append(
+            "roc_auc_score has no pos_label argument. For binary AUC, explicitly binarize "
+            "the target against the declared positive label and align the probability column "
+            "with estimator.classes_; for multiclass AUC align all probability columns."
+        )
+    if "multiclass-multioutput is not supported" in text or (
+        "Classification metrics can't handle a mix of" in text
+    ):
+        hints.append(
+            "Score categorical outputs separately in declared target order, with matching "
+            "true/predicted label types. Reuse training-fitted target encoders unchanged; "
+            "never fit an encoder during validation or test."
+        )
     return (
         "Execution failed: "
         + (types[-1] if types else "runtime failure")

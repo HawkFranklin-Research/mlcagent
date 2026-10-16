@@ -1,12 +1,11 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: score_validation
 event: validate
 title: Score candidates on validation rows
 params: {}
 prompt: |
-  Do: for each saved candidate model: ROC AUC, PR AUC, balanced accuracy, Brier score; threshold = Youden J on validation; sensitivity and specificity at it.
-  Save: validation_metrics.csv (model, metric, value, threshold).
-  Record: metric roc_auc on val for each model; facts best_model, best_val_roc_auc (source validation_metrics.csv).
+  Do: compare candidates by _protocol task.primary_metric with its correct optimization direction. Binary: ROC AUC, PR AUC, balanced accuracy and Brier score; choose Youden J threshold on validation. Multiclass: macro one-vs-rest ROC AUC and macro F1 with aligned model classes; no binary threshold.
+  Save: validation_metrics.csv (model, metric, value, threshold; threshold empty for multiclass).
+  Record: the exact declared primary_metric name on val for each model; fact best_model; best_val_roc_auc only for the corresponding validation AUC, citing validation_metrics.csv.
 inputs:
 - ref: train
 - ref: val
@@ -20,5 +19,7 @@ fact_candidates:
 - best_val_roc_auc
 reads_test: false
 timeout_s: 300
-methods_text: Candidates were compared on validation rows by ROC AUC; the threshold was set by Youden's J on validation.
+methods_text: Candidates were compared on validation rows by the declared task-specific primary metric.
+  A binary threshold used validation Youden J; multiclass evaluation used macro one-vs-rest AUC without
+  a binary threshold.
 builtin: null

@@ -2,6 +2,11 @@
 
 ## Unreleased — work order 05 (16 October 2026)
 
+- Batch-02: three qualifying development successes; preserve all nine failures.
+- Align local prediction audits with the Parquet row-output schema and make
+  classification scoring task-aware without weakening metric or fit checks.
+- Fixed value-free repair hints cover observed categorical-scoring API errors.
+
 - Activate consolidated rails-0.3; retain exploratory rounds separately.
 - Normalize metric aliases against one task registry and bound model calls.
 - Approved setup value inventories and validated, recorded label spelling maps.

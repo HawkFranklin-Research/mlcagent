@@ -99,6 +99,11 @@ def runtime_api():
         "For lifelines CoxPHFitter, X must include the duration/event columns, y stays None, "
         "and duration_col= and event_col= must name the actual columns from _protocol. "
         "For sklearn estimators, X is the feature DataFrame and y is the target."
+        "\nsave_table is for summary tables. save_row_outputs is for declared local per-row "
+        "data artifacts only: use a .parquet filename, unique nonmissing row_id from the "
+        "source DataFrame index, and partition containing exactly train, val or test "
+        "(validation is spelled val). Include only the declared predictions, assignments "
+        "or embedding columns; never expose these rows as summaries, facts or printed text."
     )
 
 

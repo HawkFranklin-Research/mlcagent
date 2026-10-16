@@ -1,22 +1,22 @@
-# Content v0.2.0 (2026-10-06). Keep it short: see docs/templates.md, 'Writing content'.
 id: audit_validation
 event: validate
 title: Save validation predictions for error analysis
 params: {}
 prompt: |
-  Do: per validation row: row index, outcome, predicted value per candidate model. No other columns.
-  Save: validation_predictions.csv.
+  Do: for each validation row, save outcome columns and predictions per candidate model; no raw feature columns or fitting.
+  Save: validation_predictions.parquet with save_row_outputs; row_id = original source index, partition = "val"; keep rows local, never print or expose as facts.
 inputs:
 - ref: train
 - ref: val
 - ref: prior_outputs
 outputs:
-- name: validation_predictions.csv
-  kind: table
+- name: validation_predictions.parquet
+  kind: data
   required: true
 fact_candidates: []
 reads_test: false
 timeout_s: 300
-methods_text: Validation predictions were saved for error analysis.
+methods_text: Validation per-row outcome columns and predictions were saved locally as Parquet with source
+  row identifiers and partition labels; no fitting.
 builtin: null
 role: supporting

@@ -193,3 +193,34 @@ are between batches. No hand-written analysis or current-study script changes.
 - Output-budget failures remain recorded. Hidden reasoning is not controlled by
   a shorter visible-script instruction; explicit effort changes, if needed,
   belong at a recorded batch boundary with model/rails changes separated.
+
+## B-0014 — per-row audit artifacts match the runtime (batch-02)
+
+Evidence: experiments 4a9a60d, Breast validation audit, Dry Bean test audit and
+Covertype supporting validation audit. Actions required CSV row outputs while
+the runtime requires local Parquet, row_id and a train/val/test partition. Align
+all shipped prediction-audit output specs to data-kind Parquet and spell out
+the helper schema in Worker write/repair orders. Unsupervised audits use only
+cluster assignments or embeddings, never outcomes. No row egress, privacy,
+partition or fitting validation is relaxed. Frozen historical projects retain
+their snapshotted templates; only new projects use the corrected contract.
+
+## B-0015 — classification action metric agrees with task (batch-02)
+
+Covertype score_validation attempt2 ran successfully after a frontend repair,
+but its action explicitly requested roc_auc while the task and engine check
+correctly require roc_auc_ovr. Audit then failed under B-0014. Validation, test
+and interpretation instructions/methods now distinguish binary and multiclass
+scoring, use the declared primary metric and forbid binary thresholds for
+multiclass. Legacy AUC fact keys are used only for corresponding AUC values.
+Distinct metric names stay distinct; checks are not weakened to accept them.
+
+## B-0016 — fixed, value-free scoring repair hints (batch-02)
+
+Adult repeatedly supplied unsupported roc_auc_score(pos_label=...). Anuran
+used a whole multiclass-multioutput target matrix, mixed encoded/predicted label
+types, then attempted fitting during validation. Fixed diagnostic hints explain
+probability alignment, per-output categorical scoring and reuse of training-only
+encoders. No captured error values or labels leave the machine. Fit refusals
+remain enforced. Focused new/legacy Worker and contract regressions:40 passed
+in1.70s; the full gate follows consolidated rail changes before another batch.
