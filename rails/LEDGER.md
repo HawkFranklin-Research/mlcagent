@@ -413,3 +413,16 @@ cache/migration/schema/MCP/privacy/preparation tests pass45.63s. Full gate
 follows before any live run. No claim of actual large-cache savings yet.
 Private archives, salts and scientific artifacts are preserved.
 
+## L-0007 — preparation metadata, analysis units and actual embeddings (rails-0.8)
+
+Evidence batch06, experiments ef3d703. Refine existing rails only:
+RL0004: group/time constraints describe final analysis units; raw event dates
+used only for static aggregation do not automatically imply temporal cohorts.
+Consecutive periods of one series still require chronology.
+RL0020: entity artifacts retain declared group/time names as complete columns,
+not an arbitrary entity_id or index; temporal aggregation is explicit.
+RL0022: private ACTIVATIONS mutate in place/returnNone; public activation
+results propagate to the actual bottleneck, returning finite2D train/test
+arrays of the same width. No training on evaluation rows or labels.
+All26 rails remain instructions, no dataset/column/model-specific rule.
+Low effort and all other generation settings stay fixed for batch07.

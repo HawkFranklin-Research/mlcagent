@@ -1,4 +1,4 @@
-# Rails review — rails-0.7 after batch 05
+# Rails review — rails-0.8 after batch 06
 
 All 26 rails are instructions; no new scientific checks/defaults. Development
 only, no acceptance, ablation or freeze. Held-out files untouched.
@@ -27,6 +27,16 @@ Retail05 recommends preparation but invalid auxiliary metadata triggers a bad
 fallback. Digits05 corrects reconstruction then emits an undeclared row file.
 RL0022 is refined inL0006; no isolated rail-effect claim. Seeds external ARI/NMI
 are evaluator measurements, never agent work or a basis for tuning rails.
+
+## Batch06 follow-up
+
+No new qualifying study; Digits passes validation then fails with None returned
+by a private activation helper; Retail prepares entities but renames/drops its
+declared constraint columns. Evidence experiments ef3d703. L0007 refines existing
+analysis-unit, metadata-preservation and embedding instructions. B0024–26 are
+separate engine/output/storage corrections. Source cache v3 preserves matching
+policy; legacy projects remain readable/writable without silent migration.
+No hidden-label tuning or reference analysis;10/12 qualified once, not acceptance.
 
 ## RL-0001
 
@@ -67,10 +77,10 @@ are evaluator measurements, never agent work or a basis for tuning rails.
 ## RL-0004
 
 - Kind: instruction; roles: navigator; events: onboard; tasks: all.
-- Source: RL-0004.yaml; ledger: L-0005; introduced: rails-0.3.
+- Source: RL-0004.yaml; ledger: L-0007; introduced: rails-0.3.
 - Exact instruction:
 
-> Set group_column when a non-target column repeats across rows and identifies the source unit (subject, recording, customer, device), so its rows must stay in one partition. List time_columns when rows are consecutive periods of one series, regardless of the stated prediction aim, or when the aim is to predict later periods. Use columns that establish chronological order, not redundant seasonal encodings. Leave both empty when no such column exists; do not invent them.
+> Set group_column when a non-target column repeats across rows and identifies the source unit (subject, recording, customer, device), so its rows must stay in one partition. List time_columns when rows are consecutive periods of one series, regardless of the stated prediction aim, or when the aim is to predict later periods. Use columns that establish chronological order, not redundant seasonal encodings. Leave both empty when no such column exists; do not invent them. Declare constraints for the final analysis units, not merely every raw event field. A timestamp used only to aggregate static entity features, such as recency relative to a fixed observation date, does not by itself require a chronological split. Consecutive periods of a single series still require chronology.
 
 - Rationale: Rows from one source unit or one period on both sides of the split inflate validation and test scores; the split can respect them only if setup declares them.
 - Evidence/before-after: see cited ledger and proposed/rails-0.3/DESIGN.md for observed versus anticipated basis; no isolated causal effect claimed.
@@ -259,10 +269,10 @@ are evaluator measurements, never agent work or a basis for tuning rails.
 ## RL-0020
 
 - Kind: instruction; roles: navigator, worker; events: eda; tasks: clustering.
-- Source: RL-0020.yaml; ledger: L-0004; introduced: rails-0.3.
+- Source: RL-0020.yaml; ledger: L-0007; introduced: rails-0.3.
 - Exact instruction:
 
-> If the proposed clustering units are entities but the input rows are repeated transactions, the Navigator must recommend build_entities before a distribution-only EDA action completes the event. In that entity-building step, before the split, the Worker builds one row per entity: drop rows without an entity key, handle reversing rows (negative amounts, returns) by an explicit rule printed in one line, and aggregate deterministically (recency against the last date in the table, frequency, total and mean value), with no fitted transform. Save the declared prepared-data artifact so the engine freezes the entity rows. Do not aggregate after partitioning or pretend transaction-level clustering satisfies an entity-level aim.
+> If the proposed clustering units are entities but the input rows are repeated transactions, the Navigator must recommend build_entities before a distribution-only EDA action completes the event. In that entity-building step, before the split, the Worker builds one row per entity: drop rows without an entity key, handle reversing rows (negative amounts, returns) by an explicit rule printed in one line, and aggregate deterministically (recency against the last date in the table, frequency, total and mean value), with no fitted transform. Save the declared prepared-data artifact so the engine freezes the entity rows. Do not aggregate after partitioning or pretend transaction-level clustering satisfies an entity-level aim. Preserve the declared group column as a complete explicit column with the same name, never a generic renamed identifier or index alone. Preserve declared chronological ordering columns with a documented, consistent entity-level time aggregation; do not silently discard them.
 
 - Rationale: A distribution-only EDA completed before entity preparation, leaving missing group keys and the wrong analysis rows at the split.
 - Evidence/before-after: see cited ledger and proposed/rails-0.3/DESIGN.md for observed versus anticipated basis; no isolated causal effect claimed.
@@ -283,10 +293,10 @@ are evaluator measurements, never agent work or a basis for tuning rails.
 ## RL-0022
 
 - Kind: instruction; roles: worker; events: preprocess, features, model, validate, test, interpret; tasks: representation.
-- Source: RL-0022.yaml; ledger: L-0006; introduced: rails-0.3.
+- Source: RL-0022.yaml; ledger: L-0007; introduced: rails-0.3.
 - Exact instruction:
 
-> There is no outcome in this project: never treat any column as a label. Fit scaling on training rows only. Inspect each saved pipeline's final estimator and reuse its frontend once; compare reconstruction error in that frontend's feature space, saying so. PCA has no predict method: reconstruct with inverse_transform(transform(X)) on its final PCA component, not an inverse of the whole preprocessing pipeline. An MLPRegressor reconstructs with predict, never inverse_transform. Its embedding is the middle hidden layer computed from coefs_ and intercepts_ without refitting; PCA coordinates come from transform. Record embedding dimension. Only emit embeddings when the action declares a per-row output, with row_id and partition as explicit columns. Metric-only validation must not create embedding files.
+> There is no outcome in this project: never treat any column as a label. Fit scaling on training rows only. Inspect each saved pipeline's final estimator and reuse its frontend once; compare reconstruction error in that frontend's feature space, saying so. PCA has no predict method: reconstruct with inverse_transform(transform(X)) on its final PCA component, not an inverse of the whole preprocessing pipeline. An MLPRegressor reconstructs with predict, never inverse_transform. Its embedding is the middle hidden layer computed from coefs_ and intercepts_ without refitting; PCA coordinates come from transform. Record embedding dimension. Only emit embeddings when the action declares a per-row output, with row_id and partition as explicit columns. Metric-only validation must not create embedding files. Avoid private sklearn ACTIVATIONS: they mutate in place and return None. Use public NumPy/SciPy activation results and propagate through each hidden layer up to the actual middle bottleneck, explicitly returning a finite 2D array of identical width for train and test.
 
 - Rationale: Representation steps need a fitted encoder whose embeddings can be extracted without refitting, so that an external scorer can evaluate them.
 - Evidence/before-after: see cited ledger and proposed/rails-0.3/DESIGN.md for observed versus anticipated basis; no isolated causal effect claimed.

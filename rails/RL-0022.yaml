@@ -19,8 +19,10 @@ text: 'There is no outcome in this project: never treat any column as a label. F
   the middle hidden layer computed from coefs_ and intercepts_ without refitting; PCA coordinates
   come from transform. Record embedding dimension. Only emit embeddings when the action declares
   a per-row output, with row_id and partition as explicit columns. Metric-only validation must not
-  create embedding files.'
+  create embedding files. Avoid private sklearn ACTIVATIONS: they mutate in place and return None.
+  Use public NumPy/SciPy activation results and propagate through each hidden layer up to the actual
+  middle bottleneck, explicitly returning a finite 2D array of identical width for train and test.'
 reason: Representation steps need a fitted encoder whose embeddings can be extracted without refitting,
   so that an external scorer can evaluate them.
-ledger: L-0006
+ledger: L-0007
 added_in: rails-0.3
