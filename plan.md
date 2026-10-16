@@ -1,3 +1,54 @@
+## Work order 05 — batch03 reviewed; batch04 launch gate passed
+
+Batch03: four new qualifying completions (Breast Cancer, Adult, Dry Bean,
+full-size Covertype), seven of twelve qualified at least once. Acceptance
+K=3 and ablation remain pending.279 requests;663898 input+1152202 output
+(reasoning1076403 INCLUDED);$1.1659709834. Cumulative since batch01:
+814 requests,5193710 total tokens,$3.3776949354,all core usage known.
+Curated evidence/review:experiments53dad9c,1730 verified text artifact hashes.
+
+Local engine9295c30 and compatibility/guided follow-ups e40248d,6aba218:
+exact read-only /proc/self/maps with real sandbox KMeans+denial test; all
+six scoring templates use the nested declared metric; bounded scoring-only
+retry stays at validation in both guided-driver and CLI paths. Native unguided
+sessions receive the same protocol snapshot. No fit/test/privacy rule relaxed.
+Rails e4c8371,rails06,L0005: existing temporal,per-target categorical metric
+and PCA reconstruction instructions strengthened. No dataset-specific rail.
+Optional reasoning effort transport/accounting is implemented but unset for
+batch04. Experiments1344fc8 records it and guards ablation-setting identity.
+
+Final full offline gate:467 passed,1 skipped,98 files,zero failures/errors;
+four exit codes0,slowest438.59s. Logs/XML ~/.cache/mlca-batch04-complete-gate/.
+Earlier partial gates are superseded; their logs are retained, not passing
+gates. Final focused62 passed44.94s; native compatibility fixture group29
+passed134.06s. Experiments tests/:18 passed12.78s. Ruff passes; changed-file
+format and whitespace checks pass. The unrelated existing scope_guard test
+has a whole-tree format discrepancy and was preserved.
+
+Author decision: future Retail runs evaluate static customer segmentation,
+recency relative to the last transaction date. No chronological requirement;
+grouping/identifier exclusions unchanged. Earlier scores retained. Bike keeps
+its chronological requirement. Manifest remains researcher-only.
+
+Next launch: python ~/.cache/mlca-launch-batch04.py (asserts gate and clean
+source). Five failed/deferred tables only:anuran_calls,bike_sharing_hourly,
+seeds,optical_digits,online_retail. DeepSeek V4.1 Flash,temp0,max16384,
+provider-default reasoning;6 parallel,shared60rpm,one large atonce,A only,
+5400s study/300s call+script,3 Worker attempts. Consult
+~/.cache/mlca-05-batch-controller.json for live PID/log/source identities;
+never edit source during active jobs. Batch05 changes only requested reasoning
+effort to low (supported efforts max/high/low/none,not medium); same engine,
+rails,model and other settings. No current claim about that setting's effect.
+
+O1–O7 built;O8 development loop continues;O9 freeze NOT started. No held-out
+access,biomedical run,paper edit,push,remote,upload,version bump or publication.
+No no-AI real-data reference run. Automatic CLI OpenRouter sign-in deferred.
+Storage compaction remains proposed,not implemented; check disk before large
+acceptance repeats. Closed derived caches may be byte-verified archived only
+after worker exit/scoring; restore original caches before reopening old projects.
+
+---
+
 # MLCA v2: implementation plan
 
 ## Work order05 — batch02 reviewed; batch03 full gate (16 October2026)

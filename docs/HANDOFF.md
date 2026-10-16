@@ -1,3 +1,99 @@
+## Work order 05 — batch03 reviewed; batch04 launch gate passed
+
+Batch03: four new qualifying completions (Breast Cancer, Adult, Dry Bean,
+full-size Covertype), seven of twelve qualified at least once. Acceptance
+K=3 and ablation remain pending.279 requests;663898 input+1152202 output
+(reasoning1076403 INCLUDED);$1.1659709834. Cumulative since batch01:
+814 requests,5193710 total tokens,$3.3776949354,all core usage known.
+Curated evidence/review:experiments53dad9c,1730 verified text artifact hashes.
+
+Local engine9295c30 and compatibility/guided follow-ups e40248d,6aba218:
+exact read-only /proc/self/maps with real sandbox KMeans+denial test; all
+six scoring templates use the nested declared metric; bounded scoring-only
+retry stays at validation in both guided-driver and CLI paths. Native unguided
+sessions receive the same protocol snapshot. No fit/test/privacy rule relaxed.
+Rails e4c8371,rails06,L0005: existing temporal,per-target categorical metric
+and PCA reconstruction instructions strengthened. No dataset-specific rail.
+Optional reasoning effort transport/accounting is implemented but unset for
+batch04. Experiments1344fc8 records it and guards ablation-setting identity.
+
+Final full offline gate:467 passed,1 skipped,98 files,zero failures/errors;
+four exit codes0,slowest438.59s. Logs/XML ~/.cache/mlca-batch04-complete-gate/.
+Earlier partial gates are superseded; their logs are retained, not passing
+gates. Final focused62 passed44.94s; native compatibility fixture group29
+passed134.06s. Experiments tests/:18 passed12.78s. Ruff passes; changed-file
+format and whitespace checks pass. The unrelated existing scope_guard test
+has a whole-tree format discrepancy and was preserved.
+
+Author decision: future Retail runs evaluate static customer segmentation,
+recency relative to the last transaction date. No chronological requirement;
+grouping/identifier exclusions unchanged. Earlier scores retained. Bike keeps
+its chronological requirement. Manifest remains researcher-only.
+
+Next launch: python ~/.cache/mlca-launch-batch04.py (asserts gate and clean
+source). Five failed/deferred tables only:anuran_calls,bike_sharing_hourly,
+seeds,optical_digits,online_retail. DeepSeek V4.1 Flash,temp0,max16384,
+provider-default reasoning;6 parallel,shared60rpm,one large atonce,A only,
+5400s study/300s call+script,3 Worker attempts. Consult
+~/.cache/mlca-05-batch-controller.json for live PID/log/source identities;
+never edit source during active jobs. Batch05 changes only requested reasoning
+effort to low (supported efforts max/high/low/none,not medium); same engine,
+rails,model and other settings. No current claim about that setting's effect.
+
+O1–O7 built;O8 development loop continues;O9 freeze NOT started. No held-out
+access,biomedical run,paper edit,push,remote,upload,version bump or publication.
+No no-AI real-data reference run. Automatic CLI OpenRouter sign-in deferred.
+Storage compaction remains proposed,not implemented; check disk before large
+acceptance repeats. Closed derived caches may be byte-verified archived only
+after worker exit/scoring; restore original caches before reopening old projects.
+
+---
+
+## Work order 05 — batch 03 closed, batch 04 gate running
+
+Batch03 verified: four new qualifying completions (Breast, Adult, Dry Bean,
+Covertype); seven of twelve have qualified at least once. 279 requests,663898
+input+1152202 output (1076403 reasoning included),$1.1659709834. Cumulative
+814 requests,5193710 tokens,$3.3776949354. Acceptance/ablation not started.
+Experiments evidence53dad9c: REVIEW plus1730 hashed curated text artifacts,
+180 omitted binary/table hashes; source artifacts retained.
+
+Author approved prospective static customer segmentation for Retail. Manifest
+removes its time requirement; grouping/identifier exclusion remain. Older scores
+unchanged. Bike retains chronology. Next batch includes five remaining tables.
+
+Engine9295c30: exact read-only /proc/self/maps; universal nested declared metric
+in12 scoring actions; bounded validation-only missing-metric retry; optional
+recorded reasoning effort (unset in batch04). Rails e4c8371/rails06: revised
+RL0004 temporal rows,RL0018 categorical per-output metrics,RL0022 PCA inverse
+transform. Compatibility e40248d supplies protocol to unguided native sessions.
+Experiments1344fc8 records effort and guards ablation setting identity.
+Focused gates44/78 passed; complete legacy/native fixture group29 passed in134s.
+Full gate currently running in ~/.cache/mlca-batch04-corrected-gate,98files.
+The first partial gate was intentionally interrupted before native correction.
+Partition4 assertion expected only the data file; it is updated to expect
+protocol metadata too, with external data still sealed. Partition4 is rerun
+against unchanged runtime source; keep superseded logs and interpreter-start
+error separate, not counted as tests. Three other partitions continue.
+No live request before all four final partitions pass.
+
+After gate: commit test/status updates and ensure both tracked trees clean.
+Launch batch04 fresh on anuran_calls,bike_sharing_hourly,seeds,optical_digits,
+online_retail,DeepSeek V4.1 Flash,default reasoning unchanged,temp0,max16384,
+concurrency6,rpm60,one large table at once,5400s study/300s call+script,A only.
+Record PID in ~/.cache/mlca-05-batch-controller.json; no source edits while active.
+Batch05 is setting-only low effort: official cached metadata supports max/high/
+low/none,not medium; code/rails/model/settings otherwise unchanged. Scorer
+criteria are researcher-only; no hidden labels/manifest fed to agent.
+Compact private fingerprint storage remains a proposed future improvement,
+not implemented or claimed. Check disk before repeated full-size acceptance;
+restore archived caches before Session/privacy reads on prior projects.
+No held-out access, biomedical run,paper edit,push,freeze,tag or publication.
+CLI automatic OpenRouter sign-in deferred. Continue acceptanceK3/ablation/cap
+then PartC as work order05 specifies; no no-AI real-data reference runs.
+
+---
+
 ## Work order05 — batch02 reviewed; batch03 full gate (16 October2026)
 
 Batch02 finished:3/12 qualifying completions (Heart, Abalone, Energy Efficiency),
