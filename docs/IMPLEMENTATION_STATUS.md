@@ -1,3 +1,28 @@
+## Work order 05 — batch 06 reviewed; batch 07 launch gate passed
+
+Series 10/12 tables have qualified at least once; K=3 acceptance/ablation have
+not started. Batch 06 on code 51ba007/controller 9447df6/rails-0.7/low reasoning:
+Optical Digits failed validation embedding (None matrix from private helper),
+Online Retail failed split after declared group/time columns were dropped in preparation.
+45 requests, 130129 input + 103502 output (88400 reasoning), $0.115940568.
+Cumulative since batch 01: 1127 requests, 7047437 tokens, $4.4820545792.
+
+Consolidated source 40d24b6, rail fbcba27/rails-0.8:
+- B-0024: Validate declared group/time columns in preparation collection, enabling
+  normal Worker repair loop before step completion.
+- B-0025: Provide value-free diagnostics for missing return values in representation learning.
+- B-0026: Compact normalized private cache v3 to reduce Covertype cache footprint.
+- L-0007 / RL-0022: Require public activations and explicit 2D bottleneck array of shape (n_samples, n_components).
+- RL-0004 / RL-0020: Clarify preparation output contract to retain declared group/time column names.
+
+Final full offline gate: 486 passed, 1 skipped in 1207s; experiments 18 passed in 12s.
+Ruff check passes on src and tests.
+
+Next: launch fresh batch 07 ONLY optical_digits, online_retail with low reasoning effort,
+rails-0.8, temp 0, max 16384, concurrency 6.
+
+---
+
 ## Work order05 — batch05 reviewed; batch06 final gate passed
 
 Series10/12 tables have qualified at least once; K=3 acceptance/ablation have
