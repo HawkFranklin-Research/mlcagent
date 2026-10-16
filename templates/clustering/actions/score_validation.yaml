@@ -26,7 +26,7 @@ fact_candidates:
 - best_validation_score
 reads_test: false
 timeout_s: 300
-methods_text: Score the frozen candidates using the task-specific declared primary metric and its
-  direction; supplementary metrics do not replace it. Fit only on training rows, select on validation,
-  and evaluate the frozen choice on test.
+methods_text: 'Score candidates on validation rows: Score the frozen candidates using the task-specific
+  declared primary metric and its direction; supplementary metrics do not replace it. Fit only on
+  training rows, select on validation, and evaluate the frozen choice on test.'
 builtin: null

@@ -370,7 +370,16 @@ class Session:
             target = ids[index + 1]
             if gates.check(target, state, self.workflow, self.root)[0]:
                 options.insert(0, {"id": "next", "title": f"Continue to {target}"})
-        if state.current_event == "validate" and not self._ever_unlocked():
+        from mlca.engine.options import missing_validation_metric, validation_recovery
+
+        recovery = validation_recovery(state, self.workflow)
+        if recovery is not None:
+            options = recovery
+        if (
+            state.current_event == "validate"
+            and not missing_validation_metric(state)
+            and not self._ever_unlocked()
+        ):
             for transition in self.workflow.spec.transitions.get("loops", []):
                 if transition["from"] == "validate":
                     options.extend(

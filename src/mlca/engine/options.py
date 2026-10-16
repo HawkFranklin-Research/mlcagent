@@ -85,6 +85,24 @@ def scoring_retry(identifier, state):
     )
 
 
+def validation_recovery(state, workflow):
+    """None: ordinary turn; list: bounded scoring recovery; empty: stop for help."""
+    if not missing_validation_metric(state):
+        return None
+    completed = sum(
+        s["status"] == "completed"
+        and s["event_id"] == "validate"
+        and s["action_id"] == "score_validation"
+        and s.get("generation", 0) == state.generations.get("validate", 0)
+        for s in state.steps
+    )
+    if not completed:
+        return None
+    if completed > 1:
+        return []
+    return [o for o in fallback(state, workflow) if o["action_id"] == "score_validation"]
+
+
 def validate(options: Any, state: Any, workflow: Any) -> Any:
     event = workflow.events[state.current_event]
     if not 1 <= len(options) <= event.max_options:

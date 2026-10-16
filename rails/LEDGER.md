@@ -314,3 +314,11 @@ a missing task metric from the existing registry without changing recorded
 state or an explicit override. This keeps the new instructions usable on
 older native projects. The first partial gate was deliberately interrupted
 before this source change; its exit2 logs are retained as superseded.
+
+The final guided-driver recovery uses the same bounded scoring rule as CLI
+options, skips an unnecessary Navigator call, and suppresses upstream loop
+cards while the primary metric is missing. A dedicated synthetic turn test
+proves that only validation scoring is recommended, then exhaustion stops with
+a gate refusal. Review caught duplicate validation/test methods text; each
+action now has a distinct report description. Earlier partial gate logs are
+superseded, not a completed suite.

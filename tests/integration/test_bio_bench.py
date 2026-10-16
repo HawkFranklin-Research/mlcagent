@@ -31,7 +31,13 @@ def test_external_is_sealed_and_once_per_variant(tmp_path):
         action = ActionSpec(
             id="probe", event="data", title="Probe", prompt="Probe", inputs=[{"ref": "registered_data"}]
         )
-        assert set(inputs_for(action, s.state, root)) == {"discovery"}
+        declared = inputs_for(action, s.state, root)
+        assert set(declared) == {"discovery", "_protocol"}
+        import json
+
+        protocol = json.loads(declared["_protocol"].read_text())
+        assert protocol["task"]["primary_metric"] == "roc_auc"
+        assert "external" not in protocol["columns"].values()
         action.inputs = [{"ref": "external"}]
         with pytest.raises(MlcaUserError, match="locked"):
             inputs_for(action, s.state, root)

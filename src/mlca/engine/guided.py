@@ -5,7 +5,7 @@ import re
 from pydantic import Field
 
 from mlca.engine import checks, questions
-from mlca.engine.options import Option, fallback, validate
+from mlca.engine.options import Option, fallback, validate, validation_recovery
 from mlca.errors import IntegrityError, MlcaUserError
 from mlca.llm.structured import decode
 from mlca.log.schema import StrictModel
@@ -203,6 +203,14 @@ def present(session):
         if state.pending_options is not None
         else fallback(state, session.workflow)
     )
+    recovery = validation_recovery(state, session.workflow)
+    if recovery is not None:
+        if not recovery:
+            raise MlcaUserError(
+                "Validation scoring did not record the declared primary metric after its scoring-only retry",
+                category="gate_blocked",
+            )
+        legal = recovery
     if state.current_event == "onboard":
         from mlca.project.init import study_ready
 
@@ -218,6 +226,7 @@ def present(session):
     # Human decisions and navigation are computed by the engine, never invented by a model.
     if (
         legal
+        and recovery is None
         and state.event_statuses.get(state.current_event) != "done"
         and (
             session.mode != "brain"

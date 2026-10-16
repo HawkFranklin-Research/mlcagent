@@ -87,3 +87,52 @@ def test_protocol_exposes_same_metric_contract_to_older_native_sessions(tmp_path
     assert json.loads(path.read_text())["task"]["primary_metric"] == expected
     assert current.task == task
     assert protocol_input(session) == path
+
+
+def test_guided_turn_recommends_only_scoring_retry_without_navigator(monkeypatch):
+    from mlca.engine.guided import present
+    from mlca.engine.options import validation_recovery
+    from mlca.errors import MlcaUserError
+
+    step = {
+        "status": "completed",
+        "event_id": "validate",
+        "action_id": "score_validation",
+        "params": {},
+        "metrics": [],
+    }
+    current = state([step])
+    current.guided_enabled = True
+    current.split = None
+    current.presented_turn = None
+    current.pending_options = None
+    current.questions = {}
+    current.answers = {}
+    session = NS(
+        state=current,
+        workflow=get("regression"),
+        config=NS(roles={}),
+        mode="driver",
+        client=NS(disabled=True),
+        _ever_unlocked=lambda: False,
+    )
+
+    def emit(kind, payload):
+        if kind == "OptionsProposed":
+            current.pending_options = payload["options"]
+
+    session.emit = emit
+    session.guided_view = lambda: [{**o, "description": o["why_now"]} for o in current.pending_options]
+    monkeypatch.setattr("mlca.engine.guided.questions.pending", lambda _: [])
+    monkeypatch.setattr(
+        "mlca.engine.guided._model_scene", lambda *_: pytest.fail("Scoring retry must not call Navigator")
+    )
+    turn = present(session)
+    assert len(turn["choices"]) == 1
+    assert turn["choices"][0]["action_id"] == "score_validation"
+    assert turn["choices"][0]["recommended"]
+    current.steps.append(dict(step))
+    current.pending_options = None
+    assert validation_recovery(current, session.workflow) == []
+    with pytest.raises(MlcaUserError, match="scoring-only retry"):
+        present(session)
