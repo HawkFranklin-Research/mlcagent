@@ -108,3 +108,17 @@ Activation gate: 17 focused loader/scope/genericity/setup tests passed in 0.58 s
 - Tests: setup values/egress/exclusion, map validation, atomic registration and
   source preservation. Final full suite remains Step 1.7.
 - Prior engine E1–E4 commit: d48b0f8. This entry's commit is linked next.
+
+## B-0007 / E6 — fitted input columns
+
+fit_record snapshots input column names before estimator.fit and retains them in
+manifest fits and StepCompleted. No row values are logged. Legacy unknown column
+sets remain unavailable to the external scorer. Full frozen-index enforcement is
+unchanged. Evidence: work-order-05 leakage outcome requires explicit fitted inputs.
+
+## B-0008 / E7 — training group metadata
+
+The frozen partitions retain group columns for internal folds; protocol and rails
+exclude them from predictors. Group-disjoint outer splitting remains enforced.
+Two focused regressions cover value-free fitted-column records and train groups.
+E5 prior commit: 9026276. Final full suite remains the Step 1.7 gate.

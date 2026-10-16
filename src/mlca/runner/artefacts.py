@@ -85,7 +85,13 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
             raise MlcaUserError("Missing or invalid frozen-training fit evidence", category="fit_rule")
     if any(o["kind"] == "model" for o in outputs) and action.event not in {"preprocess", "features", "model"}:
         raise MlcaUserError("Model artifacts may only be created in fitting stages")
-    return {"outputs": outputs, "figures": figures, "metrics": metrics, "facts": manifest.get("facts", [])}
+    return {
+        "outputs": outputs,
+        "figures": figures,
+        "metrics": metrics,
+        "facts": manifest.get("facts", []),
+        "fits": fits,
+    }
 
 
 def freeze(step: Path) -> None:

@@ -105,8 +105,7 @@ def freeze(root: Path, state: Any, params: dict, step_id: str, emit: Any) -> dic
         assignments = None
     if state.group_column or not state.task.get("time_columns"):
         assignments = partitions(frame, params, target)
-    if state.group_column:
-        frame = frame.drop(columns=[state.group_column])
+    # Retain group values for train-only internal folds; protocol excludes them from features.
     from mlca.privacy.rows import guard
 
     guard(root, state).register_split(step_id, frame, assignments)

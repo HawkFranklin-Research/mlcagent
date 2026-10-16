@@ -167,12 +167,24 @@ def fit_record(estimator_or_pipeline: Any, X: Any, partition: str, y: Any = None
         raise FitRuleError(
             f"MLCA: Fit rows must match the frozen training index: expected {os.environ.get('MLCA_TRAIN_ROW_COUNT', 'unknown')} rows, received {len(X.index)} rows"
         )
+    columns = (
+        [str(c) for c in X.columns]
+        if hasattr(X, "columns")
+        else [str(X.name)]
+        if getattr(X, "name", None) is not None
+        else None
+    )
     result = (
         estimator_or_pipeline.fit(X, y, **kwargs) if y is not None else estimator_or_pipeline.fit(X, **kwargs)
     )
     _record(
         "fits",
-        {"partition": partition, "index_sha256": digest, "estimator": type(estimator_or_pipeline).__name__},
+        {
+            "partition": partition,
+            "index_sha256": digest,
+            "estimator": type(estimator_or_pipeline).__name__,
+            "columns": columns,
+        },
     )
     return result
 
