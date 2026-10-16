@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — work order 04 Part B (16 October 2026)
+
+- Correct the setup response contract and bounded local validation/repair; retain
+  known setup-failure usage in aggregate accounting without inventing unknowns.
+- Candidate RL-0001 requests concise setup proposals and meaningful alternatives.
+- Round 1: twelve setup failures preserved; no completed live workflow or freeze.
+
 ## Unreleased — work order 04 Part A (16 October 2026)
 
 - Autonomous `mlca run`: schema-only study inference, fresh repeated projects,
@@ -10,7 +17,7 @@
   project usage and missing values remain unavailable.
 - New workflow templates, label-excluded registration and external evaluator
   artifacts are offline-tested; live development acceptance has not started.
-- Part B waits for the author's next instruction. No release/version change.
+- Part B was subsequently authorized and has started; see the newer entry. No release/version change.
 
 ## Unreleased — multi-dataset development validation (15 October 2026)
 

@@ -1,5 +1,8 @@
 # Work order 04: Part A
 
+Historical completion snapshot; Part B subsequently started. See the current
+HANDOFF and experiments/bench/dev-loop/ reports for live development status.
+
 Author boundary (16 October 2026): finish and validate Part A first. The author
 subsequently authorized Part B while sleeping; its inference runs have not started. This report describes software implementation and synthetic offline
 checks, not completed AI experiments or scientific evaluation results.

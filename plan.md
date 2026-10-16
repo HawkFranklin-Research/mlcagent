@@ -1,5 +1,31 @@
 # MLCA v2: implementation plan
 
+## Work order 04 Part B — 16 October 2026 (in progress)
+
+Part A is complete at 32530ae: 380 passed, 1 skipped (PowerShell unavailable).
+The author authorized the live rails loop while sleeping. Only openrouter/free
+is used for Navigator and Worker, at 16 requests/minute, sandbox A required.
+
+Round 1: twelve fresh setup attempts, zero completed workflows, twelve requests,
+17,340 input / 44,055 output / 39,694 reasoning tokens as provider-reported,
+and $0 reported cost. Eleven failures exposed the engine's inconsistent setup
+schema; one exhausted its output budget. No Worker script ran. Immutable raw
+attempts and hashed curated evidence are in experiments commit e74b799 under
+bench/dev-loop/round-01/. Reviewed classifications are separate annotations.
+
+B-0001 fixes the advertised schema/repair path and failed-setup accounting;
+RL-0001 is a candidate generic setup-brevity instruction. Full offline suite:
+**387 passed, 1 skipped in 1197.87 s** (PowerShell unavailable); Ruff passes.
+Local commits: engine fix c5ea681, instruction rail 900bd07. Round 2 starts
+from this tested source with rails-0.2. Acceptance K=3 has not been attempted or reached. See rails/LEDGER.md
+and rails/REVIEW.md. Do not treat development failures as frozen measurements.
+
+Held-out tables remain untouched. No paper edit, installed-tool refresh, freeze,
+package version change, tag, publication, remote operation, push or upload.
+Automatic CLI OpenRouter onboarding is still a later usability item.
+
+---
+
 ## Work order 04 Part A — 16 October 2026
 
 A1/A2 are committed (0bdeb79, 6c0576e); external unsupervised/inference scorers

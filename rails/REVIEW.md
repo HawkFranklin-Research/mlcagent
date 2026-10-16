@@ -2,7 +2,7 @@
 
 ## RL-0001
 
-- Kind: instruction; scope: Navigator, onboard, all problem types.
+- Kind: instruction; scope: Navigator, onboard, all problem types; commit `900bd07`.
 - Text: see RL-0001.yaml (the executable source of this instruction).
 - Cause: L-0001; Round 1 setup output truncation, before any Worker execution.
 - Before: rails-0.0, 0/12 workflow completions; one truncated setup output.
@@ -13,7 +13,7 @@
 
 ## Engine fixes (not rails)
 
-B-0001 repairs an inconsistent advertised setup contract and preserves failed
+B-0001 (`c5ea681`) repairs an inconsistent advertised setup contract and preserves failed
 setup accounting. Details and evidence are in LEDGER.md. Existing semantic
 checks now participate in bounded structured repair; no check is removed.
 

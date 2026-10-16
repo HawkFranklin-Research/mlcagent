@@ -30,8 +30,7 @@ event, step, category, value-free diagnosis, files, commit and fresh verificatio
   setup fails before a project exists. Unknown compute time stays unavailable.
 - Files: autonomous/inference.py, autonomous/runner.py, llm/structured.py,
   evaluation/bench.py; regressions: integration/test_setup_contract.py.
-- Rails set after engine fix: rails-0.1. Commit: recorded after local commit in
-  the review package (resolve via git history for this entry).
+- Rails set after engine fix: rails-0.1. Commit: `c5ea681`.
 - Verification: synthetic invalid metric, incomplete alternative, unknown-column
   and task-cardinality responses repair once or fail with invalid_inference;
   zero raw-row context sent. Fresh live verification pending.
@@ -48,7 +47,7 @@ event, step, category, value-free diagnosis, files, commit and fresh verificatio
   scientific ambiguity. This cannot guarantee control over hidden reasoning or
   provider truncation; preserve any further truncation as failure evidence.
 - Change: rails/RL-0001.yaml, scoped to Navigator/onboard/all problem types;
-  rails-0.2. Commit: recorded after local commit in the review package.
+  rails-0.2. Commit: `900bd07`.
 - Genericity: no table, filename, column, observed value, model or domain in
   instruction or reason. Valid for any study setup; no safeguard is changed.
 - Offline verification: genericity and actual inference-request injection tests.
