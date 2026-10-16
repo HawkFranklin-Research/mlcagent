@@ -184,3 +184,6 @@ def test_setup_halt_is_retained_before_project_exists(tmp_path, monkeypatch):
     decisions = json.loads((out / "setup-001/decision-windows.json").read_text())
     assert decisions[-1]["type"] == "DecisionWindowHalted"
     assert decisions[-1]["actor"] == "user"
+    summary = json.loads((out / "bench_summary.json").read_text())
+    assert summary["autonomy"]["halts"]["mean"]["value"] == 1
+    assert summary["autonomy"]["runs_with_setup_only_autonomy"]["value"] == 1

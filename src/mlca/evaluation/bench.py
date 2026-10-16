@@ -402,6 +402,7 @@ def summarize(out):
         for split in ("val", "test")
     }
     summary = {
+        "autonomy": autonomy_summary(loaded, manifest["runs"]),
         "kind": manifest.get("kind", "independent_agent_runs"),
         "measurement_arm": manifest.get("measurement_arm", "worker"),
         "runs": manifest["runs"],
@@ -588,3 +589,37 @@ def drive_guided(session, card, sleep=time.sleep):
         else:
             raise MlcaUserError("Guided run stopped: " + result["reason"])
     raise MlcaUserError("Guided task-card turn limit reached")
+
+
+def autonomy_summary(loaded, runs):
+    """Preserve per-run availability; external inference correctness stays external."""
+    entries = [m.get("autonomy") if m else run.get("setup_autonomy") for m, run in zip(loaded, runs)]
+    models, rails = Counter(), Counter()
+    for entry in entries:
+        if entry:
+            models.update(
+                {key: value["value"] for key, value in entry["model_reported_distribution"].items()}
+            )
+            rails.update({key: value["value"] for key, value in entry["rails_fired"].items()})
+    return {
+        "halts": distribution(e["halts"]["value"] if e else None for e in entries),
+        "overrides": distribution(e["overrides"]["value"] if e else None for e in entries),
+        "auto_resolved_questions": distribution(
+            e["auto_resolved_questions"]["value"] if e else None for e in entries
+        ),
+        "questions_asked": distribution(e["questions_asked"]["value"] if e else None for e in entries),
+        "inference": [e["inference"] if e else None for e in entries],
+        "halts_by_event": [e["halts_by_event"] if e else None for e in entries],
+        "overrides_by_event": [e["overrides_by_event"] if e else None for e in entries],
+        "rails": [e["rails"] if e else None for e in entries],
+        "rails_fired": {key: measured(value, "exact") for key, value in sorted(rails.items())},
+        "model_reported_distribution": {
+            key: measured(value, "exact") for key, value in sorted(models.items())
+        },
+        "runs_with_unavailable_metrics": measured(sum(m is None for m in loaded), "exact"),
+        "runs_with_setup_only_autonomy": measured(
+            sum(m is None and bool(r.get("setup_autonomy")) for m, r in zip(loaded, runs)), "exact"
+        ),
+        "setup_usage": [r.get("setup_usage") for r in runs],
+        "setup_usage_scope": "Includes failed inference; successful setup requests are already included in project usage and must not be added twice",
+    }

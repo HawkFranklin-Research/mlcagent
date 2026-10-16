@@ -1,3 +1,20 @@
+## Work order 04 Part A — 16 October 2026
+
+A1/A2 are committed (0bdeb79, 6c0576e); external unsupervised/inference scorers
+are in experiments commit e7eef1e. A3 autonomous execution, A4 decision windows
+and A5 sourced autonomy metrics are implemented locally. Full offline validation:
+**380 passed, 1 skipped in 1189.07 seconds** (PowerShell unavailable); Ruff and
+whitespace checks pass. A3 commit fb8abf2; A4 commit 6c7d3aa; A5 is this update.
+
+**Author boundary (updated):** the author subsequently authorized Part B while
+sleeping. Part A validation is complete; finish its local commits before the live loop. It has
+not started yet. Its account metadata check reports 1,000 free requests remaining. No live model inference
+calls, held-out inspection, freeze, version bump, installed-tool refresh, push,
+upload, release, or paper edit in this continuation. Existing untracked datasets
+and author work orders remain preserved. CLI automatic sign-in is deferred.
+
+---
+
 # Handoff — 15 October 2026: organized plan
 
 **Read `plan.md`, section "Organized plan (15 October 2026)", first.** MLCA is now developed as an autonomous agent with rails: `mlca run <path>`, a halt window for the human, an explicit rails layer with a ledger of the failures that caused each rail, and templates for more problem types. Rails are developed on about 10 public tables, frozen, then checked on 2–3 held-out tables and evaluated on the biomedical studies. Unfinished P17/P18 items and `plan_mcp.md` MB6/M7 are stopped. `master` is at `ad92ebd` (327 passed, 1 skipped). No completed live run. Open decisions are listed in the plan; the first is the list of development and held-out tables. No push, publication, upload or live call without the author's go-ahead.

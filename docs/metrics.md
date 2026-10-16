@@ -118,3 +118,35 @@ paper's experiment workspace and are not implemented or run by this instrumentat
 ## P16 accounting
 
 Project usage totals, model/provider groups, CSV export and missing-field backfill are described in [P16_ACCOUNTING.md](P16_ACCOUNTING.md). Role token metrics now include reasoning and cache-write counts; unknown complete totals remain unavailable, with known subtotals and missing-request counts shown separately.
+
+## Autonomous runs and rails (work order 04 A5)
+
+`mlca run` writes each project's metrics to `reports/generated/metrics.json` and
+writes `bench.json` and `bench_summary.{json,md}` in the run output directory.
+The `autonomy` section records:
+
+- halts, overrides and auto-resolved questions, including counts by event;
+- inference choices, reasons, request references and selected principal;
+- project-local rails version/hash and engine `RailFired` counts by ID;
+- the actual `model_reported` distribution, with missing model IDs counted;
+- recorded decision-window waits. These are pre-halt/expiry waits; they exclude
+  subsequent manual work and are not an estimate of active human effort.
+
+Counts are exact log counts; accumulated waits are derived. Legacy runs without
+AutonomyConfigured have unavailable autonomy counts, not invented zeroes.
+Inference correctness stays unavailable inside the agent; the external scorer
+compares the recorded inference against researcher-held expectations afterward.
+
+Setup inference envelopes retain their original session/request identifiers and
+are included in project usage, egress and wall time. If setup fails before a
+project exists, `bench.json` retains setup usage and the failure. The summary's
+`autonomy.setup_usage` preserves those entries. Successful setup usage is already
+in project totals: do not add it twice. Missing setup/project metrics remain
+explicitly unavailable; summaries report available and unavailable run counts.
+The run's provider cost completeness labels still apply to all imported setup
+requests. Router model support advertised by a catalogue is not a live test.
+
+Cancelling the initial decision before registration keeps
+`setup-NNN/decision-windows.json` and `bench.json` setup-only autonomy counts.
+The summary labels `runs_with_setup_only_autonomy` separately from projects with
+full metrics. No project rails hash is invented for a project that was not created.

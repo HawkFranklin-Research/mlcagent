@@ -56,6 +56,11 @@ def build(session, branch=None):
     records = session.branches.records(branch)
     state = replay(records)
     sessions = {r.session_id for r in records}
+    sessions.update(
+        r.payload["setup_session_id"]
+        for r in records
+        if r.type.value == "InferenceRecorded" and r.payload.get("setup_session_id")
+    )
     step_ids = {s["step_id"] for s in state.steps}
     requests = [
         r
@@ -69,7 +74,7 @@ def build(session, branch=None):
     end = max(
         [r.ts for r in records] + [datetime.fromisoformat(r["ts"].replace("Z", "+00:00")) for r in requests]
     )
-    start = records[0].ts
+    start = min([records[0].ts] + [datetime.fromisoformat(r["ts"].replace("Z", "+00:00")) for r in requests])
     wall = max(0.0, (end - start).total_seconds())
     steps = []
     recovery = Counter()
@@ -369,11 +374,14 @@ def build(session, branch=None):
         if snapshots
         else "unavailable"
     )
+    from mlca.evaluation.autonomy import build as autonomy
+
     proposal_decisions = {r.payload["request_id"]: r for r in records if r.type.value == "ApprovalResolved"}
     return {
         "measurement_arm": state.measurement_arm,
         "schema_version": "1",
         "measurement_kind": "agent_run",
+        "autonomy": autonomy(records, requests),
         "run": {
             "snapshot_refs": [r.id for r in snapshots],
             "snapshots": [r.payload for r in snapshots],

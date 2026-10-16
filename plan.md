@@ -1,5 +1,20 @@
 # MLCA v2: implementation plan
 
+## Work order 04 Part A — 16 October 2026
+
+A1/A2 are committed (0bdeb79, 6c0576e); external unsupervised/inference scorers
+are in experiments commit e7eef1e. A3 autonomous execution, A4 decision windows
+and A5 sourced autonomy metrics are implemented locally. Full offline validation:
+**380 passed, 1 skipped in 1189.07 seconds** (PowerShell unavailable); Ruff and
+whitespace checks pass. A3 commit fb8abf2; A4 commit 6c7d3aa; A5 is this update.
+
+**Author boundary (updated):** the author subsequently authorized Part B while
+sleeping. Part A validation is complete; finish its local commits before the live loop. It has
+not started yet. Its account metadata check reports 1,000 free requests remaining. No live model inference
+calls, held-out inspection, freeze, version bump, installed-tool refresh, push,
+upload, release, or paper edit in this continuation. Existing untracked datasets
+and author work orders remain preserved. CLI automatic sign-in is deferred.
+
 ## Organized plan (15 October 2026): an autonomous agent with rails
 
 **This is the organized plan from 15 October 2026 (author decision). Work below it that is not done is stopped:** the P9 remainder, the open parts of P12–P15, the unfinished P17/P18 items (A8 per-client smoke runs, A9 freeze as written, Phases B and C as written), `plan_mcp.md` §14 MB6 and M7, and the browser plans (`plan_web.md`, `plan_web_mcp.md`). Their text is kept as history; nothing is removed. Built features stay in the code.
@@ -26,12 +41,14 @@
 | O3 | **Rails layer**: rails are explicit, versioned files (one id per rail: instruction, prompt fragment or engine check; scope; reason), loaded into the Navigator and Worker prompts and the checks. Their hash goes into `RunSnapshot` | the rails set and its hash appear in every run; changing a rail changes the hash |
 | O4 | **Rails ledger**: each rail links to the failure that caused it (dataset, model, run path, step, failure category) and to the commit that added it | ledger entries validate against the run evidence; generated summary table |
 | O5 | **Problem types**: templates for regression, multi-label classification, clustering and representation learning, beside `tabular_classification` (binary/multiclass) and `survival` | each template validated; synthetic end-to-end run per template with a scripted model |
-| O6 | **Development tables**: about 10 in `benchmarks/datasets/` plus 2–3 held-out tables kept apart until the freeze; dataset card, licences, SHA-256, pull script. The 4 current classification tables join; the 2 survival tables move to evaluation | card and hashes complete; held-out files not readable by development runs |
+| O6 | **Development tables** (list confirmed 2026-10-15): 12 in `benchmarks/datasets/` (breast cancer, heart, adult, dry bean, covertype, anuran calls, abalone, bike sharing, energy efficiency, seeds, online retail, optical digits) and 4 held-out in `benchmarks/heldout/` (bank marketing, steel plates faults, wine quality, wholesale customers), with `benchmarks/manifest.yaml`, licences, SHA-256 and a pull script. The 2 survival tables stay in place with role `outside_rails`. Work order: `docs/prompts/03_benchmark_datasets.prompt.md` | manifest and hashes complete; held-out tables never run before the freeze |
 | O7 | **Measures**: existing `mlca metrics` plus halts, overrides, questions asked, rails version; summary across arm × model × dataset | summary on scripted runs; unknown values never written as zero |
 | O8 | **Development loop** (live, author go-ahead): runs → failure analysis → rail → rerun, every run kept | the agent completes the development tables reliably with the chosen models |
 | O9 | **Freeze** (version, tag, rails hash, CHANGELOG) and preregistration; then held-out tables, then evaluation arms A and B | tag exists; experiments repository records the commit |
 
 **Open decisions:** the development and held-out tables; the name of the development set (today `bench`); how specific the evaluation briefs may be; how survival enters evaluation; models and N; whether brain mode over MCP is evaluated too; a comparison arm.
+
+**Later usability item (author, 15 October 2026):** expose the existing TUI OpenRouter browser sign-in/secure-keyring onboarding through the CLI. Deferred; not part of work order 04.
 
 **Starting state:** `master` at `ad92ebd` (Nemotron development validation fixes; 327 offline tests pass, 1 skipped). No completed live run.
 

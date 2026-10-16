@@ -7,7 +7,34 @@ onboard → data → eda → split 🔒 → preprocess → features → model �
                                      └──────── iteration loop (validation only) ────────┘
 ```
 
-> **In development (from 15 October 2026):** an autonomous mode, `mlca run <path>`. The agent explores the data, infers the task and target, makes each decision itself inside fixed **rails** (instructions, prompts and engine checks) and writes the report. A human can halt any decision within a short window; otherwise the agent's choice stands. Rails are developed on about 10 public tables, then frozen and evaluated on held-out tables and biomedical studies. See [plan.md](plan.md), "Organized plan (15 October 2026)". Not yet released.
+> **Local development implementation (not released):** an autonomous mode, `mlca run <path>`. The agent explores the data, infers the task and target, makes each decision itself inside fixed **rails** (instructions, prompts and engine checks) and writes the report. A human can halt any decision within a short window; otherwise the agent's choice stands. Rails are developed on about 10 public tables, then frozen and evaluated on held-out tables and biomedical studies. See [plan.md](plan.md), "Organized plan (15 October 2026)". Not yet released.
+
+## Autonomous execution
+
+Configure Navigator and Worker first (see [providers](docs/providers.md)); no model
+or credential is selected implicitly. Then run:
+
+```sh
+mlca run /path/to/table.csv --autonomous --out /path/to/fresh-results
+mlca run /path/to/data-folder --brief "Investigate this table" --halt-window 60
+mlca run /path/to/table.csv --autonomous --runs 3 --out /path/to/fresh-repeats
+```
+
+The Navigator proposes the task, targets, grouping/time fields and scientific aim
+from the registered schema and your brief. Decisions and reasons are logged.
+Without `--autonomous`, the default decision window is 60 seconds: press `h` to
+halt, then choose another proposal/action or submit a scoped custom instruction.
+In the TUI use `a` to run/resume and `h` to halt before the next action. Automation
+uses a policy principal, never a fabricated human decision. Existing engine gates,
+training-only fitting, sandbox selection and test-exposure restrictions still apply.
+
+`--exclude-columns name` (repeatable) removes evaluation-only columns before they
+enter the project or inference request. The agent never reads a benchmark manifest.
+Each repetition has a fresh project and request evidence; failures remain in
+`bench.json` and the command exits nonzero if any run fails. Metrics are under
+`run-NNN/reports/generated/metrics.json`; [metrics](docs/metrics.md) explains
+availability and setup accounting. Live development/acceptance is still pending.
+CLI automatic first-run sign-in is deferred; existing provider/keyring setup works.
 
 ## How a step works
 
@@ -22,7 +49,9 @@ onboard → data → eda → split 🔒 → preprocess → features → model �
 
 Each event has a goal, sub-goals, an action catalog and a custom-instruction scope. These are defined in a **workflow template**:
 - `templates/tabular_classification/`: logistic baseline vs gradient boosting, ROC AUC;
-- `templates/survival/`: Cox vs penalised Cox, C-index.
+- `templates/survival/`: Cox vs penalised Cox, C-index;
+- `templates/regression/`, `multilabel_classification/`, `clustering/`, and
+  `representation/`: numeric/multiple categorical outcomes or unsupervised studies.
 
 The template content is short by design; see [templates](docs/templates.md).
 

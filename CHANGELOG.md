@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — work order 04 Part A (16 October 2026)
+
+- Autonomous `mlca run`: schema-only study inference, fresh repeated projects,
+  unchanged Session safeguards, and retained failures/setup request evidence.
+- Shared decision windows with CLI/TUI Halt, human alternatives/scoped custom
+  instructions, policy attribution and recorded expiry/override timings.
+- Autonomy, rails and actual model-distribution metrics; setup requests count in
+  project usage and missing values remain unavailable.
+- New workflow templates, label-excluded registration and external evaluator
+  artifacts are offline-tested; live development acceptance has not started.
+- Part B waits for the author's next instruction. No release/version change.
+
 ## Unreleased — multi-dataset development validation (15 October 2026)
 
 - Preserve the original Worker work order during repairs; clarify named Path inputs, file formats, complete-pipeline prediction and instrumented Cox fits.

@@ -108,6 +108,14 @@ def test_bare_csv_scripted_run(tmp_path):
     assert all(r["principal"] == result["policy_principal"] for r in inference_requests)
     metrics = json.loads((project / "reports/generated/metrics.json").read_text())
     assert metrics["run"]["completed"]["value"]
+    assert metrics["autonomy"]["halts"]["value"] == 0
+    assert len(metrics["autonomy"]["inference"]["choices"]) == 1
+    assert metrics["models"]["navigator"]["calls"]["value"] == sum(
+        r.get("role") == "navigator" for r in read(project)
+    )
+    assert metrics["autonomy"]["rails"]["version"] == "rails-0.0"
+    assert any(r["type"] == "DecisionWindowOpened" and r["payload"]["kind"] == "approval" for r in records)
+    assert any(r["type"] == "DecisionWindowOpened" and r["payload"]["kind"] == "choice" for r in records)
     assert {r["actor"] for r in records if r["type"] == "UserConfirmed"} == {result["policy_principal"]}
 
 

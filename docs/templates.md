@@ -83,3 +83,21 @@ Parquet artifacts contain source row IDs and partition names, plus assignments o
 embeddings; they are local data artifacts, not LLM-readable summary tables.
 Their populations must match the frozen training and test partitions. External
 evaluation lives in the experiments repository and is labelled as researcher code.
+
+## Autonomous problem types (work order 04)
+
+In addition to classification and survival, the registry includes `regression`
+(single or multiple numeric outcomes), `multilabel_classification` (multiple
+categorical outcomes), `clustering`, and `representation`. They use the same
+Session gates, train-only fit evidence and one-way test lock. A scripted synthetic
+workflow checks each template through report; this is orchestration validation,
+not evidence that a live model completes these methods reliably.
+
+Clustering selects using internal metrics; representation uses reconstruction
+error. `save_row_outputs` stores local-only Parquet assignments/embeddings with
+`row_id` and `partition`. The engine checks uniqueness and membership of the
+frozen train/test population. Hidden evaluation labels must be removed with
+`--exclude-columns` before registration. ARI/NMI and a training-fitted linear
+probe are computed afterward by the separate experiments evaluator, explicitly
+not by the agent. Entity construction is an optional pre-split clustering action;
+its checked output becomes the split input. It must preserve traceable row IDs.

@@ -725,3 +725,47 @@ the existing fit-stage/test-lock restrictions. Per-row outputs are local-only da
 artifacts and must match the frozen population. Autonomous prepared tables retain
 source row indexes in Parquet. Legacy classification and survival paths remain
 compatible; several targets are represented by validated column fields.
+
+## Work order 04 A3–A5 — autonomous execution, oversight and accounting
+
+The author limited this continuation to Part A on 16 October 2026. Part B is
+paused until a new instruction. No live provider call is part of these checks.
+
+`mlca run` creates independent fresh projects from the Navigator's validated
+schema-only proposal. It uses the existing Session, data-review questions,
+approval checks, guided loop, provider pacing and bounded cooldown recovery.
+It never consults a researcher manifest. Discovery is frozen before creating
+outputs, so repeated runs cannot register their own generated tables. Source
+hash changes are refused between repetitions. Setup inference has the policy
+principal and is retained even if initialization fails.
+
+The 60-second decision controller is shared by CLI and TUI; autonomous mode uses
+zero seconds. Human starts alone may enable TUI policy execution. A Halt changes
+no scientific rule: an alternate card, confirmation or custom instruction still
+uses the existing engine entry points. Scoped custom refusals pause rather than
+silently continuing. A human override is attributed to the human, including the
+request principal; the policy resumes afterward. Halt pauses before the next
+decision and does not kill a currently running script.
+
+Metrics include setup inference envelopes by their original session IDs, rather
+than silently dropping their tokens, cost or egress. Legacy autonomy counts and
+external inference correctness remain unavailable. Failed setup usage is retained
+in the run manifest and summary; successful setup usage is not added twice.
+
+An A2 integration correction seals an excluded external table from its staged
+projection during atomic initialization. Clustering score prompts explicitly
+reuse Model-stage stability rather than asking validation/test to refit. These
+are engineering/template corrections, not failure-derived development rails.
+No live rails have been added: the explicit baseline remains rails-0.0.
+
+Inference validation accepts an explicitly named default metric without requiring
+an override reason. Only allowed non-default regression metrics require one;
+regression tests cover the defaults for all eight inferred problem types.
+Cancellation during setup keeps decision-window evidence outside the not-yet-
+created project, with setup-only measurements labelled separately in summaries.
+
+The author subsequently authorized Part B while sleeping. Finish Part A local
+commits first, then use openrouter/free only. A read-only account metadata check
+reported 1,000 free requests remaining; it made no inference request. Native
+sandbox preflight reports A. Final Part A suite: 380 passed, 1 skipped in
+1189.07 seconds. No paper edit, release, version change, freeze or remote action.

@@ -1,3 +1,20 @@
+## Work order 04 Part A — 16 October 2026
+
+A1/A2 are committed (0bdeb79, 6c0576e); external unsupervised/inference scorers
+are in experiments commit e7eef1e. A3 autonomous execution, A4 decision windows
+and A5 sourced autonomy metrics are implemented locally. Full offline validation:
+**380 passed, 1 skipped in 1189.07 seconds** (PowerShell unavailable); Ruff and
+whitespace checks pass. A3 commit fb8abf2; A4 commit 6c7d3aa; A5 is this update.
+
+**Author boundary (updated):** the author subsequently authorized Part B while
+sleeping. Part A validation is complete; finish its local commits before the live loop. It has
+not started yet. Its account metadata check reports 1,000 free requests remaining. No live model inference
+calls, held-out inspection, freeze, version bump, installed-tool refresh, push,
+upload, release, or paper edit in this continuation. Existing untracked datasets
+and author work orders remain preserved. CLI automatic sign-in is deferred.
+
+---
+
 # Current work order status — 14 October 2026
 
 **WP1–WP7 completed locally; stopped after package 7.** P17 E1/E2 and the P18 packages
