@@ -289,8 +289,9 @@
   targets: []
   evaluation_only: []
   group_column: CustomerID
-  time_columns:
-  - InvoiceDate
+  time_columns: []
+  task_definition: Static customer segmentation; one row per customer, recency measured relative to the last transaction date.
+  criterion_decision: Author approved prospectively after batch-03; no claim of future-period prediction, so chronological splitting is not required. Customer grouping and identifier exclusion remain required. Earlier scores are unchanged.
   known_traps:
   - transactional; customer features must be constructed
   - cancellation invoice numbers start C

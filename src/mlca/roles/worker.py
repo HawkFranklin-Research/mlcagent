@@ -114,7 +114,7 @@ def render_order(session, action, params, inputs, state):
     for key, value in params.items():
         rendered = rendered.replace("{" + key + "}", str(value))
     if state.guided_enabled:
-        rendered += "\nRead the declared _protocol JSON: use its task, primary_metric, outcome columns and exclusions. Binary threshold selection is validation-only; multiclass uses macro one-vs-rest ROC AUC without a binary threshold. Never fit after test exposure."
+        rendered += "\nRead the declared _protocol JSON: use _protocol['task']['primary_metric'], _protocol['targets'], _protocol['excluded_columns'] and the declared outcome columns. primary_metric is nested inside task, not a top-level key. Binary threshold selection is validation-only; multiclass uses macro one-vs-rest ROC AUC without a binary threshold. Never fit after test exposure."
     names = {k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()}
     if action.reads_test:
         names["test"] = {"name": "test.parquet", "format": ".parquet"}

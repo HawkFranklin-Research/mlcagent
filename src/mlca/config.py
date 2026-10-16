@@ -33,6 +33,7 @@ class RoleConfig(ConfigModel):
     provider: str
     model: str
     temperature: float | None = None
+    reasoning_effort: Literal["none", "low", "medium", "high", "max"] | None = None
     # Reasoning models spend most of this on hidden reasoning; 4096 truncated Worker repairs.
     max_output_tokens: int = Field(default=16384, ge=64, le=65536)
 

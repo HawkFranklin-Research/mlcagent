@@ -497,7 +497,42 @@ class Session:
                 target = ids[index + 1]
                 if gates.check(target, state, self.workflow, self.root)[0]:
                     options.insert(0, {"id": "next", "title": f"Continue to {target}"})
-            if state.current_event == "validate" and not self._ever_unlocked():
+            from mlca.engine.options import missing_validation_metric, scoring_retry
+
+            missing_metric = missing_validation_metric(state)
+            if missing_metric and scoring_retry("score_validation", state):
+                # Prefer the bounded in-event repair over destructive upstream loops.
+                retry = next(
+                    (o for o in fallback(state, self.workflow) if o["action_id"] == "score_validation"), None
+                )
+                if retry is not None:
+                    ordered = [retry, *(o for o in options if o.get("action_id") != "score_validation")]
+                    options = [
+                        {**o, "id": str(i)}
+                        for i, o in enumerate(
+                            ordered[: self.workflow.events[state.current_event].max_options], 1
+                        )
+                    ]
+                    if options != state.pending_options:
+                        self.emit(
+                            "OptionsProposed",
+                            {"options": options, "source": "fallback", "navigator_request_id": None},
+                        )
+            elif (
+                missing_metric
+                and not options
+                and any(
+                    s["status"] == "completed"
+                    and s["action_id"] == "score_validation"
+                    and s.get("generation", 0) == state.generations.get("validate", 0)
+                    for s in state.steps
+                )
+            ):
+                raise MlcaUserError(
+                    "Validation scoring did not record the declared primary metric after its scoring-only retry",
+                    category="gate_blocked",
+                )
+            if state.current_event == "validate" and not missing_metric and not self._ever_unlocked():
                 for transition in self.workflow.spec.transitions.get("loops", []):
                     if transition["from"] == "validate":
                         for target in transition["to"]:

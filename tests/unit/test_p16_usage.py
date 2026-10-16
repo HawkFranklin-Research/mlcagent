@@ -329,3 +329,22 @@ def test_generation_http_is_metadata_only_and_validated(monkeypatch):
     with pytest.raises(MlcaUserError, match="official"):
         fetch_generation(provider, "gen-one")
     assert len(requests) == 1
+
+
+@pytest.mark.parametrize("effort", [None, "low", "medium"])
+def test_reasoning_effort_is_explicit_preserved_and_unset_by_default(opened_project, monkeypatch, effort):
+    s = opened_project
+    s.config.providers["offline"] = ProviderConfig(kind="openrouter", request_cost_bound_usd=0)
+    s.config.roles["worker"] = RoleConfig(provider="offline", model="selected", reasoning_effort=effort)
+    payloads = []
+
+    def complete(payload):
+        payloads.append(payload)
+        return adapter_result(BODY)
+
+    monkeypatch.setattr(s.client, "_provider", lambda *_: NS(complete=complete))
+    call(s)
+    extra = payloads[0]["extra_body"]
+    assert extra["user"].startswith("mlca-")
+    assert extra.get("reasoning") == (None if effort is None else {"effort": effort})
+    assert usage.read(s.root)[0]["request_settings"]["reasoning_effort"] == effort

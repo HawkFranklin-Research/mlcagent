@@ -848,3 +848,24 @@ partition must match frozen membership; data remains unreadable through the
 MCP summary-table path. The superseded gate was interrupted, with logs retained,
 to avoid claiming a suite pass for a different source revision. No live rerun
 preceded the corrected collector contract and its regressions.
+
+## After batch 03 — author-approved task criterion and repairs
+
+Online Retail is static customer segmentation, one row per customer, recency
+relative to the last transaction date. From batch 04 chronological splitting is
+not required; grouping and identifier exclusions remain enforced. Previous
+scores are retained without recalculation. Bike retains chronological splitting.
+The manifest stays researcher-only.
+
+The author permits exactly read-only /proc/self/maps in the audit hook for
+threadpoolctl. Other /proc paths and writes remain blocked. Synthetic KMeans
+inside bubblewrap verifies compatibility and denials. All six scoring templates
+refer to the nested declared primary metric, including legitimate overrides.
+One bounded validation-only retry repairs a missing metric without reopening
+preprocessing. Existing temporal, representation and categorical-output rails
+are strengthened generically, with engine and instruction commits separate.
+
+Batch 04 retains provider-default reasoning. Batch 05 isolates explicit low
+reasoning effort: recorded official metadata supports max/high/low/none, not
+medium. Configuration/transport support is added before batch 04 but left unset
+there; batch 05 changes no source or rails. No future-setting result is claimed.

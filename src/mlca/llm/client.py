@@ -219,6 +219,11 @@ class Client:
             if privacy.zero_data_retention:
                 routing["zdr"] = True
             payload["extra_body"] = {"user": end_user, **({"provider": routing} if routing else {})}
+        if selected.reasoning_effort is not None:
+            if provider_config.kind == "openrouter":
+                payload["extra_body"]["reasoning"] = {"effort": selected.reasoning_effort}
+            else:
+                payload["reasoning_effort"] = selected.reasoning_effort
         digest = egress.classify(payload, categories, self.config.privacy.allow_sample_rows)
         provider = self._provider(selected.provider)
         if not 1 <= max_attempts <= 3:
@@ -253,6 +258,7 @@ class Client:
                     "temperature": payload.get("temperature"),
                     "max_output_tokens": payload.get("max_tokens", payload.get("max_completion_tokens")),
                     "call_deadline_s": provider_config.call_deadline_s,
+                    "reasoning_effort": selected.reasoning_effort,
                 },
                 "input_tokens": None,
                 "output_tokens": None,

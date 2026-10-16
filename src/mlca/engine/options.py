@@ -55,6 +55,36 @@ def parameters(action: Any, values: Any, state: Any) -> Any:
     return result
 
 
+def missing_validation_metric(state):
+    from mlca.task_metrics import default_metric
+
+    metric = state.task.get("primary_metric") or default_metric(state.task.get("type", state.template_id))
+    return state.current_event == "validate" and not any(
+        m["name"] == metric and m["split"] == "val"
+        for step in state.steps
+        if step["status"] == "completed"
+        and step["event_id"] == "validate"
+        and step.get("generation", 0) == state.generations.get("validate", 0)
+        for m in step.get("metrics", [])
+    )
+
+
+def scoring_retry(identifier, state):
+    # One bounded scoring-only retry. Never invalidate preprocessing or refit.
+    return (
+        identifier == "score_validation"
+        and missing_validation_metric(state)
+        and sum(
+            step["status"] == "completed"
+            and step["action_id"] == identifier
+            and step["event_id"] == "validate"
+            and step.get("generation", 0) == state.generations.get("validate", 0)
+            for step in state.steps
+        )
+        == 1
+    )
+
+
 def validate(options: Any, state: Any, workflow: Any) -> Any:
     event = workflow.events[state.current_event]
     if not 1 <= len(options) <= event.max_options:
@@ -85,7 +115,8 @@ def validate(options: Any, state: Any, workflow: Any) -> Any:
             and s.get("generation", 0) == state.generations.get(s["event_id"], 0)
             for s in state.steps
         ):
-            raise MlcaUserError("Duplicate completed action and parameters")
+            if not scoring_retry(action.id, state):
+                raise MlcaUserError("Duplicate completed action and parameters")
         if any(o["action_id"] == action.id and o["params"] == params for o in result):
             raise MlcaUserError("Duplicate option")
         result.append({**option.model_dump(), "id": str(n), "params": params, "est_cost_usd": None})
@@ -155,7 +186,9 @@ def fallback(state: Any, workflow: Any) -> Any:
             "expected_outputs": [output.name for output in action.outputs],
             "est_cost_usd": None,
         }
-        if not duplicate:
+        if not duplicate or scoring_retry(identifier, state):
+            if duplicate:
+                option["why_now"] = "Retry validation scoring: the declared primary metric is missing"
             options.append(option)
         elif action.role == "primary" and action.params:
             exhausted.append({**option, "why_now": "Repeat with different parameters"})

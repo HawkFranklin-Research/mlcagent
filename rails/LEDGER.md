@@ -267,3 +267,25 @@ The first batch03 full gate was deliberately interrupted before source changes;
 its four exit2 logs are retained as superseded, not reported as a passing gate.
 Forty-two focused template/runtime/collector/metric/rail tests passed in2.97s.
 A fresh full gate follows the final contract; no live batch03 call occurred.
+
+## B-0018–B-0020 — batch-03 engine contract corrections
+
+Evidence: batch-03/REVIEW.md and its curated hashed scripts/logs in the
+experiments repository. Seeds KMeans/threadpoolctl reads own-process library
+maps; exact read-only /proc/self/maps is allowed by author decision. Other
+/proc reads and writes stay blocked; sandbox A is unchanged. A synthetic
+KMeans fit through fit_record inside bubblewrap exercises the actual path.
+
+Bike legitimately declares poisson_deviance but action text requests rmse,
+repeating batch-02 Covertype's roc_auc versus roc_auc_ovr mismatch. All twelve
+validation/test actions across six templates now name the nested declared
+metric. Primary checks are unchanged. One scoring-only retry (bounded to one
+completed scoring attempt) stays within validation; exhausted scoring cannot
+automatically select an upstream loop. No training/test gate is weakened.
+
+Optional reasoning_effort is transported and logged with requests; None keeps
+existing behavior. Controller records the setting and requires it to match for
+ablation. Batch 04 leaves it unset; batch 05 will isolate explicit low effort.
+No captured error values, reference code, model change or silent historical
+rescoring. Focused contracts/sandbox:44 passed; final full gate follows.
+

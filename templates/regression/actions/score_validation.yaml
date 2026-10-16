@@ -2,14 +2,17 @@ id: score_validation
 event: validate
 title: Score candidates on validation rows
 params: {}
-prompt: 'Do: RMSE, MAE and R2 per target and macro average; use actual targets from
-  _protocol. Choose the lowest validation primary metric. Record any primary-metric
-  change with its reason. Score only val; do not fit. Freeze the validation-selected
+prompt: 'Do: RMSE, MAE and R2 per target and macro average; use actual targets from _protocol. Honor
+  the declared primary metric and its direction. Score only val; do not fit. Freeze the validation-selected
   candidate before test.
 
   Save: validation_metrics.csv (model, metric, value).
 
-  Record: metric rmse on val; fact best_validation_score (source validation_metrics.csv).'
+  Record: the exact declared metric _protocol[''task''][''primary_metric''] on val; fact best_validation_score
+  (source validation_metrics.csv). Read the declared metric from _protocol[''task''][''primary_metric''];
+  compute and record that exact name, not a template default. Other listed metrics are supplementary.
+  Use its correct optimization direction and compare candidates only on validation; test scores never
+  select a model.'
 inputs:
 - ref: train
 - ref: val
@@ -23,6 +26,7 @@ fact_candidates:
 - best_validation_score
 reads_test: false
 timeout_s: 300
-methods_text: Follow the recorded task and saved model contract; all fitting uses
-  training rows only.
+methods_text: Score the frozen candidates using the task-specific declared primary metric and its
+  direction; supplementary metrics do not replace it. Fit only on training rows, select on validation,
+  and evaluate the frozen choice on test.
 builtin: null

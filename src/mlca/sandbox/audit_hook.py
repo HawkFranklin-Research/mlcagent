@@ -22,7 +22,7 @@ def guard(event, args):
         mode = args[1] or ""
         flags = args[2] if len(args)>2 else 0
         write = (isinstance(mode,str) and any(c in mode for c in "wax+")) or bool(flags & (os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC))
-        if not inside(path, write_roots if write else read_roots):
+        if not (not write and os.fsdecode(args[0]) == "/proc/self/maps") and not inside(path, write_roots if write else read_roots):
             raise PermissionError("MLCA blocked an undeclared file access")
     elif event in ("os.system", "subprocess.Popen", "os.posix_spawn"):
         raise PermissionError("MLCA blocked child process creation")
