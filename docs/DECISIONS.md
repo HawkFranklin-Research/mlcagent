@@ -769,3 +769,24 @@ commits first, then use openrouter/free only. A read-only account metadata check
 reported 1,000 free requests remaining; it made no inference request. Native
 sandbox preflight reports A. Final Part A suite: 380 passed, 1 skipped in
 1189.07 seconds. No paper edit, release, version change, freeze or remote action.
+
+
+## 16 October 2026 — work order 05 baseline and batch parameters
+
+The author authorized DeepSeek V4.1 Flash paid calls with no spending ceiling.
+All twelve full-size development tables form the baseline, six studies in
+parallel, at most one over 500,000 rows. Limits are 90 minutes per study,
+300 seconds per model call and default script, three Worker attempts, sandbox A,
+and no additional per-study memory cap. Model, rails and code remain fixed
+within each batch. Unknown costs/tokens remain unavailable and totals partial.
+
+Setup may expose at most twenty distinct values/counts per visible column,
+otherwise numeric summaries. This approved egress is recorded exactly; hidden
+evaluation columns never enter the inventory. Optional reasoned label spelling
+maps are validated and applied before cardinality checks, retaining original
+source bytes and registration evidence. External leakage/setup scorers are
+researcher measurements, not agent achievements.
+
+Instruction rails can be disabled for the required post-acceptance ablation
+without disabling engine safeguards. CLI automatic OpenRouter sign-in remains
+a later usability task. No reference analyses, held-out access or publication.

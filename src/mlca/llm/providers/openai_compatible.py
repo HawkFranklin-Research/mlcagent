@@ -24,7 +24,8 @@ class CompatibleProvider:
         self.client = OpenAI(api_key=key, base_url=config.base_url, timeout=config.timeout_s, max_retries=0)
 
     def complete(self, payload: dict) -> dict:
-        if self.config.call_deadline_s is not None:
+        deadline = getattr(getattr(self, "config", None), "call_deadline_s", None)
+        if deadline is not None:
             from mlca.llm.deadline import exchange
 
             data = exchange(
@@ -35,7 +36,7 @@ class CompatibleProvider:
                     "timeout_s": self.config.timeout_s,
                     "payload": payload,
                 },
-                self.config.call_deadline_s,
+                deadline,
             )
             if "error" in data:
                 error = MlcaUserError(data["error"], category="provider_error")

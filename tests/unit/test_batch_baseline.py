@@ -71,3 +71,25 @@ def test_unsupervised_wording_and_action_methods(template):
     methods = [a.methods_text for a in workflow.actions.values()]
     assert len(methods) == len(set(methods))
     assert all("Follow the recorded task and saved model contract" not in text for text in methods)
+
+
+def test_configured_adapter_uses_bounded_transport(monkeypatch):
+    from types import SimpleNamespace
+
+    from mlca.config import ProviderConfig
+    from mlca.llm.providers.openai_compatible import CompatibleProvider
+
+    adapter = object.__new__(CompatibleProvider)
+    adapter.config = ProviderConfig(kind="openai_compatible", call_deadline_s=0.2)
+    adapter.client = SimpleNamespace(api_key="FAKE_CANARY", base_url="http://local.invalid/v1/")
+    calls = []
+
+    def bounded(command, body, seconds):
+        calls.append((command, body, seconds))
+        return {"data": {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}}
+
+    monkeypatch.setattr("mlca.llm.deadline.exchange", bounded)
+    assert adapter.complete({"model": "fixture"})["text"] == "ok"
+    assert calls[0][2] == 0.2
+    assert calls[0][1]["key"] == "FAKE_CANARY"
+    assert "FAKE_CANARY" not in str(calls[0][0])

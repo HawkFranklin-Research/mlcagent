@@ -1,5 +1,55 @@
 # MLCA v2: implementation plan
 
+## Work order 05 — 16 October 2026 (baseline validated; batch-01 ready)
+
+Work order 05 replaces the earlier Part B procedure. Round 2 is closed, not
+continued: experiments dae6775 preserves its three failures and interrupted
+energy run. No new-model call has occurred during baseline preparation.
+
+Completed local changes, in required order:
+- L-0002 rails-0.3 design pass: 5ded618 (24 generic instruction rails).
+- E1–E4 metric aliases/shared defaults, bounded model calls and unsupervised
+  action wording: d48b0f8. E5 approved setup value inventories and reasoned,
+  validated label spelling maps: 9026276.
+- E6 fitted column names and E7 training group retention: bf8814b.
+- Researcher-only development leakage fields: 99b415b; external scorer:
+  experiments 4efef07. Unknown evidence stays unavailable.
+- Shared request pacing, unlimited-budget configuration and explicit ablation:
+  c448e56. Parallel/resumable queue: experiments eb70bd3; six focused controller
+  and leakage tests pass; twelve focused engine control/rails tests pass.
+
+The initial full suite exposed an optional-deadline adapter compatibility defect
+(389 passed, 18 failed, 1 skipped); all affected regressions passed after the fix
+(44 tests). The fresh full offline gate, partitioned across four isolated pytest
+processes, passed **408 tests, 1 skipped**, zero failures/errors (slowest partition
+379.11 s). Experiments tests: **18 passed in 11.31 s**. Ruff and diff checks pass.
+Logs/XML: /home/prime/.cache/mlca-05-parallel-gate/.
+
+Exact next step: launch batch-01 (if no batch.json exists), otherwise inspect its
+live state and controller before using --resume. Command from experiments:
+`../mlca-revized/.venv/bin/python scripts/run_batch.py --batch 1 --out
+bench/dev-loop/batch-01 --model deepseek/deepseek-v4.1-flash --concurrency 6`.
+Use the fresh baseline commit and controller eb70bd3;
+all twelve DEVELOPMENT entries, six concurrent studies, exact model
+`deepseek/deepseek-v4.1-flash`. Paid calls are authorized without a spending
+ceiling; use OPENROUTER_API_KEY without printing or persisting it. Parameters
+are recorded in experiments bench/dev-loop/PARAMETERS.md. No model substitution.
+
+Status: O1–O7 implemented for this baseline; O8 batch loop ready, acceptance
+not attempted; O9 freeze not started.
+
+Batch controls: one large table at a time; 5,400 s/study, 300 s/model call,
+300 s default script timeout; no additional memory limit; full input tables.
+After each batch report all failures, make consolidated generic repairs between
+batches only, and rerun failed tables. Acceptance K=3 then rails ablation;
+stop at acceptance+ablation or ten batches/five days and prepare Part C.
+
+Held-out tables remain untouched; paper read-only. No freeze, version bump,
+release, tag, push, remote or upload. CLI automatic OpenRouter sign-in remains
+an acknowledged later usability item, not part of this work order.
+
+---
+
 ## Work order 04 Part B — 16 October 2026 (in progress)
 
 Part A is complete at 32530ae: 380 passed, 1 skipped (PowerShell unavailable).

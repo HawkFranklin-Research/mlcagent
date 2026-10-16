@@ -131,3 +131,14 @@ unknown-price refusals. Unknown usage is still unavailable, never fabricated as
 zero. rails_enabled=false snapshots rails-0.0 for the specified ablation only.
 Default native configuration stays unchanged. Twelve focused tests passed.
 E6/E7 implementation: bf8814b; researcher-only manifest fields: 99b415b.
+
+## B-0010 — optional deadline transport compatibility (baseline gate)
+
+The first Step 1.7 suite found 18 failures: SDK adapter test doubles constructed
+without __init__ had no config attribute. The optional deadline now defaults to
+legacy synchronous transport only when absent. Real configured deadlines still
+use the bounded subprocess; a new positive dispatch test proves that path.
+No engine safeguard is bypassed. The affected accounting/refusal/truncation and
+new baseline tests then passed: 44 passed in 27.68 s. The complete suite then passed in four isolated offline test processes:
+408 passed, 1 skipped, zero failures/errors. Experiments: 18 passed.
+Controller Step 1.6 commit: eb70bd3. No live call occurred before the gate.

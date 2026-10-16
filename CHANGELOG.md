@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — work order 05 (16 October 2026)
+
+- Activate consolidated rails-0.3; retain exploratory rounds separately.
+- Normalize metric aliases against one task registry and bound model calls.
+- Approved setup value inventories and validated, recorded label spelling maps.
+- Record fitted columns and retain grouping metadata for training folds.
+- Share batch rate state, support explicit unlimited budgets and rails ablation.
+- Development batches use external setup/leakage scoring, never manifest answers
+  in the agent prompt. Full validation and live outcomes are recorded separately.
+
 ## Unreleased — work order 04 Part B (16 October 2026)
 
 - Correct the setup response contract and bounded local validation/repair; retain
