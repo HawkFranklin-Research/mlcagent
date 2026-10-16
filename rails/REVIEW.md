@@ -351,7 +351,7 @@ Review draft; no acceptance, ablation or freeze. All26 active rails are instruct
 
 ## Engine fixes are not rails
 
-B-0001–B-0013 remain in LEDGER.md with original evidence. B-0014–B-0016 (43b7407) align per-row audit artifacts with the runtime, make classification primary-metric instructions task-aware and add fixed value-free scoring diagnostics. Forty focused regressions passed; full consolidated gate pending. Checks are not relaxed and no failed Worker script is replaced.
+B-0001–B-0013 remain in LEDGER.md with original evidence. B-0014–B-0017 (43b7407 and subsequent explicit-population correction) align per-row audit artifacts with the runtime, make classification primary-metric instructions task-aware and add fixed value-free scoring diagnostics. Forty focused regressions passed; full consolidated gate pending. Checks are not relaxed and no failed Worker script is replaced.
 
 ## Rejected shortcuts
 

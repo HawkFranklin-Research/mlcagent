@@ -3,6 +3,8 @@
 ## Unreleased — work order 05 (16 October 2026)
 
 - Batch-02: three qualifying development successes; preserve all nine failures.
+- Validate exact declared frozen populations for per-row artifacts while
+  preserving historical train/test requirements and local-only access.
 - Align local prediction audits with the Parquet row-output schema and make
   classification scoring task-aware without weakening metric or fit checks.
 - Fixed value-free repair hints cover observed categorical-scoring API errors.

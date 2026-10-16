@@ -27,6 +27,9 @@ outputs:
   required: true
 - name: embeddings.parquet
   kind: data
+  row_partitions:
+  - train
+  - test
   required: true
 fact_candidates:
 - test_score

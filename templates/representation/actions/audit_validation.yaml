@@ -12,6 +12,8 @@ inputs:
 outputs:
 - name: validation_predictions.parquet
   kind: data
+  row_partitions:
+  - val
   required: true
 fact_candidates: []
 reads_test: false

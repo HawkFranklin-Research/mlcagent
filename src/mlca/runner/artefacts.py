@@ -42,26 +42,33 @@ def collect(root: Path, step: Path, action: Any, state: Any) -> dict:
             matched = guard(root, state).file_contains_rows(path)
             entry["contains_data_rows"] = matched
             entry["row_privacy_checked"] = matched is not None
-        if kind == "data" and path.suffix == ".parquet" and action.event == "test":
+        partitions = getattr(declared.get(name), "row_partitions", None)
+        # Preserve the historical train/test population check for test data
+        # without a more specific, trusted template output contract.
+        if partitions is None and kind == "data" and action.event == "test":
+            partitions = ["train", "test"]
+        if kind == "data":
+            entry["local_only"] = True
+        if kind == "data" and path.suffix == ".parquet" and partitions is not None:
             import pandas as pd
 
+            if not state.split:
+                raise MlcaUserError("Per-row output validation requires a frozen split")
             rows = pd.read_parquet(path)
             if not {"row_id", "partition"} <= set(rows):
                 raise MlcaUserError("Per-row evaluation outputs require row_id and partition")
             if rows.row_id.duplicated().any() or rows.row_id.isna().any():
                 raise MlcaUserError("Per-row evaluation identifiers are not unique")
             membership = pd.read_csv(root / state.split["manifest"]["path"])
-            wanted = membership[membership.partition.isin(["train", "test"])].rename(
-                columns={"row_id": "row_id"}
-            )
+            wanted = membership[membership.partition.isin(partitions)][["row_id", "partition"]]
             got = rows[["row_id", "partition"]]
             if (
                 not got.sort_values("row_id")
                 .reset_index(drop=True)
                 .equals(wanted.sort_values("row_id").reset_index(drop=True))
             ):
-                raise MlcaUserError("Per-row output populations differ from the frozen train/test split")
-            entry["local_only"] = True
+                raise MlcaUserError("Per-row output populations differ from the declared frozen partitions")
+            entry["row_partitions"] = partitions
         outputs.append(entry)
         if kind == "figure":
             figures.append(entry)

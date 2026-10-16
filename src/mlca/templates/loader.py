@@ -51,6 +51,13 @@ def load(path: Path) -> Workflow:
         for output in action.outputs:
             if Path(output.name).is_absolute() or ".." in Path(output.name).parts:
                 raise MlcaUserError(f"{file}: unsafe output.name")
+            if output.row_partitions is not None and (
+                output.kind != "data"
+                or Path(output.name).suffix != ".parquet"
+                or len(set(output.row_partitions)) != len(output.row_partitions)
+                or ("test" in output.row_partitions and not action.reads_test)
+            ):
+                raise MlcaUserError(f"{file}: invalid per-row output partition contract")
         actions[action.id] = action
     for name, event in events.items():
         filename = path / "events" / f"{name}.yaml"

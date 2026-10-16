@@ -51,6 +51,7 @@ class OutputSpec(Spec):
     name: str
     kind: Literal["table", "figure", "model", "report", "data", "other"]
     required: bool = True
+    row_partitions: list[Literal["train", "val", "test"]] | None = Field(default=None, min_length=1)
 
 
 class ActionSpec(Spec):

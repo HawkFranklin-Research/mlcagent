@@ -840,3 +840,11 @@ No new entity algorithm, reference script or relaxed training-index rule was
 introduced. Primary-script recovery and whole-event completion are reported
 separately; Covertype's repaired validation script did not satisfy its primary
 metric check under the old action contract.
+
+The per-row collector has an explicit trusted partition contract: val-only
+validation audits, test-only test audits, train+test unsupervised evaluation.
+Legacy test outputs retain the train+test default. Every declared row and its
+partition must match frozen membership; data remains unreadable through the
+MCP summary-table path. The superseded gate was interrupted, with logs retained,
+to avoid claiming a suite pass for a different source revision. No live rerun
+preceded the corrected collector contract and its regressions.

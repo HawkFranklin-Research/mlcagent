@@ -1,4 +1,5 @@
 import json
+import shutil
 from types import SimpleNamespace as NS
 
 import pandas as pd
@@ -6,9 +7,12 @@ import pytest
 
 import mlca_runtime
 from mlca.engine.checks import evaluate
+from mlca.errors import MlcaUserError
 from mlca.roles.worker import runtime_api
+from mlca.runner.artefacts import collect
 from mlca.runner.run_step import diagnostics
 from mlca.task_metrics import default_metric
+from mlca.templates.loader import load
 from mlca.templates.registry import get
 
 
@@ -33,13 +37,65 @@ def test_prediction_audit_contract_matches_runtime(tmp_path, monkeypatch, templa
     if template in {"clustering", "representation"}:
         assert "outcome" not in action.prompt
     monkeypatch.setenv("MLCA_STEP_DIR", str(tmp_path))
-    frame = pd.DataFrame({"row_id": [11, 21], "partition": [partition] * 2, "prediction": [0, 1]})
+    ids = [11, 21] if partition == "val" else [31, 41]
+    frame = pd.DataFrame({"row_id": ids, "partition": [partition] * 2, "prediction": [0, 1]})
     saved = mlca_runtime.save_row_outputs(frame, output.name)
     pd.testing.assert_frame_equal(pd.read_parquet(saved), frame)
     manifest = json.loads((tmp_path / "manifest.json").read_text())
     assert manifest["outputs"][-1]["kind"] == "data"
+    pd.DataFrame(
+        {"row_id": [1, 2, 11, 21, 31, 41], "partition": ["train"] * 2 + ["val"] * 2 + ["test"] * 2}
+    ).to_csv(tmp_path / "membership.csv", index=False)
+    state = NS(split={"manifest": {"path": "membership.csv"}})
+    result = collect(tmp_path, tmp_path, action, state)
+    assert result["outputs"][0]["local_only"] is True
+    assert result["outputs"][0]["row_partitions"] == [partition]
     with pytest.raises(ValueError, match="Parquet"):
         mlca_runtime.save_row_outputs(frame, "old_predictions.csv")
+    frame["partition"] = "train"
+    mlca_runtime.save_row_outputs(frame, output.name)
+    with pytest.raises(MlcaUserError, match="populations differ"):
+        collect(tmp_path, tmp_path, action, state)
+
+
+def test_legacy_test_data_still_requires_both_train_and_test(tmp_path, monkeypatch):
+    monkeypatch.setenv("MLCA_STEP_DIR", str(tmp_path))
+    membership = pd.DataFrame({"row_id": [0, 1, 2], "partition": ["train", "val", "test"]})
+    membership.to_csv(tmp_path / "membership.csv", index=False)
+    state = NS(split={"manifest": {"path": "membership.csv"}})
+    action = NS(
+        event="test",
+        reads_test=True,
+        outputs=[NS(name="rows.parquet", kind="data", required=True)],
+    )
+    rows = membership[membership.partition.isin(["train", "test"])]
+    mlca_runtime.save_row_outputs(rows, "rows.parquet")
+    assert collect(tmp_path, tmp_path, action, state)["outputs"][0]["row_partitions"] == ["train", "test"]
+    mlca_runtime.save_row_outputs(rows[rows.partition.eq("test")], "rows.parquet")
+    with pytest.raises(MlcaUserError, match="populations differ"):
+        collect(tmp_path, tmp_path, action, state)
+
+
+@pytest.mark.parametrize("change", ["table", "csv", "duplicate", "test_without_access"])
+def test_template_rejects_invalid_row_partition_contract(tmp_path, change):
+    import yaml
+
+    folder = tmp_path / "template"
+    shutil.copytree(get("tabular_classification").path, folder)
+    file = folder / "actions/audit_validation.yaml"
+    action = yaml.safe_load(file.read_text())
+    output = action["outputs"][0]
+    if change == "table":
+        output["kind"] = "table"
+    elif change == "csv":
+        output["name"] = "rows.csv"
+    elif change == "duplicate":
+        output["row_partitions"] = ["val", "val"]
+    else:
+        output["row_partitions"] = ["test"]
+    file.write_text(yaml.safe_dump(action))
+    with pytest.raises(MlcaUserError, match="per-row output partition contract"):
+        load(folder)
 
 
 def test_worker_api_explains_row_schema_without_relaxing_it(tmp_path, monkeypatch):

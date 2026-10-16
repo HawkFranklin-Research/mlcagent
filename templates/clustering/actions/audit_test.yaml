@@ -13,6 +13,8 @@ inputs:
 outputs:
 - name: test_predictions.parquet
   kind: data
+  row_partitions:
+  - test
   required: true
 fact_candidates: []
 reads_test: true

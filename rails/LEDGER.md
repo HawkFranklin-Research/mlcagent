@@ -248,3 +248,22 @@ Output-budget failures remain measured; no reasoning-setting change yet.
 
 Focused rail/genericity/metric-contract regressions:34 passed in2.49s.
 The full consolidated native suite is required before the next live batch.
+
+## B-0017 — explicit frozen populations for local row outputs (batch-02 follow-up)
+
+Before another live call, source inspection found the collector historically
+requires train+test rows for every test data artifact (originally only clustering/
+representation outputs). New test prediction audits correctly need test rows
+only. OutputSpec now permits a trusted, nonempty unique row_partitions contract
+for data-kind Parquet, with test access still required. The collector compares
+the exact declared frozen membership, checks unique/nonmissing IDs, and marks
+data artifacts local-only. Validation audits require val, test audits test;
+unsupervised evaluation still requires train+test. Historical test data without
+an explicit contract retains train+test, verified by a negative regression.
+Malformed output contracts are refused by the template loader. No scientific
+population, test lock, privacy or fit validation is weakened.
+
+The first batch03 full gate was deliberately interrupted before source changes;
+its four exit2 logs are retained as superseded, not reported as a passing gate.
+Forty-two focused template/runtime/collector/metric/rail tests passed in2.97s.
+A fresh full gate follows the final contract; no live batch03 call occurred.

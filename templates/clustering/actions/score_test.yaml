@@ -25,6 +25,9 @@ outputs:
   required: true
 - name: assignments.parquet
   kind: data
+  row_partitions:
+  - train
+  - test
   required: true
 fact_candidates:
 - test_score
