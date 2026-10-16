@@ -169,7 +169,7 @@ class MlcaApp(App):
     def action_autopilot(self):
         if self._can_act() and not self.external_client:
             self.auto_resume = True
-            self.run_session_action("autopilot")
+            self.run_session_action("autonomous")
 
     def action_pause(self):
         self.auto_resume = False
@@ -278,7 +278,12 @@ class MlcaApp(App):
                         severity="error",
                     )
                 self.pending_config = None
-            if method == "autopilot" and result.get("reason") in {"failure", "budget", "paused", "completed"}:
+            if method in {"autopilot", "autonomous"} and result.get("reason") in {
+                "failure",
+                "budget",
+                "paused",
+                "completed",
+            }:
                 self.auto_resume = False
             if getattr(self, "auto_resume", False) and method in {
                 "answer_question",
