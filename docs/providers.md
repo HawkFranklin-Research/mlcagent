@@ -4,7 +4,7 @@ Copy `examples/config.yaml` to `~/.config/mlca/config.yaml` or use `mlca config 
 are supplied by the user. Navigator and Worker can use different providers/models. Inspector is optional.
 No account/subscription login or third-party public gateway credentials are implemented.
 
-Supported kinds: `openai_api`, `openrouter`, `openai_compatible`, `fake`. Credentials are environment
+Supported kinds: `openai_api`, `openrouter`, `deepseek`, `openai_compatible`, `fake`. Credentials are environment
 variables or author-approved masked TUI input retained only in the application process; YAML stores
 variable names or non-secret session references, never pasted values. `openai_compatible` supports local servers with no API key.
 Remote custom endpoints require HTTPS. Real requests require a known price in `pricing.yaml` or an
@@ -141,3 +141,47 @@ bound to the credential's non-secret fingerprint. Missing fields remain unknown.
 Optional Remember API keys stores pasted keys in supported secure OS keyrings; unchecked input
 remains session-only. Never put a key in YAML. mlca auth status lists local availability/storage only,
 not secret values. Earlier descriptions of pasted keys being exclusively session-only predate P11.
+
+
+## Direct DeepSeek API
+
+OpenRouter remains available, including `openrouter/free` and paid models. To use
+DeepSeek directly, select **DeepSeek (direct API)** in Models or configure:
+
+```yaml
+providers:
+  deepseek:
+    kind: deepseek
+    api_key_env: DEEPSEEK_API_KEY
+    base_url: https://api.deepseek.com
+    request_cost_bound_usd: 0.10  # Example reservation per request; choose your own bound.
+roles:
+  navigator:
+    provider: deepseek
+    model: deepseek-flash
+    reasoning_effort: low
+  worker:
+    provider: deepseek
+    model: deepseek-flash
+    reasoning_effort: low
+```
+
+Set `DEEPSEEK_API_KEY` in your environment; never put its value in YAML. The endpoint
+and environment-variable name above are defaults for this provider. Model IDs are
+user configured; OpenRouter model IDs are not interchangeable with direct API IDs.
+The model catalogue is fetched only on explicit request, not during onboarding.
+
+`reasoning_effort` is forwarded directly; unset leaves provider defaults intact.
+When `structured_outputs: true` is explicitly enabled, MLCA sends DeepSeek's
+JSON-object format with the requested schema in the prompt. Local schema validation
+still applies; this is not server-enforced JSON-schema output. Otherwise MLCA uses
+its existing prompt and local validation path.
+
+Returned model IDs and cache-hit tokens are recorded. USD cost remains unknown
+unless supplied by the response or estimated from your configured pricing table;
+a request reservation is not a measured charge. Existing experimental configurations
+are unchanged. A direct-provider run is a separately identified provider/model
+condition, and a mutable model alias does not guarantee an immutable model revision.
+
+API contracts: [Chat completions](https://api-docs.deepseek.com/api/create-chat-completion/)
+and [Thinking mode](https://api-docs.deepseek.com/guides/thinking_mode/).

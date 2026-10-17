@@ -16,6 +16,7 @@ from .openrouter_signin import OpenRouterSignin
 KINDS = [
     ("OpenRouter", "openrouter"),
     ("OpenAI", "openai_api"),
+    ("DeepSeek (direct API)", "deepseek"),
     ("Local Ollama / OpenAI-compatible server", "openai_compatible"),
 ]
 

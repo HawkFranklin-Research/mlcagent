@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,7 @@ from mlca.errors import BudgetError, MlcaUserError
 from mlca.paths import atomic_json, canonical
 
 from . import egress, pricing, usage
+from .providers.deepseek import DeepSeekProvider
 from .providers.fake import FakeProvider
 from .providers.openai_api import OpenAIProvider
 from .providers.openai_chatgpt import ChatGPTProvider
@@ -134,6 +136,7 @@ class Client:
                 "openai_api": OpenAIProvider,
                 "openai_chatgpt": ChatGPTProvider,
                 "openrouter": OpenRouterProvider,
+                "deepseek": DeepSeekProvider,
                 "openai_compatible": CompatibleProvider,
             }[cfg.kind]
             self.providers[name] = cls(cfg)
@@ -183,7 +186,7 @@ class Client:
             "messages": messages,
             "max_completion_tokens": selected.max_output_tokens,
         }
-        if provider_config.kind in {"openrouter", "openai_compatible"}:
+        if provider_config.kind in {"openrouter", "deepseek", "openai_compatible"}:
             payload["max_tokens"] = payload.pop("max_completion_tokens")
         if selected.temperature is not None:
             payload["temperature"] = selected.temperature
@@ -199,6 +202,17 @@ class Client:
                     "strict": False,
                 },
             }
+        if schema and structured and provider_config.kind == "deepseek":
+            # DeepSeek offers JSON-object mode, not OpenAI's JSON-schema mode.
+            # Keep the schema in the prompt and retain MLCA's local validation.
+            payload["response_format"] = {"type": "json_object"}
+            payload["messages"] = [
+                *messages,
+                {
+                    "role": "user",
+                    "content": "Return JSON matching this schema: " + json.dumps(schema.model_json_schema()),
+                },
+            ]
         end_user = None
         if provider_config.kind == "openrouter":
             import yaml

@@ -19,6 +19,7 @@ from mlca.paths import atomic_json, user_config_dir
 from .credentials import resolve
 
 DEFAULTS = {
+    "deepseek": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
     "openai_chatgpt": ("https://api.openai.com/v1", None),
     "openai_api": ("https://api.openai.com/v1", "OPENAI_API_KEY"),

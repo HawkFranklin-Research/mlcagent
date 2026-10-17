@@ -14,7 +14,7 @@ class ConfigModel(BaseModel):
 
 
 class ProviderConfig(ConfigModel):
-    kind: Literal["openai_api", "openrouter", "openai_compatible", "openai_chatgpt", "fake"]
+    kind: Literal["openai_api", "openrouter", "deepseek", "openai_compatible", "openai_chatgpt", "fake"]
     oauth_client_id: str | None = None
     base_url: str | None = None
     api_key_env: str | None = None
@@ -27,6 +27,13 @@ class ProviderConfig(ConfigModel):
     # account limit is 20/min), otherwise unpaced.
     requests_per_minute: float | None = Field(default=None, gt=0)
     rate_limit_dir: str | None = None
+
+    @model_validator(mode="after")
+    def provider_defaults(self):
+        if self.kind == "deepseek":
+            self.base_url = self.base_url or "https://api.deepseek.com"
+            self.api_key_env = self.api_key_env or "DEEPSEEK_API_KEY"
+        return self
 
 
 class RoleConfig(ConfigModel):

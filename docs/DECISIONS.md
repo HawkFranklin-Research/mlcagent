@@ -903,3 +903,19 @@ Normalized private fingerprint v3 is a capacity correction for45GB caches on
 v2 stores remain in their historical format, v1 migration stays atomic.
 Synthetic equivalence/storage tests are regression checks, not a research
 comparison arm. No primary artifact is removed or changed.
+
+
+## Direct DeepSeek provider (author request, 18 October 2026)
+
+Add `kind: deepseek` alongside OpenRouter, using the shared OpenAI-compatible
+transport, default endpoint https://api.deepseek.com and DEEPSEEK_API_KEY reference.
+Models remain configured by users. The Models panel offers the direct provider.
+Keep native reasoning_effort and max_tokens; explicit structured output uses
+JSON-object mode plus the schema in the prompt and existing local validation.
+Preserve direct cache-hit token accounting, returned model IDs and unknown costs.
+No experimental run configuration, rails, scientific criteria or measurement
+condition is changed. No live calls, installation refresh or publication requested.
+
+Offline verification: 43 focused provider/accounting/catalogue tests passed;
+14 onboarding and direct-provider tests passed (overlapping coverage). Ruff and
+git diff --check passed. The full suite and real DeepSeek inference were not run.

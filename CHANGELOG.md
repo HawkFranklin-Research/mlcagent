@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — direct DeepSeek provider
+
+- Add direct DeepSeek API selection in configuration and the Models panel, with
+  separate credentials, reasoning effort, JSON-object output and cache-hit accounting.
+- Keep existing OpenRouter and experimental configurations unchanged; no live calls.
+
 ## Unreleased — work order 05 (16 October 2026)
 
 - Batches04–05 add qualifying Anuran, Seeds and Bike runs:10/12 tables have

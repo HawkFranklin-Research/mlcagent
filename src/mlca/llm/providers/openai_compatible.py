@@ -54,7 +54,9 @@ class CompatibleProvider:
             "text": message.get("content") or "",
             "input_tokens": usage.get("prompt_tokens"),
             "output_tokens": usage.get("completion_tokens"),
-            "cached_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
+            "cached_tokens": (usage.get("prompt_tokens_details") or {}).get(
+                "cached_tokens", usage.get("prompt_cache_hit_tokens")
+            ),
             "reasoning_tokens": (usage.get("completion_tokens_details") or {}).get("reasoning_tokens"),
             "cache_write_tokens": (usage.get("prompt_tokens_details") or {}).get("cache_write_tokens"),
             "upstream_cost_usd": (usage.get("cost_details") or {}).get("upstream_inference_cost"),
