@@ -1,6 +1,6 @@
-# Rails review — rails-0.10 after the first acceptance batch
+# Rails review — rails-0.11 after batch-09
 
-All 26 rails are instructions; no new scientific checks/defaults. Development
+All 27 rails are instructions; no new scientific checks/defaults. Development
 only, no acceptance, ablation or freeze. Held-out files untouched.
 Batch 03: four new qualifying completions, seven tables qualified across the
 series. Evidence: experiments bench/dev-loop/batch-03/{REPORT,REVIEW}.md and

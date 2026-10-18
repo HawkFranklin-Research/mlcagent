@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — rails-0.11 after batch-09
+
+- RL-0010 extended to eda, features and model and to derived date columns; RL-0017 handles
+  partitions missing some classes; new RL-0027 forbids chaining transformers fitted on the
+  same raw columns (L-0010).
+
 ## Unreleased — fixes after the first acceptance batch (rails-0.10)
 
 - Setup accepts an empty `alternatives` list nested inside an alternative (B-0027).

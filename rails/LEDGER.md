@@ -518,3 +518,26 @@ the 90-minute deadline at the model step in run 3 on a 4-CPU host running four
 studies). These are infrastructure outcomes; acceptance needs a host with enough
 cores per study. Next: rerun the failed tables, then a fresh 12 x 3 acceptance on
 one model route, unchanged version.
+
+## L-0010 — remaining development failures (rails-0.11)
+
+Evidence: first acceptance batch (rails-0.9) and batch-09 (rails-0.10). Generic
+corrections; no table, column or model is named:
+- RL-0010 now also applies at eda, features and model, and covers date columns
+  created in earlier steps. Online Retail batch-09 passed first and last invoice
+  dates from entity aggregation to the clustering model (step 7); RL-0010 had
+  applied only at preprocess.
+- RL-0017: when the evaluated partition lacks some model classes, compute the
+  macro one-vs-rest value as the mean of binary per-class AUCs; never pass a column
+  subset of the probability matrix. Anuran Calls acceptance run 1 (step 10, all
+  three attempts) passed predict_proba columns for the classes present in the
+  validation rows only, so rows no longer summed to 1. Single-table evidence.
+- RL-0027 (new): saved transformers that both expect the raw feature columns are
+  alternatives, never chained. Optical Digits batch-09 (step 8) chained a saved
+  preprocessor and a saved selector, both fitted on raw columns.
+Already covered, no change: Energy run 3 and Anuran run 3 (targets in inputs,
+B-0030); Heart run 1 (B-0027); Bike runs 1-2 (B-0029); Online Retail runs 2-3
+(group split on transactions with missing keys after the fallback skipped entity
+building, B-0028; RL-0020 drops rows without an entity key); Covertype and Optical
+Digits run 1 (infrastructure). 27 rails, all instructions. Next: fresh 12 x 3
+acceptance on rails-0.11.
