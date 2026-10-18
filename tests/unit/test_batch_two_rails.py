@@ -52,7 +52,7 @@ def test_categorical_output_metric_uses_matching_vectors_per_target():
     assert np.mean(per_target) == 1.0
     text = load(resource("rails")).instructions("worker", "validate", "multilabel")
     assert "one-dimensional true and predicted labels" in text
-    assert "Never fit an encoder during validation or test" in text
+    assert "Never fit anything during validation or test" in text
 
 
 def test_temporal_rail_does_not_depend_on_a_forecasting_aim():
