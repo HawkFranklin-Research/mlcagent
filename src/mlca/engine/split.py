@@ -54,6 +54,20 @@ def group_time_partitions(frame, params):
     return frame[group].map(labels).astype("object")
 
 
+def time_block_partitions(times, train, val):
+    """Chronological split whose boundaries fall only between distinct timestamps."""
+    order = {value: rank for rank, value in enumerate(sorted(set(times)))}
+    if len(order) < 3:
+        raise MlcaUserError("Time split needs at least three distinct timestamps")
+    codes = np.array([order[value] for value in times])
+    totals = np.cumsum(np.bincount(codes))
+    n = len(times)
+    a = min(range(1, len(order) - 1), key=lambda i: abs(totals[i - 1] - n * train))
+    b = min(range(a + 1, len(order)), key=lambda i: abs(totals[i - 1] - n * (train + val)))
+    labels = np.where(codes < a, "train", np.where(codes < b, "val", "test"))
+    return pd.Series(labels, index=times.index, dtype="object")
+
+
 def partitions(frame: Any, params: Any, target: str) -> Any:
     train, val = float(params["train_fraction"]), float(params["val_fraction"])
     if train <= 0 or val <= 0 or train + val >= 1:
@@ -95,7 +109,8 @@ def partitions(frame: Any, params: Any, target: str) -> Any:
             raise MlcaUserError("Time split requires a complete time column")
         ordered = frame.sort_values(column, kind="stable")
         assign(ordered.index)
-        # Equal timestamps must not span partitions.
+        # Equal timestamps must not span partitions: move each boundary to the nearest
+        # timestamp change instead of refusing the requested fractions.
         if (
             pd.DataFrame({"time": frame[column], "partition": assignments})
             .groupby("time")
@@ -103,7 +118,7 @@ def partitions(frame: Any, params: Any, target: str) -> Any:
             .max()
             > 1
         ):
-            raise MlcaUserError("Time boundaries split equal timestamps; choose different fractions")
+            assignments = time_block_partitions(frame[column], train, val)
     elif method == "random":
         assign(rng.permutation(frame.index))
     else:

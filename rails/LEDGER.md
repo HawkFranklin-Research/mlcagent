@@ -444,3 +444,77 @@ Refine existing rail RL-0004 only:
 All 26 rails remain instructions; no table, column, model, or dataset identifier is named.
 Low reasoning effort and all other settings remain fixed for batch08.
 
+
+## B-0027 — empty nested alternatives in the setup proposal are dropped
+
+Evidence: first acceptance batch (direct `deepseek-flash`, experiments `b5c56d8`,
+`bench/comparison/acceptance/`). Heart run 1 and Optical Digits run 1 returned
+`"alternatives": []` inside an alternative; the schema forbids the key, the one
+JSON repair repeated it, and Heart stopped at setup (Digits recovered on repair).
+`Inference` now drops an empty or null nested `alternatives` before validation.
+It carries no content. Non-empty nesting is still refused. Test:
+`test_empty_nested_alternatives_are_dropped_but_content_stays_invalid`.
+
+## B-0028 — over-long display text is clipped, not a reason to reject a decision
+
+Evidence: same batch. Online Retail runs 2 and 3: the Navigator recommended
+`build_entities`, but `what_happens` (or `situation`) exceeded its character or
+word limit in both the reply and its repair. The engine fell back to the template
+default, the eda event ended without entity rows, and the group split refused
+missing customer keys. Display fields (`title` 80 chars/8 words, `why_now` 200,
+`what_happens` 200/20 words, `situation` 240) are now shortened deterministically.
+Decision fields (action, parameters, recommendation, question effects) stay
+strictly validated. Test: `test_long_display_text_is_clipped_not_rejected`.
+
+## B-0029 — time split boundaries move to the nearest timestamp change
+
+Evidence: same batch. Bike Sharing runs 1 and 2 declared a date column only;
+24 rows share each value, the fixed 60/20/20 cut points fell inside a date, and
+the built-in split refused with no repair path. When the exact fractions would
+separate equal timestamps, each boundary now moves to the nearest change of
+timestamp; equal timestamps never span partitions, and the counts are recorded
+as before. Tables without ties keep the exact earlier split. Fewer than three
+distinct timestamps still refuses. Tests: three `test_time_split_*` cases.
+
+## B-0030 — fit_record refuses target, excluded and group columns as inputs
+
+Evidence: same batch. Energy Efficiency run 3 fitted the alternative model
+with both targets in X (later steps failed on them); Anuran Calls run 3 fitted
+a feature transformer on a frame containing the three targets and the group key
+(external leakage check failed). The engine recorded these fits but did not stop
+them. `fit_record` now refuses any fit whose input columns include a declared
+target, an excluded column or the group column, with an `MLCA:` message the
+Worker can repair in the same step. Survival duration and event columns are
+exempt (Cox models read them from X). Group values still reach folds through
+`groups=`. Tests: `test_fit_record_refuses_protected_columns`,
+`test_protected_columns_cover_outcomes_exclusions_and_group_except_survival_fields`.
+
+## B-0031 — setup failures keep the engine message
+
+Evidence: same batch. Optical Digits run 1 failed after a valid setup proposal
+with only "Setup failed: MlcaUserError"; the cause could not be read. Its time
+falls in the batch's disk-full interval, so it is classified as infrastructure,
+probable, not confirmed. Engine refusals (value-free by design) now keep their
+first line, at most 300 characters. Test: `test_setup_failure_keeps_engine_message`.
+
+## L-0009 — joint outcome levels, datetime columns, no target encoders (rails-0.10)
+
+Evidence: same batch. Refine existing rails only:
+- RL-0002: categorical outcome columns at nested levels (each coarser level
+  determined by a finer one) are joint outcomes; do not keep only the finest
+  level and list the others as leakage suspects. Anuran Calls runs 1 and 2 kept
+  one level and excluded the others, disagreeing with the declared task.
+  Single-table evidence.
+- RL-0003: joint outcome columns are targets, not leakage suspects of each other
+  (removes the conflict between RL-0002 and RL-0003).
+- RL-0010: columns already of datetime type become numeric parts or days since a
+  fixed reference date; never pass them to imputers, scalers or encoders. Online
+  Retail run 1 passed a datetime column to an imputer in all three attempts.
+- RL-0018: target encoders removed; consistent with B-0030.
+All 26 rails remain instructions; no table, column or model is named.
+
+Not changed: the three Covertype runs (disk exhaustion at setup in runs 1 and 2;
+the 90-minute deadline at the model step in run 3 on a 4-CPU host running four
+studies). These are infrastructure outcomes; acceptance needs a host with enough
+cores per study. Next: rerun the failed tables, then a fresh 12 x 3 acceptance on
+one model route, unchanged version.

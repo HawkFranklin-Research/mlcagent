@@ -1,4 +1,4 @@
-# Rails review — rails-0.9 after batch 07
+# Rails review — rails-0.10 after the first acceptance batch
 
 All 26 rails are instructions; no new scientific checks/defaults. Development
 only, no acceptance, ablation or freeze. Held-out files untouched.
@@ -45,6 +45,14 @@ all 12 steps to report and passes all three leakage checks, but fails setup agre
 due to time_columns: ["InvoiceDate"]. Evidence experiments 9be8c34. L-0008 refines
 RL-0004 to clarify that for static entity clustering from transactional records,
 time_columns should be left empty.
+
+## First acceptance batch follow-up
+
+24/36 qualified on direct `deepseek-flash`. Engine fixes B-0027–B-0031 (nested
+empty alternatives, display-text clipping, timestamp-safe time split, protected
+fit inputs, setup messages). L-0009 refines RL-0002, RL-0003, RL-0010 and RL-0018;
+their exact current text is in the YAML files (the quotes below predate L-0009
+for those four rails).
 
 ## RL-0001
 

@@ -919,3 +919,14 @@ condition is changed. No live calls, installation refresh or publication request
 Offline verification: 43 focused provider/accounting/catalogue tests passed;
 14 onboarding and direct-provider tests passed (overlapping coverage). Ruff and
 git diff --check passed. The full suite and real DeepSeek inference were not run.
+
+## After the first acceptance batch (author request, 18 October 2026)
+
+The first 12 x 3 acceptance batch on direct `deepseek-flash` qualified 24/36.
+Failures were classified from the retained evidence; no run was patched or
+rerun. Engine fixes B-0027–B-0031 make the engine accept or repair what it
+previously refused for presentation reasons (nested empty list, display length,
+timestamp ties) and refuse at fit time what the external leakage check found only
+afterwards (protected columns in X). L-0009 refines four rails. No scientific
+criterion, metric, split rule or held-out material changed. Covertype failures
+are infrastructure and need an adequately sized host.

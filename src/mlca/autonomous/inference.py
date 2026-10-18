@@ -113,6 +113,23 @@ class StudyProposal(StrictModel):
 class Inference(StudyProposal):
     alternatives: list[StudyProposal] = Field(default_factory=list, max_length=3)
 
+    @model_validator(mode="before")
+    @classmethod
+    def empty_nested_alternatives(cls, data):
+        # An empty "alternatives" list inside an alternative carries no content; drop it
+        # rather than reject the proposal. Non-empty nesting stays invalid.
+        if isinstance(data, dict) and isinstance(data.get("alternatives"), list):
+            data = {
+                **data,
+                "alternatives": [
+                    {k: v for k, v in a.items() if k != "alternatives"}
+                    if isinstance(a, dict) and a.get("alternatives") in ([], None)
+                    else a
+                    for a in data["alternatives"]
+                ],
+            }
+        return data
+
 
 def value_information(series):
     import math

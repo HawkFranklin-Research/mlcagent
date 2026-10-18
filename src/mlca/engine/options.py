@@ -1,9 +1,24 @@
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from mlca.errors import MlcaUserError
 from mlca.log.schema import StrictModel
+
+
+def clip(text: Any, chars: int, words: int | None = None) -> Any:
+    """Shorten display text deterministically; decision fields are never clipped."""
+    if not isinstance(text, str):
+        return text
+    if words is not None and len(text.split()) > words:
+        text = " ".join(text.split()[:words]) + "..."
+    return text if len(text) <= chars else text[: chars - 3].rstrip() + "..."
+
+
+def clip_fields(data: Any, limits: dict) -> Any:
+    if not isinstance(data, dict):
+        return data
+    return {k: clip(v, *limits[k]) if k in limits else v for k, v in data.items()}
 
 
 class Option(StrictModel):
@@ -15,6 +30,12 @@ class Option(StrictModel):
     advances: list[str] = Field(default_factory=list)
     expected_outputs: list[str] = Field(default_factory=list)
     est_cost_usd: float | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def display_text(cls, data):
+        # Over-long display text must not discard a valid action choice.
+        return clip_fields(data, {"title": (80, 8), "why_now": (200,)})
 
 
 class OptionsResponse(StrictModel):

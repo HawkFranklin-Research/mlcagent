@@ -29,6 +29,7 @@ def execute(
     allow_network: Any = False,
     callback: Any = None,
     expected_train_rows: int = 0,
+    protected_columns: Any = (),
 ) -> dict:
     with tempfile.TemporaryDirectory(prefix="mlca-home-") as temporary:
         env = {
@@ -48,6 +49,7 @@ def execute(
             "MLCA_STYLE": str(style),
             "MLCA_TRAIN_INDEX_SHA256": train_index_sha256,
             "MLCA_TRAIN_ROW_COUNT": str(expected_train_rows),
+            "MLCA_PROTECTED_COLUMNS": json.dumps(sorted(protected_columns)),
             "TMPDIR": temporary,
             "TEMP": temporary,
             "TMP": temporary,

@@ -308,7 +308,16 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
             entry.update(
                 error_type=type(exc).__name__,
                 category=(getattr(exc, "category", None) or "runtime_error:" + type(exc).__name__),
-                message=session.redact(str(exc)) if session else "Setup failed: " + type(exc).__name__,
+                message=session.redact(str(exc))
+                if session
+                # Engine refusals are value-free; keep their first line so setup failures stay diagnosable.
+                else "Setup failed: "
+                + type(exc).__name__
+                + (
+                    ": " + str(exc).splitlines()[0][:300]
+                    if isinstance(exc, MlcaUserError) and str(exc)
+                    else ""
+                ),
             )
             if session:
                 session.emit("Refusal", {"category": entry["category"], "operation": "autonomous_run"})

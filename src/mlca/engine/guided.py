@@ -2,10 +2,10 @@
 
 import re
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from mlca.engine import checks, questions
-from mlca.engine.options import Option, fallback, validate, validation_recovery
+from mlca.engine.options import Option, clip_fields, fallback, validate, validation_recovery
 from mlca.errors import IntegrityError, MlcaUserError
 from mlca.llm.structured import decode
 from mlca.log.schema import StrictModel
@@ -17,11 +17,21 @@ class Choice(Option):
     what_happens: str = Field(max_length=200)
     recommended: bool = False
 
+    @model_validator(mode="before")
+    @classmethod
+    def description_text(cls, data):
+        return clip_fields(data, {"what_happens": (200, 20)})
+
 
 class Scene(StrictModel):
     situation: str = Field(min_length=1, max_length=240)
     choices: list[Choice] = Field(min_length=1, max_length=4)
     question: questions.Question | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def situation_text(cls, data):
+        return clip_fields(data, {"situation": (240,)})
 
 
 class Summary(StrictModel):
@@ -164,11 +174,8 @@ def _model_scene(session, legal):
             if sum(c.recommended for c in scene.choices) != 1:
                 raise MlcaUserError("Exactly one recommendation is required")
             allowed = {o["action_id"] for o in legal}
-            if any(
-                c.action_id not in allowed or len(c.title.split()) > 8 or len(c.what_happens.split()) > 20
-                for c in scene.choices
-            ):
-                raise MlcaUserError("Choices must be short and from the legal catalogue")
+            if any(c.action_id not in allowed for c in scene.choices):
+                raise MlcaUserError("Choices must come from the legal catalogue")
             parsed = validate(
                 [
                     Option.model_validate(

@@ -17,9 +17,9 @@ text: Several categorical targets need MultiOutputClassifier or an estimator sup
   predictions all match. Compute f1_score(average='macro') separately on each target's one-dimensional
   true and predicted labels, then report the unweighted mean and per-target values. Both vectors
   must have the same native label type; an object array of encoded integers can be rejected as unknown.
-  Preserve categorical labels directly, or save the training-fitted target encoders with the model
-  and reuse their unchanged mappings. Never fit an encoder during validation or test.
+  Preserve categorical labels directly; target columns are never inputs to fit_record, which refuses
+  them, so do not fit target encoders. Never fit anything during validation or test.
 reason: Multi-output predictions have a different shape from single-output ones; metric code written
   for one target fails or scores only the first.
-ledger: L-0005
+ledger: L-0009
 added_in: rails-0.3

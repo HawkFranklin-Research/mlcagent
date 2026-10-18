@@ -93,6 +93,21 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
     return paths
 
 
+def protected_columns(state: Any) -> list[str]:
+    """Columns fit_record refuses as inputs: outcomes, exclusions and the group key.
+    Survival fits keep their duration and event columns, which Cox models read from X."""
+    names = set(state.excluded_columns or []) | set(state.task.get("targets") or [])
+    if state.group_column:
+        names.add(state.group_column)
+    for value in (state.columns or {}).values():
+        names.update([value] if isinstance(value, str) else value or [])
+    if state.template_id == "survival":
+        names -= {state.columns.get("duration"), state.columns.get("event_column")}
+        names -= set(state.task.get("targets") or [])
+    names.discard("")
+    return sorted(n for n in names if isinstance(n, str))
+
+
 def _manifest(step: Any, output: Any, kind: Any) -> Any:
     atomic_json(
         step / "manifest.json",
@@ -426,6 +441,7 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
             action.allow_network,
             callback=session.output_callback,
             expected_train_rows=state.split["counts"]["train"] if state.split else 0,
+            protected_columns=protected_columns(state),
         )
     execution = {k: session.redact(v) if isinstance(v, str) else v for k, v in execution.items()}
     session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)

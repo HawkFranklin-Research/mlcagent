@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — fixes after the first acceptance batch (rails-0.10)
+
+- Setup accepts an empty `alternatives` list nested inside an alternative (B-0027).
+- Over-long Navigator display text is clipped instead of discarding a valid choice (B-0028).
+- Time splits move boundaries to the nearest timestamp change instead of refusing (B-0029).
+- `fit_record` refuses target, excluded and group columns as model inputs (B-0030).
+- Setup failures keep the engine's message (B-0031).
+- Rails RL-0002, RL-0003, RL-0010 and RL-0018 refined (L-0009).
+
 ## Unreleased — direct DeepSeek provider
 
 - Add direct DeepSeek API selection in configuration and the Models panel, with

@@ -179,6 +179,15 @@ def fit_record(estimator_or_pipeline: Any, X: Any, partition: str, y: Any = None
         if getattr(X, "name", None) is not None
         else None
     )
+    protected = set(json.loads(os.environ.get("MLCA_PROTECTED_COLUMNS") or "[]"))
+    reached = sorted(protected.intersection(columns or []))
+    if reached:
+        # Outcomes, excluded columns and the group key are never model inputs; group
+        # values reach internal folds through groups=, not through X.
+        raise FitRuleError(
+            f"MLCA: Target, excluded or group columns cannot be fitted as inputs: {reached}; "
+            "select the feature columns only (pass group values with groups=)"
+        )
     result = (
         estimator_or_pipeline.fit(X, y, **kwargs) if y is not None else estimator_or_pipeline.fit(X, **kwargs)
     )
