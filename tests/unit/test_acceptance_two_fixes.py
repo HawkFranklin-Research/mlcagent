@@ -20,7 +20,7 @@ def test_binary_recoding_of_a_grade_is_not_a_label_hierarchy():
     text = rails.instructions("navigator", "onboard", "binary")
     assert "hierarchy of named categories" in text and "thresholds or recodes an ordinal grade" in text
     later = rails.instructions("worker", "interpret", "multiclass")
-    assert "do not require a particular class such as Pipeline" in later
+    assert "do not require it to be a Pipeline" in later
 
 
 @pytest.fixture
