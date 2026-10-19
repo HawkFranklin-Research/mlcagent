@@ -541,3 +541,48 @@ B-0030); Heart run 1 (B-0027); Bike runs 1-2 (B-0029); Online Retail runs 2-3
 building, B-0028; RL-0020 drops rows without an entity key); Covertype and Optical
 Digits run 1 (infrastructure). 27 rails, all instructions. Next: fresh 12 x 3
 acceptance on rails-0.11.
+
+## B-0032 — saved preprocessing and models accept the raw columns
+
+Evidence: acceptance-02 (rails-0.11). Bike Sharing runs 2 and 3 derived date parts in
+a temporary frame and fitted the saved preprocessor on them (step 5); later steps
+loaded the raw partition and failed on the missing derived columns (steps 6 and 7).
+RL-0026 already asked for derivations inside the saved pipeline. `save_model` now
+refuses, in the preprocess and model events, an object whose `feature_names_in_`
+are not columns of the frozen training partition (MLCA: message, same attempt).
+Selectors in the features event may still follow saved preprocessing (RL-0011).
+Test: `test_saved_objects_must_accept_raw_columns`.
+
+## B-0033 — interpretation reads at most 10000 rows per partition
+
+Evidence: acceptance-02. Covertype run 1 ran permutation importance on 116k
+validation rows with 20 repeats and passed the study deadline at step 11; RL-0015
+asked for subsampling. Interpretation actions fit nothing; their train and val
+inputs are now a fixed-seed sample of at most 10000 rows, in original order, when
+a partition is larger, and the work order says so. Test:
+`test_interpretation_reads_a_fixed_ordered_sample_of_large_partitions`.
+
+## B-0034 — disk exhaustion is recorded, and prevented by the controller
+
+Evidence: acceptance-02. Covertype run 3, Online Retail run 3 ("Setup failed:
+OperationalError") and Seeds run 1 (no run record) failed when free disk fell to
+86 MB and 11 MB (`resources.jsonl`), not from SQLite locking. A Covertype project's
+private row-fingerprint store is 4.3 GB. Setup failures now keep SQLite messages and
+OS error names. The batch controller (mlcagent-experiments) waits for free disk
+before starting a study and removes `.mlca/private` and `.mlca/env`, never
+published, once a study is scored. The output allowance becomes a plan parameter,
+default 32768: Adult run 3, Covertype run 2 and Bike Sharing run 1 spent all 16384
+output tokens on reasoning. Test: `test_setup_reason_keeps_database_and_disk_causes`.
+
+## L-0011 — binary recodings and the saved model contract (rails-0.12)
+
+Evidence: acceptance-02.
+- RL-0002: the joint-outcome rule (rails-0.10) applies to hierarchies of named
+  categories. A binary column that thresholds an ordinal grade is the outcome; the
+  grade is a leakage suspect (RL-0003). Heart Disease runs 2 and 3 modelled the grade
+  and its binary recoding together as multilabel, disagreeing with the declared task.
+- RL-0011: states the B-0032 contract for later steps. Dry Bean run 1 (step 11)
+  refused a saved model because it was not a Pipeline, though it accepted the raw
+  columns; the failure was in the generated check, not in SHAP.
+27 rails, all instructions. The setup scorer is unchanged. Next: fresh 12 x 3
+acceptance on rails-0.12.

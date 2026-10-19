@@ -1,4 +1,4 @@
-# Rails review — rails-0.11 after batch-09
+# Rails review — rails-0.12 after acceptance-02
 
 All 27 rails are instructions; no new scientific checks/defaults. Development
 only, no acceptance, ablation or freeze. Held-out files untouched.

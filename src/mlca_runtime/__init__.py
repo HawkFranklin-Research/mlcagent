@@ -114,7 +114,23 @@ def save_table(df: Any, name: str, caption: str = "") -> Path:
     return path
 
 
+def _check_raw_inputs(model: Any) -> None:
+    # Preprocessing and models are the saved contract later steps rebuild on; derived columns
+    # created outside the saved object would be missing when a later step loads the raw partition.
+    source = os.environ.get("MLCA_SOURCE_COLUMNS")
+    names = getattr(model, "feature_names_in_", None)
+    if os.environ.get("MLCA_EVENT") not in {"preprocess", "model"} or not source or names is None:
+        return
+    missing = sorted(set(map(str, names)) - set(json.loads(Path(source).read_text(encoding="utf-8"))))
+    if missing:
+        raise FitRuleError(
+            f"MLCA: Saved object expects columns the frozen table does not have: {missing[:10]}; "
+            "derive features inside the saved pipeline so it accepts the raw feature columns"
+        )
+
+
 def save_model(model: Any, name: str) -> Path:
+    _check_raw_inputs(model)
     path = _output(name)
     with path.open("wb") as stream:
         pickle.dump(model, stream)

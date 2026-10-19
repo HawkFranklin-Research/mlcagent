@@ -115,6 +115,10 @@ def render_order(session, action, params, inputs, state):
         rendered = rendered.replace("{" + key + "}", str(value))
     if "_protocol" in inputs:
         rendered += "\nRead the declared _protocol JSON: use _protocol['task']['primary_metric'], _protocol['targets'], _protocol['excluded_columns'] and the declared outcome columns. primary_metric is nested inside task, not a top-level key. Binary threshold selection is validation-only; multiclass uses macro one-vs-rest ROC AUC without a binary threshold. Never fit after test exposure."
+    if action.event == "interpret":
+        from mlca.runner.run_step import INTERPRET_ROWS
+
+        rendered += f"\nTrain and val inputs hold at most {INTERPRET_ROWS} rows each (a fixed-seed sample of larger partitions); use them as given and print the row counts."
     names = {k: {"name": v.name, "format": v.suffix} for k, v in inputs.items()}
     if action.reads_test:
         names["test"] = {"name": "test.parquet", "format": ".parquet"}

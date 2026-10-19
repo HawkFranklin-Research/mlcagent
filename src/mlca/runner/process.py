@@ -30,6 +30,8 @@ def execute(
     callback: Any = None,
     expected_train_rows: int = 0,
     protected_columns: Any = (),
+    event: str = "",
+    source_columns: Any = None,
 ) -> dict:
     with tempfile.TemporaryDirectory(prefix="mlca-home-") as temporary:
         env = {
@@ -50,10 +52,15 @@ def execute(
             "MLCA_TRAIN_INDEX_SHA256": train_index_sha256,
             "MLCA_TRAIN_ROW_COUNT": str(expected_train_rows),
             "MLCA_PROTECTED_COLUMNS": json.dumps(sorted(protected_columns)),
+            "MLCA_EVENT": event,
+            "MLCA_SOURCE_COLUMNS": str(step / "source_columns.json") if source_columns is not None else "",
             "TMPDIR": temporary,
             "TEMP": temporary,
             "TMP": temporary,
         }
+        if source_columns is not None:
+            # A file, not the variable itself: wide tables exceed the per-variable size limit.
+            (step / "source_columns.json").write_text(json.dumps(list(source_columns)), encoding="utf-8")
         for name in ("SYSTEMROOT", "WINDIR"):
             if name in os.environ:
                 env[name] = os.environ[name]

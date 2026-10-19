@@ -18,6 +18,8 @@ from .artefacts import collect, freeze
 from .process import execute
 from .static_checks import check as static_check
 
+INTERPRET_ROWS = 10000
+
 
 def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[str, Path]:
     params = params or {}
@@ -57,7 +59,11 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
             path = root / entry["path"]
             if sha256(path) != entry["sha256"]:
                 raise IntegrityError("Frozen partition changed")
-            paths[ref] = path
+            paths[ref] = (
+                interpretation_sample(root, ref, path, entry["sha256"])
+                if action.event == "interpret"
+                else path
+            )
         elif ref == "external":
             if not state.test_unlocked or action.event not in {"test", "interpret"}:
                 raise MlcaUserError("External cohort is locked", category="test_lock")
@@ -91,6 +97,37 @@ def inputs_for(action: Any, state: Any, root: Any, params: Any = None) -> dict[s
 
     paths["_protocol"] = protocol_input(SimpleNamespace(root=root, state=state))
     return paths
+
+
+def interpretation_sample(root: Any, ref: str, path: Path, digest: str) -> Path:
+    """Interpretation reads at most INTERPRET_ROWS rows per partition: a fixed-seed sample of a larger
+    partition, kept in its original order. Diagnostics fit nothing, so a sample bounds their cost."""
+    import numpy as np
+    import pandas as pd
+    import pyarrow.parquet as pq
+
+    rows = pq.ParquetFile(path).metadata.num_rows
+    if rows <= INTERPRET_ROWS:
+        return path
+    sample = root / ".mlca/samples" / f"{ref}-{digest[:16]}.parquet"
+    if not sample.is_file():
+        sample.parent.mkdir(parents=True, exist_ok=True)
+        chosen = np.sort(np.random.default_rng(0).choice(rows, INTERPRET_ROWS, replace=False))
+        temporary = sample.with_suffix(".tmp")
+        pd.read_parquet(path).iloc[chosen].to_parquet(temporary, index=True)
+        temporary.replace(sample)
+    return sample
+
+
+def source_columns(state: Any, root: Any) -> list[str] | None:
+    """Columns of the frozen training partition, without the stored row index."""
+    if not state.split:
+        return None
+    import pyarrow.parquet as pq
+
+    schema = pq.read_schema(root / state.split["train"]["path"])
+    index = {i for i in (schema.pandas_metadata or {}).get("index_columns", []) if isinstance(i, str)}
+    return [name for name in schema.names if name not in index]
 
 
 def protected_columns(state: Any) -> list[str]:
@@ -442,6 +479,8 @@ def run_attempt(session, action, params, step_id, attempt, source, request_id=No
             callback=session.output_callback,
             expected_train_rows=state.split["counts"]["train"] if state.split else 0,
             protected_columns=protected_columns(state),
+            event=action.event,
+            source_columns=source_columns(state, session.root),
         )
     execution = {k: session.redact(v) if isinstance(v, str) else v for k, v in execution.items()}
     session.emit("RunFinished", {"attempt": attempt, **execution}, step_id=step_id)

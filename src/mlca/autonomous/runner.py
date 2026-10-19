@@ -3,6 +3,7 @@
 import hashlib
 import json
 import shutil
+import sqlite3
 import time
 from pathlib import Path
 
@@ -106,6 +107,13 @@ def drive(session, max_turns=100, *, cooldown_s=600, max_cooldowns=3, sleep=time
                 category="human_halt" if result["reason"] == "paused" else failure,
             )
     raise MlcaUserError("Autonomous turn limit reached", category="budget_stop")
+
+
+def setup_reason(exc):
+    """First line of a value-free setup failure: engine refusals, SQLite errors, OS error names."""
+    if isinstance(exc, (MlcaUserError, sqlite3.Error)):
+        return (str(exc).splitlines() or [""])[0]
+    return exc.strerror or "" if isinstance(exc, OSError) else ""
 
 
 def _input_hashes(files):
@@ -313,11 +321,7 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
                 # Engine refusals are value-free; keep their first line so setup failures stay diagnosable.
                 else "Setup failed: "
                 + type(exc).__name__
-                + (
-                    ": " + str(exc).splitlines()[0][:300]
-                    if isinstance(exc, MlcaUserError) and str(exc)
-                    else ""
-                ),
+                + (": " + setup_reason(exc)[:300] if setup_reason(exc) else ""),
             )
             if session:
                 session.emit("Refusal", {"category": entry["category"], "operation": "autonomous_run"})

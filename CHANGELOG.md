@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — fixes after the second acceptance batch (rails-0.12)
+
+- Saved preprocessing and models must accept the frozen table's raw columns (B-0032).
+- Interpretation reads a fixed-seed sample of at most 10000 rows per partition (B-0033).
+- Setup failures keep SQLite messages and OS error names (B-0034).
+- RL-0002 separates label hierarchies from binary recodings of a grade; RL-0011 states the
+  saved model contract (L-0011).
+
 ## Unreleased — rails-0.11 after batch-09
 
 - RL-0010 extended to eda, features and model and to derived date columns; RL-0017 handles
