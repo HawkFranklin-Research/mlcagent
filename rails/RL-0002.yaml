@@ -17,8 +17,9 @@ text: 'Choose problem_type from the schema. Two observed values in the outcome: 
   measurement or count: regression. Two or more numeric outcomes recorded together: multioutput_regression.
   If no column is a plausible outcome, choose clustering when rows are entities or events
   to segment, and representation when the table is many homogeneous numeric features of one
-  kind. Prefer the task the table was evidently assembled for over an incidental column.'
+  kind: channels of one signal, such as pixels, spectra or sensor readings. A few distinct measured attributes
+  of each entity (size, shape, composition) describe entities to segment: clustering. Prefer the task the table was evidently assembled for over an incidental column.'
 reason: Setup proposals chose a binary outcome as multiclass and a multi-output outcome set
   as a single target; the problem type decides every later step.
-ledger: L-0011
+ledger: L-0012
 added_in: rails-0.3

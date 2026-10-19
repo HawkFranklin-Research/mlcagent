@@ -1,4 +1,4 @@
-"""Regression tests for the fixes after the second acceptance batch (B-0032 to B-0034, L-0011)."""
+"""Regression tests for the fixes after the second acceptance batch (B-0032 to B-0035, L-0011, L-0012)."""
 
 import json
 import sqlite3
@@ -6,7 +6,8 @@ from types import SimpleNamespace as NS
 
 import pandas as pd
 import pytest
-from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 import mlca_runtime as rt
 from mlca.autonomous.runner import setup_reason
@@ -27,6 +28,10 @@ def test_binary_recoding_of_a_grade_is_not_a_label_hierarchy():
 def step(tmp_path, monkeypatch):
     (tmp_path / "outputs").mkdir()
     (tmp_path / "source_columns.json").write_text(json.dumps(["day", "temp"]))
+    pd.DataFrame({"day": range(300), "temp": [float(i % 7) for i in range(300)]}).to_parquet(
+        tmp_path / "train.parquet"
+    )
+    (tmp_path / "inputs.json").write_text(json.dumps({"train": {"path": str(tmp_path / "train.parquet")}}))
     monkeypatch.setenv("MLCA_STEP_DIR", str(tmp_path))
     monkeypatch.setenv("MLCA_SOURCE_COLUMNS", str(tmp_path / "source_columns.json"))
     return monkeypatch
@@ -69,3 +74,25 @@ def test_setup_reason_keeps_database_and_disk_causes():
     assert setup_reason(sqlite3.OperationalError("database or disk is full")) == "database or disk is full"
     assert setup_reason(OSError(28, "No space left on device", "/private/path")) == "No space left on device"
     assert setup_reason(ValueError("row value 3.2")) == ""
+
+
+def test_saved_objects_must_keep_the_row_index_on_later_rows(step):
+    # Fitting on rows indexed from 0 hides a component that drops the index (Bike Sharing, batch-10).
+    step.setenv("MLCA_EVENT", "preprocess")
+    train = pd.read_parquet(rt.inputs()["train"])
+    dropping = ColumnTransformer(
+        [
+            ("num", StandardScaler(), ["temp"]),
+            ("day", FunctionTransformer(lambda X: X.reset_index(drop=True)), ["day"]),
+        ]
+    ).set_output(transform="pandas")
+    dropping.fit(train)
+    with pytest.raises(rt.FitRuleError, match="^MLCA: Saved object .*row index"):
+        rt.save_model(dropping, "preprocessor.pkl")
+    kept = ColumnTransformer([("num", StandardScaler(), ["temp", "day"])]).set_output(transform="pandas")
+    rt.save_model(kept.fit(train), "preprocessor.pkl")
+
+
+def test_clustering_and_representation_are_separated_by_feature_kind():
+    text = load(resource("rails")).instructions("navigator", "onboard", "clustering")
+    assert "channels of one signal" in text and "distinct measured attributes" in text

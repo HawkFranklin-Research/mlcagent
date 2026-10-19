@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — rails-0.13 after batch-10
+
+- Saved preprocessing and models are applied to the last training rows when saved and must keep
+  the row index (B-0035).
+- RL-0002 separates representation (channels of one signal) from clustering (L-0012).
+
 ## Unreleased — fixes after the second acceptance batch (rails-0.12)
 
 - Saved preprocessing and models must accept the frozen table's raw columns (B-0032).

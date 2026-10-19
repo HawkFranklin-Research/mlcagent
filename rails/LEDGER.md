@@ -586,3 +586,22 @@ Evidence: acceptance-02.
   columns; the failure was in the generated check, not in SHAP.
 27 rails, all instructions. The setup scorer is unchanged. Next: fresh 12 x 3
 acceptance on rails-0.12.
+
+## B-0035 — saved objects keep the row index on later rows
+
+Evidence: batch-10 (rails-0.12). Bike Sharing (step 7) failed in `predict` on
+validation rows: a date branch built from NumPy functions inside a pandas-output
+ColumnTransformer dropped the row index. Fitting on training rows indexed from 0
+hid this in step 5. In the preprocess and model events, `save_model` now applies
+the object to the last 200 training rows and refuses it, with an MLCA: message in
+the same attempt, if it fails or returns rows that do not match its input rows.
+Test: `test_saved_objects_must_keep_the_row_index_on_later_rows`.
+
+## L-0012 — clustering versus representation (rails-0.13)
+
+Evidence: batch-10. Seeds proposed representation for seven distinct kernel
+measurements, disagreeing with the declared task. RL-0002: representation is for
+channels of one signal (pixels, spectra, sensor readings); a few distinct measured
+attributes of entities mean clustering. Seeds remains accepted from acceptance-02
+under pooled acceptance. 27 rails, all instructions. Next: Bike Sharing, 3 runs on
+rails-0.13.

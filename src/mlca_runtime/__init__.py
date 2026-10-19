@@ -127,6 +127,36 @@ def _check_raw_inputs(model: Any) -> None:
             f"MLCA: Saved object expects columns the frozen table does not have: {missing[:10]}; "
             "derive features inside the saved pipeline so it accepts the raw feature columns"
         )
+    _check_later_rows(model, [str(n) for n in names])
+
+
+def _check_later_rows(model: Any, names: list[str], rows: int = 200) -> None:
+    # Later steps apply the saved object to partitions whose row index does not start at 0.
+    # Running it on the last training rows catches components that drop the pandas index.
+    path = inputs().get("train")
+    if path is None:
+        return
+    import pandas as pd
+
+    frame = pd.read_parquet(path, columns=names).iloc[-rows:]
+    apply = model.transform if hasattr(model, "transform") else getattr(model, "predict", None)
+    if apply is None:
+        return
+    try:
+        out = apply(frame)
+    except Exception as exc:
+        raise FitRuleError(
+            f"MLCA: Saved object fails on later training rows ({type(exc).__name__}); every component "
+            "must keep the input row index (avoid NumPy functions such as ravel or reshape on pandas "
+            "output); use built-in transformers"
+        ) from exc
+    index = getattr(out, "index", None)
+    count = out.shape[0] if hasattr(out, "shape") else len(out)
+    if count != len(frame) or (index is not None and not index.equals(frame.index)):
+        raise FitRuleError(
+            "MLCA: Saved object returns rows that do not match its input rows; every component must "
+            "keep the input row index; use built-in transformers"
+        )
 
 
 def save_model(model: Any, name: str) -> Path:
