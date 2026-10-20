@@ -12,7 +12,10 @@ def build(state: Any, workflow: Any) -> Any:
             k: {"value": v["value"], "unit": v.get("unit"), "source": v["source"], "sha256": v["sha256"]}
             for k, v in state.facts.items()
         },
-        "inventory": state.inventory,
+        # Sealed external cohorts stay out of the Navigator's view, schema included.
+        "inventory": [
+            i for i in state.inventory if (state.data.get(i["name"]) or {}).get("role") != "external"
+        ],
         "brief": state.brief,
         "columns": state.columns,
         "last_observation": {"outputs": latest.get("outputs", []), "metrics": latest.get("metrics", [])}

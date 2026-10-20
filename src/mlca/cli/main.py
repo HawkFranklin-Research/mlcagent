@@ -749,6 +749,7 @@ def autonomous_run(
     runs: int = typer.Option(1, "--runs", min=1),
     config: Path | None = typer.Option(None, "--config"),
     exclude_columns: list[str] = typer.Option([], "--exclude-columns"),
+    external: list[Path] = typer.Option([], "--external", help="Sealed external cohort table; repeatable"),
 ):
     """Infer and execute a study from a table/folder, retaining every failed run."""
     from datetime import datetime
@@ -768,6 +769,7 @@ def autonomous_run(
         exclude_columns=exclude_columns,
         halt_window=seconds,
         window=cli_window(seconds),
+        external=external,
     )
     typer.echo(json.dumps(result, default=str))
     if any(r["status"] != "completed" for r in result["runs"]):

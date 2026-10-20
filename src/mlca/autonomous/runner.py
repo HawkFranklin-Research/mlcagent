@@ -152,7 +152,9 @@ def resume(session, *, seconds=60):
         session.decision_window = None
 
 
-def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_window=0, window=None):
+def run(
+    path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_window=0, window=None, external=()
+):
     if isinstance(runs, bool) or runs < 1:
         raise MlcaUserError("Run count must be positive", category="invalid_request")
     DecisionWindow(halt_window)  # Validate before any provider request.
@@ -162,7 +164,18 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
     from mlca.project.discovery import discover
 
     input_files = discover([Path(path)])
-    input_hashes = _input_hashes(input_files)
+    # External cohorts are registered sealed: setup inference never sees them, and the
+    # engine releases them only after the test unlock.
+    external_files = discover([Path(p) for p in external]) if external else []
+    if set(external_files) & set(input_files):
+        raise MlcaUserError(
+            "External cohort files must be outside the study folder", category="invalid_request"
+        )
+    all_files = input_files + external_files
+    from mlca.project.discovery import registrations
+
+    data_roles = {name: "external" for name, file in registrations(all_files) if file in external_files}
+    input_hashes = _input_hashes(all_files)
     out.mkdir(parents=True, exist_ok=True)
     conf = Config.model_validate(merge(load().model_dump(mode="json"), config or {})).model_dump(mode="json")
     if conf["measurement_arm"] != "worker":
@@ -177,6 +190,7 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
                 "config": conf,
                 "window_s": halt_window,
                 "exclude_columns": list(exclude_columns),
+                "external": sorted(data_roles),
                 "runs": runs,
                 "input_sha256": input_hashes,
             }
@@ -204,7 +218,7 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
         session = None
         setup_windows = []
         try:
-            if _input_hashes(input_files) != input_hashes:
+            if _input_hashes(all_files) != input_hashes:
                 raise MlcaUserError("Input changed between independent runs", category="invalid_request")
             proposal, request_id, digest, setup_session_id = infer(
                 input_files, brief, conf, setup, exclude_columns, principal=policy
@@ -238,13 +252,14 @@ def run(path, out, *, brief="", runs=1, config=None, exclude_columns=(), halt_wi
             }
             initialise(
                 project,
-                input_files,
+                all_files,
                 proposal.template,
                 answers,
                 conf,
                 principal=policy,
                 primary_data=proposal.primary_data,
                 exclude_columns=exclude_columns,
+                data_roles=data_roles,
                 label_map=proposal.label_map,
                 label_map_reason=proposal.label_map_reason,
             )

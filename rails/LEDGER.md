@@ -605,3 +605,21 @@ channels of one signal (pixels, spectra, sensor readings); a few distinct measur
 attributes of entities mean clustering. Seeds remains accepted from acceptance-02
 under pooled acceptance. 27 rails, all instructions. Next: Bike Sharing, 3 runs on
 rails-0.13.
+
+## B-0036 — external cohorts sealed in autonomous runs
+
+Pre-freeze support for the biomedical studies (S3, S4), not caused by a run failure.
+`mlca run --external FILE` (and `runner.run(external=...)`) registers each external
+cohort with role `external`: setup inference sees only the study tables, the
+Navigator's state view omits the external table's schema, and the engine opens the
+cohort only after the test unlock. Before this, an external table in the study folder
+would have been registered as discovery data. Tests: `tests/unit/test_bio_readiness.py`.
+
+## B-0037 — the test step saves per-row predictions
+
+Pre-freeze support for the AutoML comparison: acceptance-02 saved no per-row test
+predictions (the optional `audit_test` action was never chosen), so paired per-row
+tests against AutoML were impossible. In the classification and regression templates,
+`score_test` now also saves `test_predictions.parquet` (row_id, partition, y_true,
+y_pred and proba__<class> in the model's class order; no feature columns) as a
+required output. Templates changed; rails unchanged (rails-0.13).

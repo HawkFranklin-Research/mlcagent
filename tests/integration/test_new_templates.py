@@ -48,8 +48,12 @@ model=rt.fit_record(StandardScaler(), train[['feature_a','feature_b','feature_c'
             source = "import mlca_runtime as rt\nimport pandas as pd\n"
             for output in action.outputs:
                 if output.kind == "data":
-                    source += 'train=pd.read_parquet(rt.inputs()["train"])\ntest=pd.read_parquet(rt.inputs()["test"])\n'
-                    source += 'rows=pd.DataFrame({"row_id":list(train.index)+list(test.index),"partition":["train"]*len(train)+["test"]*len(test)})\n'
+                    parts = output.row_partitions or ["train", "test"]
+                    for part in parts:
+                        source += f'{part}=pd.read_parquet(rt.inputs()["{part}"])\n'
+                    ids = "+".join(f"list({part}.index)" for part in parts)
+                    labels = "+".join(f'["{part}"]*len({part})' for part in parts)
+                    source += f'rows=pd.DataFrame({{"row_id":{ids},"partition":{labels}}})\n'
                     source += (
                         'rows["cluster"]=0\n' if template == "clustering" else 'rows["embedding_0"]=0.0\n'
                     )

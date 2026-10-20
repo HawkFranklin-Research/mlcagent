@@ -132,6 +132,12 @@ responses:
 
     m.save_table(pd.DataFrame({"metric": ["roc_auc"], "value": [auc]}), "test_metrics.csv")
 
+    x = te.drop(columns="y"); p = model.predict_proba(x)
+
+    rows = {"row_id": te.index, "partition": "test", "y_true": te["y"].to_numpy(), "y_pred": model.predict(x)}
+
+    m.save_row_outputs(pd.DataFrame({**rows, **{f"proba__{c}": p[:, k] for k, c in enumerate(model.classes_)}}), "test_predictions.parquet")
+
     ```
 
     '

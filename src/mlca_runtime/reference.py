@@ -366,6 +366,19 @@ def run(action, fit=None):
                 }
             )
         rt.save_table(pd.DataFrame(rows), "test_metrics.csv")
+        if not survival:
+            # Standard per-row test predictions (B-0037): no feature columns.
+            predicted = pd.DataFrame(
+                {
+                    "row_id": test.index,
+                    "partition": "test",
+                    "y_true": y.to_numpy(),
+                    "y_pred": model.predict(predictors(test, spec)),
+                }
+            )
+            for k, label in enumerate(model.classes_):
+                predicted[f"proba__{label}"] = score[:, k]
+            rt.save_row_outputs(predicted, "test_predictions.parquet")
         rt.record_fact_candidate(
             "test_c_index" if survival else "test_roc_auc",
             measured[spec["task"]["primary_metric"]],

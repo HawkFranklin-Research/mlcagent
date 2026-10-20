@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — pre-freeze support for the biomedical studies
+
+- `mlca run --external FILE`: external cohorts are registered sealed and hidden from setup and from the
+  Navigator's view until the test unlock (B-0036).
+- Classification and regression `score_test` also save per-row test predictions (B-0037).
+
 ## Unreleased — rails-0.13 after batch-10
 
 - Saved preprocessing and models are applied to the last training rows when saved and must keep
