@@ -1,3 +1,16 @@
+## Reopening-v2 — offline implementation complete (22 October 2026)
+
+E-W1/E-W2/E-M1/E-S1 implemented in separate local commits; rails-0.14 adds
+RL-0028 for non-survival validation. Full engine suite: 536 passed, 1 skipped;
+controller: 125 passed; Ruff passes. See docs/HANDOFF.md and
+../mlcagent-experiments/docs/work-orders/reopening-v2-readiness.md.
+No live batch, freeze-v2 or eval-02 started. Next is development batch-01 under
+the reopening work order; DEEPSEEK_API_KEY must be in the launching environment.
+Testing agents report failures without editing engine/rails. Earlier status below
+is historical and does not authorize reusing an old batch or freezing early.
+
+---
+
 ## Work order 05 — batch 07 reviewed; batch 08 launch gate passed
 
 Series 11/12 tables have qualified at least once; Optical Digits qualified end-to-end.

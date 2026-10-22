@@ -1,3 +1,23 @@
+# Reopening-v2 offline fixes — 22 October 2026
+
+Read `../mlcagent-experiments/docs/work-orders/reopening-v2-readiness.md` and the
+reopening-v2 work order. Steps 1–3 are complete: E-W1 63597cf, E-W2 65232e5,
+E-M1 f7e14b0, E-S1 e7bb53f, rails-0.14 7e3a635. All commits are local on master.
+Full source suite at 7e3a635: **536 passed, 1 skipped in 1291.95 seconds**.
+Experiments-controller suite: **125 passed in 21.02 seconds**. Ruff and changed-file
+formatting pass. Three new table checksums/dimensions verified; already committed
+in 1c21032. The interrupted schema_summary.py is integrated and regression-tested.
+
+No development batch, freeze-v2, eval-02, live model call, push, upload, installed
+CLI refresh or paper edit was performed. DEEPSEEK_API_KEY is absent from this
+session; never replace the environment-only rule with a credential-file read.
+Disk was about 54 GiB free at inspection. Recheck launch gates. The testing agent
+runs/reports only; engine/rail changes return to the coding agent. Resume Step 4
+on all 15 development tables once its environment is ready. Preserve eval-01,
+existing untracked files and the original freeze-v1 tag. No survival rail added.
+
+---
+
 ## Work order 05 — Phase 1 development loop complete (all 12 tables qualified, rails-0.9)
 
 Series 12/12 development tables have now qualified with complete end-to-end runs,
