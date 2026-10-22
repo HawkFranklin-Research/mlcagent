@@ -44,3 +44,15 @@ def test_scoring_only_recovery_names_exact_selected_model_metric(template, metri
         "Scoring-only recovery:"
         not in render_order(session, workflow.actions["score_validation"], {}, {}, state)["worker_prompt"]
     )
+
+
+def test_metric_rail_is_validation_only_and_excludes_survival():
+    from mlca.paths import resource
+    from mlca.rails import load
+
+    rails = load(resource("rails"))
+    assert "[RL-0028]" in rails.instructions("worker", "validate", "binary")
+    assert "[RL-0028]" in rails.instructions("worker", "validate", "regression")
+    assert "[RL-0028]" not in rails.instructions("worker", "model", "binary")
+    assert "[RL-0028]" not in rails.instructions("worker", "validate", "survival")
+    assert "[RL-0028]" not in rails.instructions("navigator", "validate", "binary")

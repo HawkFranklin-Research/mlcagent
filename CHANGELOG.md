@@ -547,3 +547,7 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 ### Reopening-v2: E-S1
 - Retain duration/event columns needed by survival scoring and training-only review.
+
+
+### Reopening-v2: rails-0.14
+- Add RL-0028, scoped to non-survival validation, with observed evidence in L-0013.

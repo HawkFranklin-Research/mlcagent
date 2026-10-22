@@ -688,3 +688,15 @@ marks them excluded. Existing runtime predictor guards remain authoritative. No
 survival rail, Worker fix or survival development run is added. Three synthetic
 regressions cover setup, preparation/split/train-only reads and missing-event
 errors; surrounding review/readiness tests also pass. Commit: E-S1: retain survival outcomes in frozen partitions.
+
+
+## L-0013 — RL-0028: primary validation metric (rails-0.14)
+
+Observed evidence: eval-01/EVALUATION_SUMMARY.md, two validation-scoring stops
+with per-model metric names but no selected-model primary key. The generic
+validation-only instruction requests the exact protocol key, in addition to
+per-model values, using existing fitted objects. E-M1 supplies the exact call on
+recovery. No model family, dataset name or column name is prescribed. Survival is
+explicitly outside this new rail's problem scopes. The other 27 rails and all
+scientific/sandbox checks remain unchanged. Tests: test_metric_recovery_key.py,
+loader/snapshot and genericity regressions. Commit: Rails: add exact validation metric rail 0.14.

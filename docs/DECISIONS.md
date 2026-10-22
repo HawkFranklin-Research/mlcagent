@@ -959,3 +959,9 @@ The survival stop came from deleting the resolved duration as a leakage suspect.
 Retain resolved outcome fields for evaluation; existing runtime rules exclude them
 from predictor fitting. Only run records were inspected, not biomedical tables.
 Survival remains outside new instruction rails and development datasets.
+
+
+## 2026-10-22 — rails-0.14
+Add RL-0028 for the exact selected-model validation metric contract. Exclude
+survival from this new instruction rail, in accordance with the author's boundary.
+No additional rails are invented before development evidence exists.
