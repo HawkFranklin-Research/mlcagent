@@ -91,20 +91,21 @@ work; this sign-in change does not alter the scientific workflow or remove scope
 Protocol source: [OpenRouter OAuth PKCE](https://openrouter.ai/docs/guides/overview/auth/oauth).
 Localhost app attribution uses the host/port; MLCA does not promise a branded marketplace identity.
 
-## ChatGPT plan sign-in (P11.5, registration-gated)
+## ChatGPT plan sign-in
 
-**Continue with ChatGPT** is disabled until `chatgpt_auth.client_id` holds MLCA's own issued
-`oaiapp_…` registration. No Codex CLI client ID or private ChatGPT backend is used. The official
-OSS flow can issue a per-user/workspace client during registration; this implementation deliberately
-waits for the author-selected registration rather than dynamically registering it for you.
-[Registration and sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in)
-explains the account/host distinction and consent.
+`mlca signin --provider openai` (or **Continue with ChatGPT** in Models) uses OpenAI's Sign in with
+ChatGPT for open-source clients. The **first** sign-in registers MLCA: the browser opens with
+`client_id=dynamic_agent_client` and `agent_name_hint=MLCA`; you name and approve the agent, and the
+callback returns MLCA's own issued `oaiapp_…` client ID, accepted only after the state check and saved
+to `chatgpt_auth.client_id` in the global config. Later sign-ins use that ID. No Codex CLI client ID,
+client secret or private ChatGPT backend is used.
+[Registration and sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in).
+OpenAI API keys (`openai_api`, `OPENAI_API_KEY`) remain available alongside plan sign-in.
 
-Set your issued ID in global config, then use Models or `mlca signin --provider openai`.
 For SSH use `--headless`, authorize in the browser, and paste the complete redirected loopback URL
-into the masked terminal field. The documented loopback PKCE flow is used; no undocumented device
-endpoint is guessed. A stable UUID host ID is non-secret metadata. State, nonce, callback, JWT
-signature/issuer/audience/expiry and granted plan-use scope are validated before activation.
+into the masked terminal field. The documented loopback PKCE flow on `127.0.0.1` is used. A stable
+UUID host ID is non-secret metadata. State, nonce, callback, JWT signature/issuer/audience/expiry and
+granted plan-use scope are validated before activation.
 
 Access/refresh/ID tokens are a single secure-keyring record per registered client. Refresh is
 serialized across processes and rotates the record together. No plaintext fallback. Sign-out with

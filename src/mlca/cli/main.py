@@ -151,13 +151,13 @@ def signin(headless: bool = False, provider: str = "openrouter"):
 
 
 def openai_signin(headless):
+    from mlca.config import ChatGPTAuth, save
     from mlca.llm.openai_auth import OpenAIFlow, save_profile
 
     config = load()
-    if not config.chatgpt_auth.client_id:
-        raise MlcaUserError("ChatGPT sign-in is coming soon: register MLCA and set chatgpt_auth.client_id")
     if not typer.confirm("Allow MLCA to request your ChatGPT plan allowance and its caps?"):
         return
+    # Without an issued ID, this first sign-in registers MLCA with OpenAI.
     flow = OpenAIFlow(config.chatgpt_auth.client_id)
     try:
         typer.echo(flow.url)
@@ -166,7 +166,11 @@ def openai_signin(headless):
         else:
             flow.open_browser()
             flow.wait()
-        save_profile(flow.exchange())
+        data = flow.exchange()
+        save_profile(data)
+        if config.chatgpt_auth.client_id != data["client_id"]:
+            config.chatgpt_auth = ChatGPTAuth(client_id=data["client_id"])
+            save(config)
     finally:
         flow.close()
     typer.echo(

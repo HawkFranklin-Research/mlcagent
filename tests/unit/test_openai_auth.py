@@ -47,7 +47,7 @@ def profile():
 
 def test_registration_gated_and_pkce_state(backend):
     with pytest.raises(MlcaUserError):
-        auth.OpenAIFlow(None)
+        auth.OpenAIFlow("borrowed-client")
     with pytest.raises(ValueError):
         Config(chatgpt_auth={"client_id": "borrowed-client"})
     flow = auth.OpenAIFlow("oaiapp_mlca")
@@ -163,3 +163,70 @@ def test_responses_only_accepts_completed_stream(monkeypatch):
     events[:] = [NS(type="response.failed")]
     with pytest.raises(MlcaUserError):
         adapter.complete(payload)
+
+
+def test_first_sign_in_registers_mlca_and_uses_the_issued_id(backend, monkeypatch):
+    flow = auth.OpenAIFlow()
+    try:
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(flow.url).query)
+        assert query["client_id"] == [auth.REGISTRATION]
+        assert query["agent_name_hint"] == [auth.AGENT_NAME]
+        assert query["redirect_uri"][0].startswith("http://127.0.0.1:")
+        with pytest.raises(MlcaUserError, match="issued MLCA client ID"):
+            flow.accept(flow.redirect + f"?code=c&state={flow.state}")
+        with pytest.raises(MlcaUserError, match="issued MLCA client ID"):
+            flow.accept(flow.redirect + f"?code=c&state={flow.state}&client_id=borrowed")
+        with pytest.raises(MlcaUserError):
+            flow.accept(flow.redirect + "?code=c&state=wrong&client_id=oaiapp_new")
+        assert flow.client_id is None
+        flow.accept(flow.redirect + f"?code=c&state={flow.state}&client_id=oaiapp_new")
+        assert flow.client_id == "oaiapp_new"
+    finally:
+        flow.close()
+    sent = {}
+    monkeypatch.setattr(auth, "identity", lambda token, client, nonce=None: {"sub": "user"})
+    monkeypatch.setattr(
+        auth,
+        "token_request",
+        lambda payload: (
+            sent.update(payload)
+            or {**profile(), "token_type": "Bearer", "expires_in": 3600, "scope": "chatgpt.tokens.use.direct"}
+        ),
+    )
+    flow = auth.OpenAIFlow()
+    flow.accept(flow.redirect + f"?code=c&state={flow.state}&client_id=oaiapp_new")
+    data = flow.exchange()
+    assert sent["client_id"] == data["client_id"] == "oaiapp_new"
+
+
+def test_signin_saves_the_issued_client_id(monkeypatch):
+    import mlca.cli.main as cli
+    import mlca.config as config_module
+    import mlca.llm.openai_auth as module
+
+    class Flow:
+        url = "https://auth.openai.com/api/accounts/authorize?client_id=dynamic_agent_client"
+
+        def __init__(self, client_id=None):
+            assert client_id is None
+
+        def open_browser(self):
+            pass
+
+        def wait(self):
+            pass
+
+        def exchange(self):
+            return {**profile(), "client_id": "oaiapp_new"}
+
+        def close(self):
+            pass
+
+    saved = {}
+    monkeypatch.setattr(cli, "load", lambda: Config())
+    monkeypatch.setattr(cli.typer, "confirm", lambda *a, **k: True)
+    monkeypatch.setattr(module, "OpenAIFlow", Flow)
+    monkeypatch.setattr(module, "save_profile", lambda data: "reference")
+    monkeypatch.setattr(config_module, "save", lambda config: saved.setdefault("config", config))
+    cli.openai_signin(headless=False)
+    assert saved["config"].chatgpt_auth.client_id == "oaiapp_new"

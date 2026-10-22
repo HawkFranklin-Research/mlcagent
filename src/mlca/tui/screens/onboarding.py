@@ -48,14 +48,10 @@ class OnboardingScreen(ModalScreen[dict | None]):
             yield Static("Models and providers — environment, session keys, or secure OpenRouter sign-in")
             yield Button("Start free with OpenRouter", id="start-free", variant="primary")
             yield Button("Sign out of OpenRouter", id="router-signout")
-            yield Button(
-                "Continue with ChatGPT"
-                if self.config.chatgpt_auth.client_id
-                else "Continue with ChatGPT — coming soon",
-                id="chatgpt-signin",
-                disabled=not bool(self.config.chatgpt_auth.client_id),
+            yield Button("Continue with ChatGPT", id="chatgpt-signin")
+            yield Static(
+                "Uses your ChatGPT plan; the first sign-in registers MLCA with OpenAI. OpenAI API keys also work."
             )
-            yield Static("ChatGPT sign-in needs MLCA's own registration. OpenAI API keys work now.")
             yield Button(
                 "Sign out of ChatGPT",
                 id="chatgpt-signout",
@@ -84,11 +80,7 @@ class OnboardingScreen(ModalScreen[dict | None]):
                     )
                     choices = (
                         KINDS
-                        + (
-                            [("ChatGPT plan (MLCA registration)", "openai_chatgpt")]
-                            if self.config.chatgpt_auth.client_id or provider.kind == "openai_chatgpt"
-                            else []
-                        )
+                        + ([("ChatGPT plan (sign in)", "openai_chatgpt")])
                         + ([("Offline fake provider", "fake")] if provider.kind == "fake" else [])
                     )
                     yield Select(choices, value=provider.kind, allow_blank=False, id=role + "-kind")
@@ -316,6 +308,11 @@ class OnboardingScreen(ModalScreen[dict | None]):
             def chatgpt_signed(reference):
                 if not reference:
                     return
+                from mlca.config import load as load_config
+
+                # The first sign-in registered MLCA; adopt the issued client ID it saved.
+                self.config.chatgpt_auth = load_config().chatgpt_auth
+                self.query_one("#chatgpt-signout", Button).disabled = False
                 for role in ["navigator", "worker"]:
                     self.query_one("#" + role + "-kind", Select).value = "openai_chatgpt"
 

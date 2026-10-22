@@ -85,6 +85,12 @@ class OpenAISignin(ModalScreen[str | None]):
             profile = self.flow.exchange()
             if not self.finished:
                 reference = save_profile(profile)
+                from mlca.config import ChatGPTAuth, load, save
+
+                config = load()
+                if config.chatgpt_auth.client_id != profile["client_id"]:
+                    config.chatgpt_auth = ChatGPTAuth(client_id=profile["client_id"])
+                    save(config)
                 self.app.call_from_thread(self.dismiss, reference)
         except Exception:
             if not self.finished:

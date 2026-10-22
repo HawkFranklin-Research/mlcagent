@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — ChatGPT plan sign-in without a preconfigured client ID
+
+- `mlca signin --provider openai` and Continue with ChatGPT now register MLCA on the first sign-in
+  (`dynamic_agent_client`) and save the issued `oaiapp_` client ID; later sign-ins reuse it. Sign-in
+  tooling only: prompts, rails, templates and the engine are unchanged.
+
 ## Unreleased — pre-freeze support for the biomedical studies
 
 - `mlca run --external FILE`: external cohorts are registered sealed and hidden from setup and from the

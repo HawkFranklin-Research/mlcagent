@@ -23,6 +23,10 @@ TOKEN = ISSUER + "/api/accounts/oauth/token"
 RESOURCE = "https://api.openai.com/v1"
 SCOPES = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
 SERVICE = "mlca.openai.chatgpt"
+# First sign-in without an issued ID registers MLCA as an open-source client; OpenAI returns
+# MLCA's own oaiapp_ ID in the callback, which is saved and used from then on.
+REGISTRATION = "dynamic_agent_client"
+AGENT_NAME = "MLCA"
 
 
 def reference(client_id):
@@ -107,18 +111,19 @@ def save_profile(data):
 
 
 class OpenAIFlow(Flow):
-    def __init__(self, client_id):
-        if not client_id or not client_id.startswith("oaiapp_"):
-            raise MlcaUserError("Register MLCA and configure its own issued OpenAI client ID before sign-in")
+    def __init__(self, client_id=None):
+        if client_id is not None and not client_id.startswith("oaiapp_"):
+            raise MlcaUserError("Use MLCA's own issued oaiapp_ client ID, or none to register MLCA")
         secure_backend()
         super().__init__(callback_path="/auth/callback")
         self.client_id = client_id
+        self.registering = client_id is None
         self.nonce = secrets.token_urlsafe(32)
         self.host = host_id()
         self.redirect = f"http://127.0.0.1:{self.server.server_port}/auth/callback"
         old = urllib.parse.parse_qs(urllib.parse.urlsplit(self.url).query)
         params = {
-            "client_id": client_id,
+            "client_id": client_id or REGISTRATION,
             "ext_agent_host_id": self.host,
             "response_type": "code",
             "redirect_uri": self.redirect,
@@ -129,17 +134,26 @@ class OpenAIFlow(Flow):
             "code_challenge_method": "S256",
             "code_challenge": old["code_challenge"][0],
         }
+        if self.registering:
+            params["agent_name_hint"] = AGENT_NAME
         self.url = AUTHORIZE + "?" + urllib.parse.urlencode(params)
 
     def accept(self, value):
-        parsed = urllib.parse.urlsplit(value)
+        parsed = urllib.parse.urlsplit(value.strip())
         query = urllib.parse.parse_qs(parsed.query)
-        if query.get("client_id") not in (None, [self.client_id]):
-            raise MlcaUserError("Callback client ID differs from MLCA registration")
+        issued = query.get("client_id")
         if query.get("state") == [self.state] and query.get("error"):
             self.close()
             raise MlcaUserError("ChatGPT authorization declined")
+        if self.registering:
+            if not issued or len(issued) != 1 or not issued[0].startswith("oaiapp_"):
+                raise MlcaUserError("Registration did not return an issued MLCA client ID")
+        elif issued not in (None, [self.client_id]):
+            raise MlcaUserError("Callback client ID differs from MLCA registration")
         super().accept(value)
+        if self.registering:
+            # Trusted only after the base flow has validated the state and code.
+            self.client_id = issued[0]
 
     def exchange(self):
         if not self.code or self.closed.is_set() or time.monotonic() >= self.deadline:
