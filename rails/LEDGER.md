@@ -660,3 +660,14 @@ retain these fields; absent diagnostics stay absent. Original eval-01 is unchang
 Tests: test_provider_error_details.py; DeepSeek/provider-resilience regressions,
 17 passed. Files: llm/provider_errors.py, client.py, request_worker.py and the
 compatible adapter. Commit: E-W2: retain redacted provider rejection diagnostics.
+
+
+## B-0040 — E-M1: exact primary metric in scoring-only recovery
+
+Evidence: eval-01/EVALUATION_SUMMARY.md; two validation runs recorded only
+per-model names, leaving the exact primary-metric check unsatisfied. The existing
+single scoring-only retry now tells the Worker the selected model's exact key and
+val split, with the required record_metric call. Per-model names are explicitly
+additional and cannot satisfy the check. No fitting is reopened or metric inferred
+from per-model values. Tests: test_metric_recovery_key.py and existing scoring
+recovery regressions, 19 passed. Commit: E-M1: name the exact metric in validation recovery.

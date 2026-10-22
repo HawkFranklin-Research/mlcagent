@@ -112,6 +112,21 @@ def render_order(session, action, params, inputs, state):
     from mlca.rails import instructions
 
     rendered = action.prompt + instructions(session, "worker")
+    if action.id == "score_validation":
+        from mlca.engine.options import scoring_retry
+        from mlca.task_metrics import default_metric
+
+        if scoring_retry(action.id, state):
+            import json
+
+            metric = state.task.get("primary_metric") or default_metric(
+                state.task.get("type", state.template_id)
+            )
+            rendered += (
+                "\nScoring-only recovery: reuse the selected fitted model, without fitting. "
+                + f'record_metric({json.dumps(metric)}, value, split="val") is required for the selected model. '
+                + "Per-model metric names are additional and do not count toward this check."
+            )
     for key, value in params.items():
         rendered = rendered.replace("{" + key + "}", str(value))
     if "_protocol" in inputs:

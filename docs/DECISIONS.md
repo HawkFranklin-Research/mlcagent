@@ -946,3 +946,9 @@ rewritten. Evidence and validation scope: rails/LEDGER.md B-0038.
 Record the provider's bounded type/message, not its entire response or request.
 Redact credentials before persistence and transport. Diagnostic text is provider
 reported, not proof of a failure cause; old missing responses are not reconstructed.
+
+
+## 2026-10-22 — E-M1 metric retry contract
+Make the existing one-off validation-scoring retry explicit about the selected
+model's required metric name and partition. Do not rename recorded metrics,
+retrain models, or extend the retry allowance.

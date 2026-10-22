@@ -539,3 +539,7 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 ### Reopening-v2: E-W2
 - Preserve redacted, bounded HTTP provider rejection messages through direct and deadline transports.
+
+
+### Reopening-v2: E-M1
+- Name the exact selected-model metric and validation split in the scoring-only retry.
