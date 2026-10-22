@@ -15,11 +15,15 @@ def main():
             response = client.chat.completions.create(**request["payload"])
             result = {"data": response.model_dump()}
     except Exception as exc:
+        from mlca.llm.provider_errors import details
+
+        provider_error = {k: v.replace(request["key"], "[REDACTED]")[:500] for k, v in details(exc).items()}
         headers = getattr(getattr(exc, "response", None), "headers", {})
         result = {
             "error": str(exc).replace(request["key"], "[REDACTED]"),
             "status_code": getattr(exc, "status_code", None),
             "retry_after": headers.get("retry-after") if headers else None,
+            **provider_error,
         }
     sys.stdout.write(json.dumps(result))
 

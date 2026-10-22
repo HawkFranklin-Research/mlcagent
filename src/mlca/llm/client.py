@@ -305,6 +305,10 @@ class Client:
                     category = model_output_category(exc)
                     if getattr(exc, "accounting", None):
                         self._record_usage(record, exc.accounting, selected)
+                    from .provider_errors import details
+
+                    provider_error = {k: redact(v, self.config)[:500] for k, v in details(exc).items()}
+                    record.update(provider_error)
                     record.update(
                         status="error",
                         error_type=type(exc).__name__,
@@ -318,6 +322,7 @@ class Client:
                                 "request_id": request_id,
                                 "category": category,
                                 "error_type": type(exc).__name__,
+                                **provider_error,
                             },
                             step_id=context.step_id,
                         )

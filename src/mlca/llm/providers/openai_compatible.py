@@ -41,6 +41,8 @@ class CompatibleProvider:
             if "error" in data:
                 error = MlcaUserError(data["error"], category="provider_error")
                 error.status_code = data.get("status_code")
+                error.provider_error_type = data.get("provider_error_type")
+                error.provider_error_message = data.get("provider_error_message")
                 error.response = SimpleNamespace(headers={"retry-after": data.get("retry_after")})
                 raise error
             data = data["data"]

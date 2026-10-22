@@ -940,3 +940,9 @@ Keep detailed low-cardinality, nonnumeric and brief-named setup fields; summary
 statistics are not sample rows. All required detailed fields remain visible even
 when that makes a pathological schema large. Existing frozen studies are not
 rewritten. Evidence and validation scope: rails/LEDGER.md B-0038.
+
+
+## 2026-10-22 — E-W2 provider-error evidence
+Record the provider's bounded type/message, not its entire response or request.
+Redact credentials before persistence and transport. Diagnostic text is provider
+reported, not proof of a failure cause; old missing responses are not reconstructed.

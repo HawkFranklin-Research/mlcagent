@@ -647,3 +647,16 @@ assertion covers the specified synthetic requests; a table with thousands of
 mandatory low-cardinality/nonnumeric fields or a huge user brief can still exceed
 it. Those fields are not silently dropped. Changes: schema_summary.py, inventory,
 state_view and prompt construction. Commit: E-W1: bound wide-table model contexts.
+
+
+## B-0039 — E-W2: retain bounded provider rejection details
+
+Evidence: eval-01/EVALUATION_SUMMARY.md: 21 HTTP 400 setup failures have status
+codes but no provider explanation. New HTTP failures extract only error.type
+(or code) and error.message, redact configured credentials, and truncate each to
+500 characters in usage and ProviderFailed. Full response bodies, request objects
+and headers are not added. Both direct SDK errors and deadline subprocess errors
+retain these fields; absent diagnostics stay absent. Original eval-01 is unchanged.
+Tests: test_provider_error_details.py; DeepSeek/provider-resilience regressions,
+17 passed. Files: llm/provider_errors.py, client.py, request_worker.py and the
+compatible adapter. Commit: E-W2: retain redacted provider rejection diagnostics.
