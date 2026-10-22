@@ -337,6 +337,88 @@
   retrieved: '2026-10-15'
   leakage_columns: []
   identifier_columns: []
+- id: gli85_glioma
+  file: datasets/gli85_glioma_openml.csv
+  role: development
+  problem_type: binary
+  level: wide
+  targets:
+  - glioma_class
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - far more columns than rows
+  - anonymised feature names
+  - class imbalance
+  source_url: https://www.openml.org/d/45089
+  openml_data_id: 45089
+  licence: Public (OpenML)
+  citation: Freije, W. A. et al. (2004). Gene expression profiling of gliomas strongly predicts survival. Cancer Research 64(18), 6503-6510.
+  route: OpenML ARFF download, MD5 checked against OpenML
+  conversion: ARFF to CSV, values copied as text; class column moved last and renamed from class to glioma_class
+    (reopening after the biomedical evaluation, 2026-10-22)
+  columns: 22284
+  rows: 85
+  bytes: 16043746
+  sha256: 60a74ac6fbfd017c938ef27f4b142e7e92a67c097b7b73bb7a30767b2c77276c
+  retrieved: '2026-10-22'
+  leakage_columns: []
+  identifier_columns: []
+- id: smk187_airway
+  file: datasets/smk187_airway_openml.csv
+  role: development
+  problem_type: binary
+  level: wide
+  targets:
+  - cancer_status
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - far more columns than rows
+  - anonymised feature names
+  source_url: https://www.openml.org/d/45100
+  openml_data_id: 45100
+  licence: Public (OpenML)
+  citation: Spira, A. et al. (2007). Airway epithelial gene expression in the diagnostic evaluation of smokers with suspect lung cancer. Nature Medicine 13(3), 361-366.
+  route: OpenML ARFF download, MD5 checked against OpenML
+  conversion: ARFF to CSV, values copied as text; class column moved last and renamed from att1 to cancer_status
+    (reopening after the biomedical evaluation, 2026-10-22)
+  columns: 19994
+  rows: 187
+  bytes: 22260761
+  sha256: 09d7404e27a53f6779108505e14ed8478743dd1dd759fc7656f84fbc303d435b
+  retrieved: '2026-10-22'
+  leakage_columns: []
+  identifier_columns: []
+- id: gcm_tumour_types
+  file: datasets/gcm_tumour_types_openml.csv
+  role: development
+  problem_type: multiclass
+  level: wide
+  targets:
+  - tumour_type
+  evaluation_only: []
+  group_column: null
+  time_columns: []
+  known_traps:
+  - far more columns than rows
+  - 14 classes with about 10 rows each
+  source_url: https://www.openml.org/d/1106
+  openml_data_id: 1106
+  licence: Public (OpenML)
+  citation: Ramaswamy, S. et al. (2001). Multiclass cancer diagnosis using tumor gene expression signatures. PNAS 98(26), 15149-15154.
+  route: OpenML ARFF download, MD5 checked against OpenML
+  conversion: ARFF to CSV, values copied as text; class column moved last and renamed from class to tumour_type
+    (reopening after the biomedical evaluation, 2026-10-22)
+  columns: 16064
+  rows: 190
+  bytes: 17701247
+  sha256: ad34c7afcd155c1e127baeebda0543616f8478deecc82b7142abd451f67569fd
+  retrieved: '2026-10-22'
+  leakage_columns: []
+  identifier_columns: []
 - id: bank_marketing
   file: heldout/bank_marketing_uci.csv
   role: heldout

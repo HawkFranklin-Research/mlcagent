@@ -20,7 +20,12 @@ All twelve new tables were downloaded from official UCI archive endpoints and co
 | Seeds | `datasets/seeds_uci.csv` | Clustering | Simple | 210 × 8 | `variety` evaluation only | CC BY 4.0 | [UCI 236](https://archive.ics.uci.edu/dataset/236/seeds) |
 | Online Retail | `datasets/online_retail_uci.csv` | Clustering | Complex | 541,909 × 8 | None; transaction table | CC BY 4.0 | [UCI 352](https://archive.ics.uci.edu/dataset/352/online+retail) |
 | Optical Recognition of Handwritten Digits | `datasets/optical_digits_uci.csv` | Representation learning | Medium | 5,620 × 65 | `digit` evaluation only | CC BY 4.0 | [UCI 80](https://archive.ics.uci.edu/dataset/80/optical+recognition+of+handwritten+digits) |
+| GLI-85 (glioma gene expression) | `datasets/gli85_glioma_openml.csv` | Binary classification | Wide | 85 × 22,284 | `glioma_class` | Public (OpenML) | [OpenML 45089](https://www.openml.org/d/45089) |
+| SMK-CAN-187 (airway gene expression) | `datasets/smk187_airway_openml.csv` | Binary classification | Wide | 187 × 19,994 | `cancer_status` | Public (OpenML) | [OpenML 45100](https://www.openml.org/d/45100) |
+| GCM (14 tumour types) | `datasets/gcm_tumour_types_openml.csv` | Multiclass classification | Wide | 190 × 16,064 | `tumour_type` | Public (OpenML) | [OpenML 1106](https://www.openml.org/d/1106) |
 
+
+The three wide tables were added on 2026-10-22, when the design was reopened after the biomedical evaluation (study design rule 7). They come from OpenML ARFF files whose MD5 matched OpenML. The values are unchanged; only the class column was moved last and given a descriptive name. None comes from TCGA, CPTAC or a held-out table.
 The six original files remain unchanged. For heart disease, `num` is the source of the existing binary target `heart_disease_binary`. The legacy lung table has an all-zero `event` column; use `status`. The two survival tables remain outside the rails and are excluded from the development set.
 
 ## Held-out set
