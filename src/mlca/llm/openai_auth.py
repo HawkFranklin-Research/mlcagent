@@ -2,8 +2,10 @@
 
 import hashlib
 import json
+import re
 import secrets
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
@@ -52,10 +54,35 @@ def token_request(payload):
         if not isinstance(data, dict):
             raise ValueError()
         return data
+    except urllib.error.HTTPError as exc:
+        raise MlcaUserError(
+            f"ChatGPT authorization/refresh failed (HTTP {exc.code}{oauth_error(exc)}); "
+            "sign in again. Credentials were not logged."
+        ) from None
     except Exception:
         raise MlcaUserError(
             "ChatGPT authorization/refresh failed; sign in again. Credentials were not logged."
         ) from None
+
+
+def oauth_error(exc):
+    # Only the standard OAuth error fields, cleaned and shortened; never the request.
+    try:
+        body = json.loads(exc.read(65536))
+        parts = [str(body.get(k, "")) for k in ("error", "error_description")]
+    except Exception:
+        return ""
+    text = re.sub(r"[^\w .,:;'()/-]", "", ": ".join(p for p in parts if p))[:200]
+    return ", " + text if text else ""
+
+
+def remember_registration(client_id):
+    from mlca.config import ChatGPTAuth, load, save
+
+    config = load()
+    if config.chatgpt_auth.client_id != client_id:
+        config.chatgpt_auth = ChatGPTAuth(client_id=client_id)
+        save(config)
 
 
 def identity(id_token, client_id, nonce=None):
@@ -152,8 +179,10 @@ class OpenAIFlow(Flow):
             raise MlcaUserError("Callback client ID differs from MLCA registration")
         super().accept(value)
         if self.registering:
-            # Trusted only after the base flow has validated the state and code.
+            # Trusted only after the base flow has validated the state and code. Saved at once,
+            # so a failed exchange retries with this registration instead of registering again.
             self.client_id = issued[0]
+            remember_registration(self.client_id)
 
     def exchange(self):
         if not self.code or self.closed.is_set() or time.monotonic() >= self.deadline:

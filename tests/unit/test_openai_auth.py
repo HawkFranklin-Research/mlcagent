@@ -166,6 +166,7 @@ def test_responses_only_accepts_completed_stream(monkeypatch):
 
 
 def test_first_sign_in_registers_mlca_and_uses_the_issued_id(backend, monkeypatch):
+    monkeypatch.setattr(auth, "remember_registration", lambda client_id: None)
     flow = auth.OpenAIFlow()
     try:
         query = urllib.parse.parse_qs(urllib.parse.urlsplit(flow.url).query)
@@ -199,34 +200,36 @@ def test_first_sign_in_registers_mlca_and_uses_the_issued_id(backend, monkeypatc
     assert sent["client_id"] == data["client_id"] == "oaiapp_new"
 
 
-def test_signin_saves_the_issued_client_id(monkeypatch):
-    import mlca.cli.main as cli
+def test_issued_id_is_saved_before_a_failed_exchange(backend, monkeypatch):
     import mlca.config as config_module
-    import mlca.llm.openai_auth as module
-
-    class Flow:
-        url = "https://auth.openai.com/api/accounts/authorize?client_id=dynamic_agent_client"
-
-        def __init__(self, client_id=None):
-            assert client_id is None
-
-        def open_browser(self):
-            pass
-
-        def wait(self):
-            pass
-
-        def exchange(self):
-            return {**profile(), "client_id": "oaiapp_new"}
-
-        def close(self):
-            pass
 
     saved = {}
-    monkeypatch.setattr(cli, "load", lambda: Config())
-    monkeypatch.setattr(cli.typer, "confirm", lambda *a, **k: True)
-    monkeypatch.setattr(module, "OpenAIFlow", Flow)
-    monkeypatch.setattr(module, "save_profile", lambda data: "reference")
+    monkeypatch.setattr(config_module, "load", lambda: Config())
     monkeypatch.setattr(config_module, "save", lambda config: saved.setdefault("config", config))
-    cli.openai_signin(headless=False)
+
+    def refuse(payload):
+        raise MlcaUserError("refused")
+
+    monkeypatch.setattr(auth, "token_request", refuse)
+    flow = auth.OpenAIFlow()
+    flow.accept(flow.redirect + f"?code=c&state={flow.state}&client_id=oaiapp_new")
+    with pytest.raises(MlcaUserError):
+        flow.exchange()
     assert saved["config"].chatgpt_auth.client_id == "oaiapp_new"
+
+
+def test_token_errors_report_only_the_oauth_code(monkeypatch):
+    import io
+    import urllib.error
+
+    body = b'{"error": "invalid_grant", "error_description": "Code expired <x>", "token": "secret"}'
+
+    def fail(*args, **kwargs):
+        raise urllib.error.HTTPError(auth.TOKEN, 400, "Bad Request", {}, io.BytesIO(body))
+
+    monkeypatch.setattr(auth.urllib.request, "urlopen", fail)
+    with pytest.raises(MlcaUserError) as error:
+        auth.token_request({"code": "code-canary"})
+    message = str(error.value)
+    assert "HTTP 400, invalid_grant: Code expired x" in message
+    assert "secret" not in message and "code-canary" not in message

@@ -151,7 +151,6 @@ def signin(headless: bool = False, provider: str = "openrouter"):
 
 
 def openai_signin(headless):
-    from mlca.config import ChatGPTAuth, save
     from mlca.llm.openai_auth import OpenAIFlow, save_profile
 
     config = load()
@@ -168,9 +167,6 @@ def openai_signin(headless):
             flow.wait()
         data = flow.exchange()
         save_profile(data)
-        if config.chatgpt_auth.client_id != data["client_id"]:
-            config.chatgpt_auth = ChatGPTAuth(client_id=data["client_id"])
-            save(config)
     finally:
         flow.close()
     typer.echo(
