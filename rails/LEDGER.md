@@ -623,3 +623,27 @@ tests against AutoML were impossible. In the classification and regression templ
 `score_test` now also saves `test_predictions.parquet` (row_id, partition, y_true,
 y_pred and proba__<class> in the model's class order; no feature columns) as a
 required output. Templates changed; rails unchanged (rails-0.13).
+
+
+## B-0038 — E-W1: bounded model-facing wide schemas (reopening-v2)
+
+Evidence: eval-01/EVALUATION_SUMMARY.md, Failure causes, and the setup egress
+byte counts under ../mlcagent-experiments/bio-bench/runs/deepseek-flash/eval-01/.
+HTTP 400 response bodies were unavailable; the oversized contexts are observed,
+while their causal relationship to the rejection remains an inference.
+
+For tables wider than 200 columns, setup retains nonnumeric, low-cardinality,
+brief-named and first/last 20 fields. Remaining numeric fields are aggregated by
+dtype with count, missingness and ranges of minima/maxima/means. Full local tables
+still validate proposals. Registered inventories retain local summary statistics;
+Navigator views, Worker briefs and structured prompt contexts abbreviate wide
+collections with explicit omission counts. Repair retains that bounded work order.
+No rows are sampled by the controller and no execution schema is truncated.
+
+Tests: tests/unit/test_wide_schema.py (25,000 numeric features plus two labels;
+model contexts for all template events, repair, and actual stubbed setup request
+with matching egress bytes), existing inference and Worker contracts. The 200 kB
+assertion covers the specified synthetic requests; a table with thousands of
+mandatory low-cardinality/nonnumeric fields or a huge user brief can still exceed
+it. Those fields are not silently dropped. Changes: schema_summary.py, inventory,
+state_view and prompt construction. Commit: E-W1: bound wide-table model contexts.

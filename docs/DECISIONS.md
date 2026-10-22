@@ -930,3 +930,13 @@ timestamp ties) and refuse at fit time what the external leakage check found onl
 afterwards (protected columns in X). L-0009 refines four rails. No scientific
 criterion, metric, split rule or held-out material changed. Covertype failures
 are infrastructure and need an adequately sized host.
+
+
+## 2026-10-22 — E-W1 reopening: model-only schema compaction
+
+Resume the interrupted schema_summary.py under the author's fix request. Compact
+wide model context, never local validation data, runtime inputs or generated code.
+Keep detailed low-cardinality, nonnumeric and brief-named setup fields; summary
+statistics are not sample rows. All required detailed fields remain visible even
+when that makes a pathological schema large. Existing frozen studies are not
+rewritten. Evidence and validation scope: rails/LEDGER.md B-0038.

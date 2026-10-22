@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 from mlca.llm.client import RequestContext
+from mlca.schema_summary import model_view
 
 
 def prompt(name: str, **values: Any) -> str:
@@ -10,7 +11,7 @@ def prompt(name: str, **values: Any) -> str:
     # Replace declared placeholders only; JSON braces in inserted content are left untouched.
     for key, value in values.items():
         text = text.replace(
-            "{" + key + "}", value if isinstance(value, str) else json.dumps(value, default=str)
+            "{" + key + "}", value if isinstance(value, str) else json.dumps(model_view(value), default=str)
         )
     return text
 

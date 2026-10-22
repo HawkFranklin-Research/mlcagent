@@ -16,6 +16,8 @@ from mlca.log.schema import StrictModel
 from mlca.paths import canonical, resource
 from mlca.project.discovery import discover, registrations
 from mlca.project.inventory import read_table
+from mlca.schema_summary import summarize_frame
+from mlca.schema_summary import value_information as value_information
 from mlca.task_metrics import default_metric, normalize_metric
 
 
@@ -131,60 +133,12 @@ class Inference(StudyProposal):
         return data
 
 
-def value_information(series):
-    import math
-
-    import pandas as pd
-
-    def scalar(value):
-        if pd.isna(value):
-            return None
-        if hasattr(value, "item"):
-            value = value.item()
-        if isinstance(value, (str, int, float, bool)):
-            return value if not isinstance(value, float) or math.isfinite(value) else None
-        return str(value)
-
-    if series.nunique(dropna=False) <= 20:
-        return {
-            "value_counts": [
-                {"value": scalar(value), "count": int(count)}
-                for value, count in series.value_counts(dropna=False).items()
-            ]
-        }
-    if pd.api.types.is_numeric_dtype(series):
-        return {
-            "numeric_summary": {
-                "min": scalar(series.min()),
-                "max": scalar(series.max()),
-                "mean": scalar(series.mean()),
-                "quantiles": {str(q): scalar(series.quantile(q)) for q in [0.25, 0.5, 0.75]},
-            }
-        }
-    return {"numeric_summary": None, "summary_status": "non_numeric_high_cardinality"}
-
-
-def inventory(paths, exclude_columns=()):
+def inventory(paths, exclude_columns=(), *, brief=""):
     schemas, tables = [], {}
     for name, file in registrations(discover(paths)):
         frame = read_table(file).drop(columns=list(exclude_columns), errors="ignore")
         tables[name] = frame
-        schemas.append(
-            {
-                "name": name,
-                "rows": len(frame),
-                "columns": [
-                    {
-                        "name": str(c),
-                        "dtype": str(frame[c].dtype),
-                        "unique": int(frame[c].nunique()),
-                        "missing": int(frame[c].isna().sum()),
-                        **value_information(frame[c]),
-                    }
-                    for c in frame
-                ],
-            }
-        )
+        schemas.append(summarize_frame(frame, name=name, brief=brief))
     if not tables:
         raise MlcaUserError("No supported table found", category="invalid_request")
     return schemas, tables
@@ -248,7 +202,7 @@ def validate(proposal, tables):
 
 
 def infer(paths, brief, config, evidence, exclude_columns=(), *, principal="user"):
-    schemas, tables = inventory(paths, exclude_columns)
+    schemas, tables = inventory(paths, exclude_columns, brief=brief)
     config = Config.model_validate(config)
     if "navigator" not in config.roles or "worker" not in config.roles:
         raise MlcaUserError("Configure Navigator and Worker before running", category="invalid_request")

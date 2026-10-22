@@ -5,6 +5,7 @@ from typing import Any
 
 import mlca_runtime
 from mlca.errors import MlcaUserError
+from mlca.schema_summary import model_view
 
 from .base import Role, prompt
 
@@ -135,13 +136,15 @@ def render_order(session, action, params, inputs, state):
         + ". The name/format fields describe files; filenames are not dictionary keys."
     )
     outputs = [o.model_dump() for o in action.outputs]
-    brief = {
-        "answers": state.brief,
-        "columns": state.columns,
-        "primary_data": state.primary_data,
-        "task": state.task,
-        "excluded_columns": state.excluded_columns,
-    }
+    brief = model_view(
+        {
+            "answers": state.brief,
+            "columns": state.columns,
+            "primary_data": state.primary_data,
+            "task": state.task,
+            "excluded_columns": state.excluded_columns,
+        }
+    )
     return {
         "event": action.event,
         "action": action.id,

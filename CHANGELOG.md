@@ -530,3 +530,8 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 - Rails-0.4 adds importable-object persistence guidance and clarifies named
   pipeline frontends, compatible output interfaces and categorical screens.
+
+
+### Reopening-v2: E-W1
+- Bound wide-table setup and later model contexts without changing full local schemas.
+- Preserve explicit omission counts and the exact transmitted setup summary in egress records.

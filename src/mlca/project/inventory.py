@@ -17,7 +17,7 @@ def read_table(path: Path) -> Any:
 
 def scan(name: str, path: Path) -> dict:
     frame = read_table(path)
-    return {
+    result = {
         "name": name,
         "rows": len(frame),
         "columns": list(frame.columns),
@@ -26,6 +26,22 @@ def scan(name: str, path: Path) -> dict:
         "sha256": sha256(path),
         "size": path.stat().st_size,
     }
+
+    # Full local metadata supports schema views without rereading source data at each turn.
+    if len(frame.columns) > 200:
+        from mlca.schema_summary import scalar
+
+        result["unique"] = {str(c): int(frame[c].nunique(dropna=False)) for c in frame}
+        result["column_summaries"] = {
+            str(c): {
+                "min": scalar(frame[c].min()),
+                "max": scalar(frame[c].max()),
+                "mean": scalar(frame[c].mean()),
+            }
+            for c in frame
+            if pd.api.types.is_numeric_dtype(frame[c])
+        }
+    return result
 
 
 def table_columns(path: Path) -> list[str]:
