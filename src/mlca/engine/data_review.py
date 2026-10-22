@@ -41,7 +41,11 @@ def context_key(state):
 
 
 def findings(frame, columns, template, repeated="", outcome_reviewed=False, excluded=(), phase="all"):
-    target = columns.get("target")
+    target = (
+        (columns.get("duration") or columns.get("target"))
+        if template == "survival"
+        else columns.get("target")
+    )
     if template in {"regression", "multilabel_classification", "clustering", "representation"}:
         targets = [c for c in columns.values() if c is not None]
         if phase == "train":
@@ -73,6 +77,8 @@ def findings(frame, columns, template, repeated="", outcome_reviewed=False, excl
         return result
     if target not in frame:
         raise MlcaUserError("Choose the outcome column before reviewing the table", category="gate_blocked")
+    if template == "survival" and columns.get("event_column") not in frame:
+        raise MlcaUserError("Choose the survival event column", category="gate_blocked")
     result = []
 
     def add(rule, header, question, effect, alternatives=(), sensitive=False):
@@ -457,6 +463,11 @@ def prepared(session):
             + (state.excluded_columns if state.task.get("autonomous") else [])
         )
     )
+    if state.template_id == "survival":
+        # Outcome fields are needed for scoring and training-only review; they
+        # are separately excluded from predictors by the runtime contract.
+        outcomes = {state.columns.get(k) for k in ("target", "duration", "event_column")}
+        excluded = [c for c in excluded if c not in outcomes]
     task = {**state.task, **task_for(frame, state, mode)}
     frame = frame.drop(columns=[c for c in excluded if c != group], errors="ignore")
     digest = hashlib.sha256(

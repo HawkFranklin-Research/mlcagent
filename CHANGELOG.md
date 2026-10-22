@@ -543,3 +543,7 @@ Added property-based findings, bounded questions, explicit sensitive decisions, 
 
 ### Reopening-v2: E-M1
 - Name the exact selected-model metric and validation split in the scoring-only retry.
+
+
+### Reopening-v2: E-S1
+- Retain duration/event columns needed by survival scoring and training-only review.

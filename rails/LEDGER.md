@@ -671,3 +671,20 @@ val split, with the required record_metric call. Per-model names are explicitly
 additional and cannot satisfy the check. No fitting is reopened or metric inferred
 from per-model values. Tests: test_metric_recovery_key.py and existing scoring
 recovery regressions, 19 passed. Commit: E-M1: name the exact metric in validation recovery.
+
+
+## B-0041 — E-S1: retain survival outcome fields through preparation
+
+Evidence: eval-01/studies/s4_hnscc-003/attempt-001/run-001/.mlca/log/events.jsonl
+in ../mlcagent-experiments/bio-bench/runs/deepseek-flash/. BriefRecorded resolves
+both outcome fields, InferenceRecorded additionally calls duration a leakage
+suspect, and TaskConfigured excludes it because only targets were protected.
+DataPrepared/SplitFrozen precede the training-review refusal. No table was opened.
+
+This is an engine distinction: an outcome must not become a predictor, but it must
+remain in the partition for scoring and train-only review. Autonomous exclusions
+now protect duration/event, and preparation retains both even when an older setup
+marks them excluded. Existing runtime predictor guards remain authoritative. No
+survival rail, Worker fix or survival development run is added. Three synthetic
+regressions cover setup, preparation/split/train-only reads and missing-event
+errors; surrounding review/readiness tests also pass. Commit: E-S1: retain survival outcomes in frozen partitions.

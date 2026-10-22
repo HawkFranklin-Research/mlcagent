@@ -952,3 +952,10 @@ reported, not proof of a failure cause; old missing responses are not reconstruc
 Make the existing one-off validation-scoring retry explicit about the selected
 model's required metric name and partition. Do not rename recorded metrics,
 retrain models, or extend the retry allowance.
+
+
+## 2026-10-22 — E-S1 engine outcome retention
+The survival stop came from deleting the resolved duration as a leakage suspect.
+Retain resolved outcome fields for evaluation; existing runtime rules exclude them
+from predictor fitting. Only run records were inspected, not biomedical tables.
+Survival remains outside new instruction rails and development datasets.

@@ -320,7 +320,13 @@ def run(
                         "autonomous": True,
                     },
                     "excluded_columns": sorted(
-                        set(proposal.identifier_suspects + proposal.leakage_suspects) - set(proposal.targets)
+                        set(proposal.identifier_suspects + proposal.leakage_suspects)
+                        - set(proposal.targets)
+                        - (
+                            {proposal.duration, proposal.event_column}
+                            if proposal.problem_type == "survival"
+                            else set()
+                        )
                     ),
                     "group_column": proposal.group_column,
                 },
