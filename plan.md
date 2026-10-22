@@ -1,3 +1,17 @@
+## Reopening-v2 — RL-0029 implemented (23 October 2026)
+
+Step 4's batch-01 follow-up adds RL-0029 and rails-0.15: above 500 model input
+features, use native importances or permute only the top 50 ranked features with
+at most 5 repeats. The classification action contract exposes the same budget
+to the Navigator. Ledger: L-0014. Offline checks: 48 focused tests passed, including
+genericity, prompt/repair, snapshots, wide contexts and template/runtime contracts;
+Ruff and whitespace checks pass. The full suite was not rerun for this change.
+No live batch, held-out/biomedical table access, freeze, push or installation refresh.
+The work order's next testing phase is pooled acceptance of the three wide
+development tables; it was not launched here. Earlier status below is historical.
+
+---
+
 ## Reopening-v2 — offline implementation complete (22 October 2026)
 
 E-W1/E-W2/E-M1/E-S1 implemented in separate local commits; rails-0.14 adds

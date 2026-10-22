@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — rails-0.15: bounded wide interpretation
+
+- Add RL-0029 for non-survival interpretation above 500 input features: native
+  model importances or permutation of only the top 50 ranked features with at
+  most 5 repeats, preserving the frozen model's full prediction schema.
+- Make the classification work order's existing 20-repeat budget conditional
+  on at most 500 features; retain the 300-second timeout and existing safeguards.
+- Development evidence and limitations are recorded in rails/LEDGER.md L-0014.
+
 ## Unreleased — ChatGPT plan sign-in without a preconfigured client ID
 
 - `mlca signin --provider openai` and Continue with ChatGPT now register MLCA on the first sign-in

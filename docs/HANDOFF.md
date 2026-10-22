@@ -1,3 +1,22 @@
+# Reopening-v2: RL-0029 / rails-0.15 — 23 October 2026
+
+Implemented the author-approved Step 4 batch-01 interpretation follow-up only.
+RL-0029 bounds non-survival interpretation above 500 input features to native
+importances or the top 50 ranked features with at most 5 permutation repeats.
+The classification work order now makes its 20-repeat budget conditional on
+at most 500 features, including in the Navigator's action view. Full prediction
+input schemas and the existing 300-second step limit remain unchanged.
+
+Evidence paths and instruction limits: rails/LEDGER.md L-0014. Offline checks:
+36 rail/genericity/prompt/repair/snapshot/wide-context tests plus 12 template and
+runtime-contract tests passed (48 total); Ruff and whitespace checks pass. The
+full suite was not rerun. No live model calls or batches, data-table inspection,
+held-out/biomedical access, freeze, push, upload or installed-CLI refresh.
+Existing untracked files were preserved. This request stops after the local commit;
+the testing agent's prospective batch-02 is specified in the experiments work order.
+
+---
+
 # Reopening-v2 offline fixes — 22 October 2026
 
 Read `../mlcagent-experiments/docs/work-orders/reopening-v2-readiness.md` and the

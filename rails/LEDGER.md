@@ -700,3 +700,40 @@ recovery. No model family, dataset name or column name is prescribed. Survival i
 explicitly outside this new rail's problem scopes. The other 27 rails and all
 scientific/sandbox checks remain unchanged. Tests: test_metric_recovery_key.py,
 loader/snapshot and genericity regressions. Commit: Rails: add exact validation metric rail 0.14.
+
+
+## L-0014 — RL-0029: bounded wide interpretation (rails-0.15)
+
+Observed evidence: ../mlcagent-experiments/bench/dev-loop-v2/batch-01/REPORT.md
+and these development-run records (model: deepseek-flash; category: timeout):
+- studies/gli85_glioma-001/attempt-001/run-001/.mlca/steps/11_interpret_explain_model_EQSSWR93/
+- studies/gcm_tumour_types-001/attempt-001/run-001/.mlca/steps/11_interpret_explain_model_ZHCT2RJ0/
+
+Both step paths are relative to ../mlcagent-experiments/bench/dev-loop-v2/batch-01/.
+All three scripts per step attempt full-width permutation over approximately
+16,000–22,000 input columns, with 20 repeats. The event logs record interpretation
+timeouts (GLI-85 attempts 1 and 3; GCM attempts 1, 2 and 3). Historical scripts,
+outcomes and input tables are not modified or rerun.
+
+The new Worker interpretation instruction applies only to non-survival tasks.
+Above 500 input features, use the frozen model's own coefficients/importances,
+or permute only its top 50 ranked features with at most 5 repeats. Retain the
+complete prediction schema, never refit, record the method and budget, and report
+an unavailable ranking rather than reverting to full-width permutation. Stay
+within the existing step timeout. This is an instruction, not a new runtime cap
+or a guarantee that model-written scripts obey it or finish in time.
+
+The classification action contract visible to the Navigator and Worker previously
+requested 20 repeats unconditionally. It now keeps that budget only for at most
+500 features and states the same wide-input limit; its methods text allows native
+importance as well as permutation. No Navigator code sets a separate budget.
+Other action contracts, earlier rails, row sampling, fit/test safeguards and
+sandbox timeouts are unchanged. No dataset names or column names enter the rail.
+
+Tests: tests/unit/test_wide_interpretation_rail.py checks all seven non-survival
+problem scopes, Worker prompt and repair propagation, and the Navigator-visible
+classification budget. Loader/snapshot, genericity and bounded-context regressions
+are checked separately. Commit: Rails: bound wide interpretation (rails-0.15).
+
+Offline verification: 48 focused tests passed, including the genericity test;
+Ruff and whitespace checks passed. The full suite and live batches were not run.

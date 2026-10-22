@@ -965,3 +965,17 @@ Survival remains outside new instruction rails and development datasets.
 Add RL-0028 for the exact selected-model validation metric contract. Exclude
 survival from this new instruction rail, in accordance with the author's boundary.
 No additional rails are invented before development evidence exists.
+
+
+## 2026-10-23 — RL-0029, rails-0.15: bound wide interpretation
+
+Author-approved follow-up to reopening-v2 batch-01's wide-table interpretation
+timeouts. Above 500 model input features, prefer native coefficients/importances
+or permute only the top 50 ranked by them, at most 5 repeats. Preserve the full
+prediction schema and report unavailable rankings rather than explaining every
+feature. This is a generic instruction rail, not an execution guarantee or new
+engine check. Survival stays outside its scope. The classification action's
+20-repeat instruction now applies only to at most 500 input features, including
+in the Navigator's action view. Existing project rail snapshots remain unchanged.
+No live batches, biomedical/held-out table access, freeze or push is authorized
+by this implementation request. Evidence: rails/LEDGER.md L-0014.

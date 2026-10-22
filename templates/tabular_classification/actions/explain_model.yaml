@@ -3,7 +3,7 @@ event: interpret
 title: Rank features of the frozen model
 params: {}
 prompt: |
-  Do: permutation importance on validation rows using scoring compatible with the declared task.primary_metric (binary ROC AUC or multiclass macro one-vs-rest AUC by default; 20 repeats, seed); top 15 features. Reuse the complete frozen pipeline without fitting or double preprocessing.
+  Do: rank the frozen model's features; report the top 15. For at most 500 input features, use validation permutation importance (20 repeats, seed) with scoring compatible with task.primary_metric (binary ROC AUC or multiclass macro one-vs-rest AUC by default). For more than 500 input features, use its own coefficients or feature_importances_, or permute only the top 50 ranked by those importances with n_repeats <= 5. Keep the complete frozen prediction input schema while permuting only those columns; never refit or double preprocess. Report a missing reliable ranking as a limitation instead of full-width permutation. Record the method and actual feature/repeat budget; finish within the step time limit.
   Save: interpretation.csv (feature, importance_mean, importance_sd).
   Record: fact top_feature (source interpretation.csv).
 inputs:
@@ -18,6 +18,7 @@ fact_candidates:
 - top_feature
 reads_test: false
 timeout_s: 300
-methods_text: Permutation feature importance used validation rows and scoring compatible with the declared
-  task-specific primary metric; no model was refitted.
+methods_text: Feature ranking used the recorded native model importances or validation permutation
+  method and budget. Above 500 input features, permutation is limited to the top 50 ranked by
+  native importances and at most 5 repeats; no model is refitted.
 builtin: null
