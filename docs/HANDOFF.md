@@ -1,3 +1,13 @@
+# freeze-v2 — 23 October 2026
+
+Tag `freeze-v2` = `7dc0aedfb674e102f3cc96a92931a1a382eaaea0`, rails-0.15
+(SHA-256 `4fe378883a4cd7f8aa6b626dc5943d441a382d89e0be3081714bc0023debf03b`, as recorded by
+development batch-02). Accepted under the pooled rule: the 12 v1 tables keep their acceptance
+(v2 batch-01 is their regression check); GLI-85, SMK-CAN-187 and GCM succeeded 3/3 each in
+`mlcagent-experiments/bench/dev-loop-v2/batch-02`. Full offline suite on `7dc0aed`: 545 passed,
+1 skipped (21m31s); Ruff passed on the changed files. Local tag, not pushed. No agent change after
+this tag; eval-02 runs on it.
+
 # Reopening-v2: RL-0029 / rails-0.15 — 23 October 2026
 
 Implemented the author-approved Step 4 batch-01 interpretation follow-up only.
